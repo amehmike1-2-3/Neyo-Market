@@ -2461,30 +2461,45 @@ function submitProduct() {
   }
 
   if (needsFileUpload) {
-    if (btn) { btn.disabled = true; btn.textContent = 'Uploading file...'; }
-    /* Upload digital file to ImgBB — same API used for product images */
-    var b64 = digitalFileData.dataUrl.split(',')[1] || digitalFileData.dataUrl;
-    var fd  = new FormData();
-    fd.append('image', b64);
-    fetch('https://api.imgbb.com/1/upload?key=' + IMGBB_KEY, { method: 'POST', body: fd })
-      .then(function(r) { return r.json(); })
-      .then(function(result) {
-        if (result && result.data && (result.data.url || result.data.display_url)) {
-          payload.fileUrl  = result.data.url || result.data.display_url;
-          payload.fileName = digitalFileData.name;
-          payload.fileExt  = digitalFileData.ext;
-          if (btn) btn.textContent = 'Saving product...';
-          doSubmitPayload(payload);
-        } else {
-          if (btn) { btn.disabled = false; btn.textContent = 'Submit for Review'; }
-          var errMsg = (result.error && result.error.message) || 'ImgBB rejected the file.';
-          toast('File upload failed: ' + errMsg + ' Try a smaller file (under 32MB) or use a PDF.', 'fail');
-        }
-      })
-      .catch(function(e) {
-        if (btn) { btn.disabled = false; btn.textContent = 'Submit for Review'; }
-        toast('File upload error: ' + e.message + '. Check your connection and try again.', 'fail');
-      });
+    if (btn) { btn.disabled = true; btn.textContent = 'Saving product...'; }
+
+    /* ── THE FIX ──────────────────────────────────────────────────────
+       ImgBB is an IMAGE host. When you upload a PDF to ImgBB it renders
+       a 1-page JPG preview and returns an image URL — NOT the original
+       file. So result.data.url was saving a JPG link as fileUrl, which
+       is why buyers only got a preview image.
+
+       The correct solution: store the file as a base64 data URL directly.
+       FileReader already captured the COMPLETE original file in
+       digitalFileData.dataUrl as "data:application/pdf;base64,JVBERi0x..."
+       This IS the full PDF — lossless, complete, every page.
+
+       The download anchor (<a href="data:..." download="file.pdf">) works
+       perfectly with base64 data URLs: browser saves the exact original file.
+
+       Product IMAGES (imgs array) continue to use ImgBB — no change there.
+       fileUrl STRICTLY holds the product file — they never mix.
+    ─────────────────────────────────────────────────────────────────── */
+
+    /* Validate we have real file data */
+    if (!digitalFileData.dataUrl || digitalFileData.dataUrl.length < 100) {
+      if (btn) { btn.disabled = false; btn.textContent = 'Submit for Review'; }
+      toast('File data is empty. Please re-select your file.', 'fail');
+      return;
+    }
+
+    var fileSizeMB = (digitalFileData.size || 0) / (1024 * 1024);
+    if (fileSizeMB > 10) {
+      toast('Large file (' + fileSizeMB.toFixed(1) + 'MB) — saving may take a moment.', 'warn');
+    }
+
+    /* Assign directly — the dataUrl IS the file, correctly typed */
+    payload.fileUrl  = digitalFileData.dataUrl;  /* "data:application/pdf;base64,JVBERi0x..." */
+    payload.fileName = digitalFileData.name;      /* "STA111.pdf" */
+    payload.fileExt  = digitalFileData.ext;       /* ".pdf" */
+
+    doSubmitPayload(payload);
+
   } else {
     doSubmitPayload(payload);
   }
@@ -3220,34 +3235,47 @@ function renderOrders() {
           /* Priority 2: top-level order file_url */
           if (!rawFileUrl) rawFileUrl = o.fileUrl || o.file_url || '';
 
-          /* Normalize URL for known hosting providers:
-             ImgBB  : /image/xxx  → already direct, use as-is
-             Google Drive : /file/d/ID/view → /uc?export=download&id=ID
-             Dropbox: ?dl=0 → ?dl=1
-             Direct : use as-is */
+          /* Normalize URL based on type:
+             base64 data URL  : "data:application/pdf;base64,..." — use directly, perfect for PDF
+             Google Drive      : /file/d/ID/view → /uc?export=download&id=ID
+             Dropbox           : ?dl=0 → ?dl=1
+             ImgBB image link  : skip — these are preview images not files
+             Everything else   : use as-is                                     */
           var cleanUrl = rawFileUrl;
-          if (cleanUrl) {
+          if (cleanUrl && cleanUrl.indexOf('data:') !== 0) {
             /* Google Drive viewer → direct download */
             var gdMatch = cleanUrl.match(/drive\.google\.com\/file\/d\/([^\/]+)/);
             if (gdMatch) {
               cleanUrl = 'https://drive.google.com/uc?export=download&id=' + gdMatch[1];
             }
-            /* Dropbox preview → direct download */
+            /* Dropbox preview → direct download CDN */
             if (cleanUrl.indexOf('dropbox.com') !== -1) {
               cleanUrl = cleanUrl.replace('?dl=0','?dl=1').replace('www.dropbox.com','dl.dropboxusercontent.com');
             }
+            /* ImgBB image display pages are NOT files — skip them */
+            if (cleanUrl.indexOf('ibb.co') !== -1 && cleanUrl.indexOf('i.ibb.co') === -1) {
+              cleanUrl = ''; /* force fallback to markDL live fetch */
+            }
+          }
+
+          /* Determine download filename */
+          var dlName = 'download';
+          for (var fi = 0; fi < o.items.length; fi++) {
+            var fit = o.items[fi];
+            if (fit.fileName || fit.file_name) { dlName = fit.fileName || fit.file_name; break; }
+            if (fit.name) { dlName = fit.name + (fit.fileExt || fit.file_ext || ''); break; }
           }
 
           if (cleanUrl) {
-            /* Direct anchor with download + target="_blank":
-               - download attribute tells browser to save, not preview
-               - target="_blank" ensures it works on mobile browsers that ignore download
-               - rel="noopener" for security
-               NO blob fetch — avoids the CORS/redirect 98KB corrupted file bug */
-            actionBtn = '<a href="' + cleanUrl + '" download target="_blank" rel="noopener noreferrer" class="dl-btn" '
+            /* Direct anchor — works for both base64 data: URLs and https: URLs.
+               download attr forces Save As on desktop.
+               target="_blank" is mobile fallback.
+               onclick fires escrow release without blocking the download. */
+            actionBtn = '<a href="' + cleanUrl + '" download="' + dlName.replace(/"/g,'') + '" '
+              + 'target="_blank" rel="noopener noreferrer" class="dl-btn" '
               + 'onclick="markDLEscrow(\'' + o.id + '\')">⬇️ Download Product</a>';
           } else {
-            /* File URL not in order yet — fetch live from products API */
+            /* fileUrl missing or was an ImgBB image link — fetch correct URL live */
             actionBtn = '<button onclick="markDL(\'' + o.id + '\')" class="dl-btn">⬇️ Download Product</button>';
           }
         } else if (isDone) {
