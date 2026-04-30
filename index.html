@@ -1171,6 +1171,24 @@ footer{background:var(--text);color:#fff;border-top:1px solid rgba(255,255,255,.
       </div>
       <div class="fg"><label>Description <span class="rq">*</span></label><textarea class="fi" id="s-desc" rows="4" placeholder="What's included? Who is this for? Why buy it?" oninput="validateSell()"></textarea></div>
 
+      <!-- Quantity, Location, Seller Bio -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="fg" style="margin-bottom:0">
+          <label>Stock Quantity</label>
+          <input class="fi" type="number" id="s-quantity" placeholder="e.g. 10 (leave blank = unlimited)" min="1"/>
+          <p class="hint">Buyers cannot purchase when stock hits 0.</p>
+        </div>
+        <div class="fg" style="margin-bottom:0">
+          <label>Your Location</label>
+          <input class="fi" type="text" id="s-location" placeholder="e.g. Lagos, Nigeria"/>
+          <p class="hint">Shown on product page so buyers know where you are.</p>
+        </div>
+      </div>
+      <div class="fg" style="margin-top:10px">
+        <label>Seller Bio <span style="font-size:.7rem;font-weight:400;text-transform:none">(optional — shown to buyers)</span></label>
+        <textarea class="fi" id="s-bio" rows="3" placeholder="Tell buyers about yourself — your expertise, experience, what you sell..."></textarea>
+      </div>
+
       <div class="fg" id="dfile-wrap" style="display:none">
         <label>Product File <span class="rq">*</span> <span style="font-size:.7rem;font-weight:400;text-transform:none;letter-spacing:0">(PDF, ZIP or MP4)</span></label>
         <div class="fz" id="fz" onclick="triggerFile()">
@@ -2407,6 +2425,9 @@ function submitProduct() {
     seller:         CU ? CU.name : 'Seller',
     sellerId:       CU ? String(CU.id) : '',
     sellerEmail:    maskEmail(gv('s-email')),
+    quantity:       gv('s-quantity') ? parseInt(gv('s-quantity'), 10) : null,
+    location:       gv('s-location') || '',
+    sellerBio:      gv('s-bio')      || '',
     imgs:           cleanImgs,
     date:           new Date().toLocaleDateString(),
     fileExt:        digitalFileData ? digitalFileData.ext  : null,
@@ -2559,13 +2580,20 @@ function mkCard(p) {
   var trustBadge = (p.isVerified || p.is_verified)
     ? '<span class="trust-badge">&#x2713; Trusted</span>' : '';
 
-  return '<div class="pcard" onclick="opn(' + p.id + ')"' + timerData + '>'
+  var qty        = (p.quantity !== undefined && p.quantity !== null) ? parseInt(p.quantity, 10) : null;
+  var location   = p.location || p.seller_location || '';
+  var outOfStock = qty !== null && qty <= 0;
+  var lowStock   = qty !== null && qty > 0 && qty <= 5;
+
+  return '<div class="pcard' + (outOfStock ? ' out-of-stock' : '') + '"'
+    + (outOfStock ? '' : ' onclick="opn(' + p.id + ')"') + timerData + '>'
     + '<div class="pci">' + mi
-    + (saleActive ? '<span class="sale-badge">SALE</span>' : (p.badge && p.badge !== 'Pending Review' ? '<span class="pb1">' + p.badge + '</span>' : ''))
+    + (outOfStock ? '<span class="sale-badge" style="background:#6b7280">OUT OF STOCK</span>' : saleActive ? '<span class="sale-badge">SALE</span>' : (p.badge && p.badge !== 'Pending Review' ? '<span class="pb1">' + p.badge + '</span>' : ''))
     + '<span class="pb2 ' + tc + '">' + tl + '</span>'
     + '<span class="el">\uD83D\uDEE1 Escrow</span></div>'
     + '<div class="pcb"><h4>' + p.name + verBadge + trustBadge + '</h4>'
-    + '<div class="pcs">by ' + p.seller + (p.reviews > 0 ? ' · \u2B50' + p.rating : '') + '</div>'
+    + '<div class="pcs">by ' + p.seller + (location ? ' \u00b7 \uD83D\uDCCD' + location : '') + (p.reviews > 0 ? ' \u00b7 \u2B50' + p.rating : '') + '</div>'
+    + (lowStock ? '<div style="font-size:.7rem;color:var(--orange);font-weight:700;margin-bottom:3px">\u26a1 Only ' + qty + ' left!</div>' : '')
     + (saleActive && saving > 0 ? '<div class="savings-tag">\uD83D\uDD25 Save \u20a6' + saving.toLocaleString() + ' (' + savePct + '% OFF)</div>' : '')
     + (timerStr ? '<div class="live-timer" id="t' + p.id + '"><span class="dot">&#x25CF;</span> <span>' + timerStr + '</span></div>' : '')
     + '<div class="pcf"><div>'
@@ -2573,7 +2601,11 @@ function mkCard(p) {
     + '<span class="pcp' + (saleActive ? '" style="color:var(--red)' : '') + '">\u20a6' + displayPrice.toLocaleString() + '</span>'
     + '</div>'
     + (p.reviews > 0 ? '<span class="pcr">\u2B50' + p.rating + '</span>' : '<span style="font-size:.7rem;color:var(--muted)">New</span>')
-    + '</div><button class="addbtn" onclick="event.stopPropagation();addCart(' + p.id + ')">\uD83D\uDED2 Add to Cart</button></div></div>';
+    + '</div>'
+    + (outOfStock
+      ? '<button class="addbtn" disabled style="opacity:.45;cursor:not-allowed;background:#9ca3af">Sold Out</button>'
+      : '<button class="addbtn" onclick="event.stopPropagation();addCart(' + p.id + ')">\uD83D\uDED2 Add to Cart</button>')
+    + '</div></div>';
 }
 window.mkCard = mkCard;
 
@@ -2655,7 +2687,24 @@ function opn(id) {
     + (function(){
         var verBadge   = (p.sellerVerified||p.seller_verified) ? ' <span style="background:#1d4ed8;color:#fff;padding:1px 7px;border-radius:4px;font-size:.6rem;font-weight:700">✓ Verified</span>' : '';
         var trustBadge = (p.isVerified||p.is_verified) ? ' <span style="background:#b45309;color:#fff;padding:1px 7px;border-radius:4px;font-size:.6rem;font-weight:700">✓ Trusted</span>' : '';
-        return '<p style="font-size:.78rem;color:#6b7280;margin-bottom:12px">Sold by: <strong style="color:#c9922a">' + p.seller + '</strong>' + verBadge + trustBadge + '</p>';
+        var pdQty      = (p.quantity !== undefined && p.quantity !== null) ? parseInt(p.quantity, 10) : null;
+        var pdLocation = p.location || p.seller_location || '';
+        var pdBio      = p.sellerBio || p.seller_bio || '';
+        var pdStock    = pdQty !== null
+          ? (pdQty <= 0
+            ? '<span style="background:#fee2e2;color:#dc2626;padding:2px 8px;border-radius:12px;font-size:.7rem;font-weight:700">OUT OF STOCK</span>'
+            : pdQty <= 5
+              ? '<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:.7rem;font-weight:700">⚡ Only ' + pdQty + ' left</span>'
+              : '<span style="background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:12px;font-size:.7rem;font-weight:700">' + pdQty + ' in stock</span>')
+          : '';
+        return '<p style="font-size:.78rem;color:#6b7280;margin-bottom:4px">Sold by: <strong style="color:#c9922a">' + p.seller + '</strong>' + verBadge + trustBadge
+          + (pdLocation ? ' &nbsp;📍 <span style="color:#6b7280">' + pdLocation + '</span>' : '')
+          + '</p>'
+          + (pdStock ? '<div style="margin-bottom:10px">' + pdStock + '</div>' : '')
+          + (pdBio ? '<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:.82rem;color:#374151;line-height:1.6">'
+            + '<div style="font-weight:700;color:#111827;margin-bottom:4px;font-size:.78rem">About the Seller</div>'
+            + pdBio
+            + '</div>' : '');
       })()
     /* PRICE */
     + (function(){
@@ -2815,6 +2864,11 @@ window.generateAffiliateLink = generateAffiliateLink;
 function addCart(id) {
   var numId = Number(id);
   var p = prods.find(function (x) { return Number(x.id) === numId; }); if (!p) return;
+  /* Block if out of stock */
+  var stockQty = (p.quantity !== undefined && p.quantity !== null) ? parseInt(p.quantity, 10) : null;
+  if (stockQty !== null && stockQty <= 0) {
+    toast('Sorry — this item is out of stock.', 'fail'); return;
+  }
   var ex = cart.find(function (x) { return Number(x.id) === numId; });
   if (ex) ex.qty = (ex.qty || 1) + 1;
   else cart.push(Object.assign({}, p, { qty: 1 }));
@@ -3121,6 +3175,24 @@ function processPaystack(mode) {
           fileUrl:      data.fileUrl || (orderPayload.items[0] && (orderPayload.items[0].fileUrl || orderPayload.items[0].file_url)) || null
         };
         ords.push(order);
+        /* Decrement local stock so card shows updated count immediately */
+        cart.forEach(function(ci) {
+          var sp = prods.find(function(x){ return Number(x.id) === Number(ci.id); });
+          if (sp && sp.quantity !== null && sp.quantity !== undefined) {
+            sp.quantity = Math.max(0, parseInt(sp.quantity, 10) - (ci.qty || 1));
+          }
+        });
+        /* Also PATCH each product's quantity on the server */
+        cart.forEach(function(ci) {
+          var sp = prods.find(function(x){ return Number(x.id) === Number(ci.id); });
+          if (sp && sp.quantity !== null && sp.quantity !== undefined) {
+            fetch('/api/products', {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id: sp.id, quantity: Math.max(0, parseInt(sp.quantity, 10)) })
+            }).catch(function(e){ console.warn('[stock] PATCH failed:', e.message); });
+          }
+        });
         cart = []; updBadge();
         saveAll();  /* persist to localStorage so order survives refresh */
 
