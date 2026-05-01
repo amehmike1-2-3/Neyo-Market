@@ -742,7 +742,7 @@ module.exports = async function handler(req, res) {
       const buyerEmail   = (customer && customer.email) ? String(customer.email) : '';
       const buyerName    = (customer && customer.name)  ? String(customer.name)  : 'Valued Customer';
       const productNames = itemList.map(function(i){ return i.name || 'Product'; }).join(', ');
-      const SITE         = process.env.SITE_URL || 'https://neyo-market.vercel.app';
+      const SITE         = process.env.SITE_URL || 'https://neyomarket.com.ng';
       if (buyerEmail) {
         try {
           const emailBody = [
