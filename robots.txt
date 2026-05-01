@@ -12,5 +12,5 @@ Disallow: /api
 Disallow: /temp
 
 # Direct Google to our official product list
-Sitemap: https://neyo-market.vercel.app/sitemap.xml
+Sitemap: https://neyomarket.com.ng/sitemap.xml
 
