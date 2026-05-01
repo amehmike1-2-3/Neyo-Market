@@ -6,7 +6,7 @@
 
   <!-- HOME — highest priority -->
   <url>
-    <loc>https://neyo-market.vercel.app/</loc>
+    <loc>https://neyomarket.com.ng/</loc>
     <lastmod>2025-04-08</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
@@ -14,7 +14,7 @@
 
   <!-- MARKETPLACE -->
   <url>
-    <loc>https://neyo-market.vercel.app/#market</loc>
+    <loc>https://neyomarket.com.ng/#market</loc>
     <lastmod>2025-04-08</lastmod>
     <changefreq>hourly</changefreq>
     <priority>0.9</priority>
@@ -22,7 +22,7 @@
 
   <!-- SELL -->
   <url>
-    <loc>https://neyo-market.vercel.app/#sell</loc>
+    <loc>https://neyomarket.com.ng/#sell</loc>
     <lastmod>2025-04-08</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
@@ -30,7 +30,7 @@
 
   <!-- AFFILIATE -->
   <url>
-    <loc>https://neyo-market.vercel.app/#aff</loc>
+    <loc>https://neyomarket.com.ng/#aff</loc>
     <lastmod>2026-04-08</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
@@ -38,7 +38,7 @@
 
   <!-- RULES -->
   <url>
-    <loc>https://neyo-market.vercel.app/#rules</loc>
+    <loc>https://neyomarket.com.ng/#rules</loc>
     <lastmod>2025-04-09</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
@@ -46,7 +46,7 @@
 
   <!-- SIGN UP -->
   <url>
-    <loc>https://neyo-market.vercel.app/#signup</loc>
+    <loc>https://neyomarket.com.ng/#signup</loc>
     <lastmod>2025-04-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -54,7 +54,7 @@
 
   <!-- SIGN IN -->
   <url>
-    <loc>https://neyo-market.vercel.app/#signin</loc>
+    <loc>https://neyomarket.com.ng/#signin</loc>
     <lastmod>2025-04-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
