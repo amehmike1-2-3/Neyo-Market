@@ -44,7 +44,7 @@ const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@neyomarket.com';
    SHARED HELPERS
 ───────────────────────────────────────────── */
 function cors(res) {
-  res.setHeader('Access-Control-Allow-Origin',  '*');
+  res.setHeader('Access-Control-Allow-Origin',  'https://neyomarket.com.ng');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-paystack-signature');
   res.setHeader('X-Content-Type-Options',       'nosniff');
@@ -1005,5 +1005,79 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({ received: true });
   }
 
-  return jsonErr(res, 405, 'Unknown action. Valid: orders | disputes | confirm | dvc-release | refund | order | webhook');
+  /* ══════════════════════════════════════════════════════════════════
+     GET ?action=check-balance
+     Re-verify user balance in database before withdrawal
+  ══════════════════════════════════════════════════════════════════ */
+  if (action === 'check-balance' && req.method === 'GET') {
+    const userId = req.query.userId;
+    if (!userId) return jsonErr(res, 400, 'userId required');
+
+    try {
+      const rows = await sql`
+        SELECT balance FROM users WHERE id = ${String(userId)} LIMIT 1
+      `;
+      if (!rows.length) return jsonErr(res, 404, 'User not found');
+      
+      const balance = parseFloat(rows[0].balance || 0);
+      return res.status(200).json({ ok: true, balance: balance });
+    } catch (err) {
+      console.error('[payment/check-balance]', err.message);
+      return jsonErr(res, 500, 'Could not fetch balance', err.message);
+    }
+  }
+
+  /* ══════════════════════════════════════════════════════════════════
+     POST ?action=update-withdrawal-status
+     Immediately mark withdrawal as 'completed' to prevent double-clicks
+  ══════════════════════════════════════════════════════════════════ */
+  if (action === 'update-withdrawal-status' && req.method === 'POST') {
+    const { withdrawalId, status } = req.body || {};
+    if (!withdrawalId || !status) return jsonErr(res, 400, 'withdrawalId and status required');
+
+    try {
+      await sql`
+        UPDATE withdrawals 
+        SET status = ${String(status)}, updated_at = NOW()
+        WHERE id = ${Number(withdrawalId)}
+      `;
+      return res.status(200).json({ ok: true });
+    } catch (err) {
+      console.error('[payment/update-withdrawal-status]', err.message);
+      return jsonErr(res, 500, 'Could not update withdrawal status', err.message);
+    }
+  }
+
+  /* ══════════════════════════════════════════════════════════════════
+     POST ?action=refund-balance
+     Auto-refund amount back to user balance if Paystack transfer fails
+  ══════════════════════════════════════════════════════════════════ */
+  if (action === 'refund-balance' && req.method === 'POST') {
+    const { userId, amount, reason } = req.body || {};
+    if (!userId || !amount) return jsonErr(res, 400, 'userId and amount required');
+
+    try {
+      const refundAmt = parseFloat(amount);
+      
+      /* Add amount back to user balance */
+      await sql`
+        UPDATE users 
+        SET balance = balance + ${refundAmt}
+        WHERE id = ${String(userId)}
+      `;
+
+      /* Log refund transaction */
+      await sql`
+        INSERT INTO transactions (user_id, type, amount, description, status, created_at)
+        VALUES (${String(userId)}, 'refund', ${refundAmt}, ${String(reason || 'Withdrawal refund')}, 'completed', NOW())
+      `;
+
+      return res.status(200).json({ ok: true, refundedAmount: refundAmt });
+    } catch (err) {
+      console.error('[payment/refund-balance]', err.message);
+      return jsonErr(res, 500, 'Could not process refund', err.message);
+    }
+  }
+
+  return jsonErr(res, 405, 'Unknown action. Valid: orders | disputes | confirm | dvc-release | refund | order | webhook | check-balance | update-withdrawal-status | refund-balance');
 };
