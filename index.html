@@ -40,7 +40,7 @@
   "@context": "https://schema.org",
   "@type": "WebSite",
   "name": "NeyoMarket",
-  "url": "https://neyo-market.vercel.app",
+  "url": "https://neyomarket.com.ng",
   "description": "Nigeria's most trusted marketplace for digital and physical products with escrow-protected payments.",
   "potentialAction": {
     "@type": "SearchAction",
@@ -2925,7 +2925,7 @@ function swImg(el, src) {
 window.swImg = swImg;
 
 /* ═══ AFFILIATE LINK — product-specific, uses real GitHub Pages base URL ═══ */
-var SITE_BASE = 'https://neyo-market.vercel.app/';
+var SITE_BASE = 'https://neyomarket.com.ng/';
 
 function cpyAffProd(id) {
   var code = CU ? (CU.affCode || 'GUEST') : 'GUEST';
@@ -4054,7 +4054,7 @@ function sendResetEmail() {
       to_name:        user.name || 'NeyoMarket User',
       user_name:      user.name || 'NeyoMarket User',
       temp_password:  tempPass,
-      login_url:      'https://neyo-market.vercel.app/'
+      login_url:      'https://neyomarket.com.ng/'
     }
   };
 
@@ -4089,7 +4089,7 @@ function sendResetEmail() {
     } else if (detail.toLowerCase().includes('template')) {
       msg = 'Wrong Template ID. Double-check on EmailJS → Email Templates.';
     } else if (detail.toLowerCase().includes('block') || detail.toLowerCase().includes('origin') || detail.toLowerCase().includes('limit')) {
-      msg = 'Origin blocked. Go to EmailJS → Account → Security → Allowed Origins → add https://neyo-market.vercel.app';
+      msg = 'Origin blocked. Go to EmailJS → Account → Security → Allowed Origins → add https://neyomarket.com.ng';
     } else {
       msg = detail;
     }
@@ -6094,11 +6094,11 @@ function shareProduct(productId) {
   setMeta('meta[property="og:title"]',       productTitle);
   setMeta('meta[property="og:description"]', productDesc);
   setMeta('meta[property="og:url"]',         base);
-  setMeta('meta[property="og:image"]',       imgUrl || 'https://neyo-market.vercel.app/og-image.png');
+  setMeta('meta[property="og:image"]',       imgUrl || 'https://neyomarket.com.ng/og-image.png');
   setMeta('meta[property="og:type"]',        'product');
   setMeta('meta[name="twitter:title"]',      productTitle);
   setMeta('meta[name="twitter:description"]',productDesc);
-  setMeta('meta[name="twitter:image"]',      imgUrl || 'https://neyo-market.vercel.app/og-image.png');
+  setMeta('meta[name="twitter:image"]',      imgUrl || 'https://neyomarket.com.ng/og-image.png');
   /* Update page title so browser tab shows product name */
   document.title = productTitle;
 
