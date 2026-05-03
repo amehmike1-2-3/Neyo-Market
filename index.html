@@ -40,7 +40,7 @@
   "@context": "https://schema.org",
   "@type": "WebSite",
   "name": "NeyoMarket",
-  "url": "https://neyomarket.com.ng",
+  "url": "https://neyo-market.vercel.app",
   "description": "Nigeria's most trusted marketplace for digital and physical products with escrow-protected payments.",
   "potentialAction": {
     "@type": "SearchAction",
@@ -337,9 +337,14 @@ nav{
 .pg{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
 @media(min-width:900px){.pg{grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}}
 .pcard{background:#fff;border:1px solid var(--border);border-radius:var(--r);
-       overflow:hidden;cursor:pointer;transition:var(--tr);box-shadow:var(--shadow)}
+       overflow:hidden;cursor:pointer;transition:var(--tr);box-shadow:var(--shadow);position:relative}
 .pcard:hover{box-shadow:var(--shadow-md);transform:translateY(-2px)}
 .pcard:active{opacity:.9;transform:scale(.99)}
+.admin-delete-btn{position:absolute;top:8px;right:8px;background:rgba(220,38,38,.85);color:#fff;border:none;
+                 border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;
+                 font-size:1rem;cursor:pointer;z-index:10;transition:all .2s;opacity:0}
+.pcard:hover .admin-delete-btn{opacity:1}
+.admin-delete-btn:hover{background:rgba(220,38,38,1);transform:scale(1.1)}
 .pci{height:200px;position:relative;overflow:hidden;background:#ffffff;
      border-bottom:1px solid var(--border);
      display:flex;align-items:center;justify-content:center}
@@ -1071,13 +1076,54 @@ footer{background:var(--text);color:#fff;border-top:1px solid rgba(255,255,255,.
   <div class="sec">
     <div class="shd"><h2>🛒 <span class="gld">Marketplace</span></h2><p>All products verified and escrow-protected</p></div>
     <div style="display:flex;gap:9px;margin-bottom:13px;flex-wrap:wrap">
+      <select id="loc-filter" onchange="doLocFilter(this.value)"
+        style="background:var(--surface);border:1.5px solid var(--border);color:var(--text);padding:10px 12px;border-radius:9px;font-size:.85rem;outline:none;min-width:140px">
+        <option value="">📍 All Locations</option>
+        <option value="Abia">Abia</option>
+        <option value="Adamawa">Adamawa</option>
+        <option value="Akwa Ibom">Akwa Ibom</option>
+        <option value="Anambra">Anambra</option>
+        <option value="Bauchi">Bauchi</option>
+        <option value="Bayelsa">Bayelsa</option>
+        <option value="Benue">Benue</option>
+        <option value="Borno">Borno</option>
+        <option value="Cross River">Cross River</option>
+        <option value="Delta">Delta</option>
+        <option value="Ebonyi">Ebonyi</option>
+        <option value="Edo">Edo</option>
+        <option value="Ekiti">Ekiti</option>
+        <option value="Enugu">Enugu</option>
+        <option value="Gombe">Gombe</option>
+        <option value="Imo">Imo</option>
+        <option value="Jigawa">Jigawa</option>
+        <option value="Kaduna">Kaduna</option>
+        <option value="Kano">Kano</option>
+        <option value="Katsina">Katsina</option>
+        <option value="Kebbi">Kebbi</option>
+        <option value="Kogi">Kogi</option>
+        <option value="Kwara">Kwara</option>
+        <option value="Lagos">Lagos</option>
+        <option value="Nasarawa">Nasarawa</option>
+        <option value="Niger">Niger</option>
+        <option value="Ogun">Ogun</option>
+        <option value="Ondo">Ondo</option>
+        <option value="Osun">Osun</option>
+        <option value="Oyo">Oyo</option>
+        <option value="Plateau">Plateau</option>
+        <option value="Rivers">Rivers</option>
+        <option value="Sokoto">Sokoto</option>
+        <option value="Taraba">Taraba</option>
+        <option value="Yobe">Yobe</option>
+        <option value="Zamfara">Zamfara</option>
+        <option value="FCT">FCT</option>
+      </select>
       <input type="text" id="srch" placeholder="🔍 Search products…" oninput="doSrch(this.value)"
         style="flex:1;min-width:140px;background:var(--surface);border:1.5px solid var(--border);color:var(--text);padding:10px 12px;border-radius:9px;font-size:.85rem;outline:none"/>
       <select id="srt" onchange="doSrt(this.value)"
         style="background:var(--surface);border:1.5px solid var(--border);color:var(--text);padding:10px 12px;border-radius:9px;font-size:.85rem;outline:none">
         <option value="">Sort</option>
-        <option value="pa">Price ↑</option>
-        <option value="pd">Price ↓</option>
+        <option value="pa">Price: Low to High</option>
+        <option value="pd">Price: High to Low</option>
         <option value="r">Top Rated</option>
       </select>
     </div>
@@ -2587,6 +2633,7 @@ function mkCard(p) {
 
   return '<div class="pcard' + (outOfStock ? ' out-of-stock' : '') + '"'
     + (outOfStock ? '' : ' onclick="opn(' + p.id + ')"') + timerData + '>'
+    + (isAdmin ? '<button class="admin-delete-btn" onclick="event.stopPropagation();delProd(' + p.id + ')" title="Delete product">🗑️</button>' : '')
     + '<div class="pci">' + mi
     + (outOfStock ? '<span class="sale-badge" style="background:#6b7280">OUT OF STOCK</span>' : saleActive ? '<span class="sale-badge">SALE</span>' : (p.badge && p.badge !== 'Pending Review' ? '<span class="pb1">' + p.badge + '</span>' : ''))
     + '<span class="pb2 ' + tc + '">' + tl + '</span>'
@@ -2640,6 +2687,20 @@ window.fMkt = fMkt;
 function doSrch(q) { var ql = q.toLowerCase(); rGrid('mkt-grid', getActive().filter(function (p) { return p.name.toLowerCase().includes(ql) || p.seller.toLowerCase().includes(ql); })); }
 window.doSrch = doSrch;
 
+function doLocFilter(loc) {
+  var filtered = getActive();
+  if (loc) {
+    filtered = filtered.filter(function (p) { return p.location === loc; });
+  }
+  var srchVal = (document.getElementById('srch') || {}).value || '';
+  if (srchVal) {
+    var ql = srchVal.toLowerCase();
+    filtered = filtered.filter(function (p) { return p.name.toLowerCase().includes(ql) || p.seller.toLowerCase().includes(ql); });
+  }
+  rGrid('mkt-grid', filtered);
+}
+window.doLocFilter = doLocFilter;
+
 function doSrt(v) {
   var s = getActive().slice();
   if (v === 'pa') s.sort(function (a, b) { return a.price - b.price; });
@@ -2648,6 +2709,31 @@ function doSrt(v) {
   rGrid('mkt-grid', s);
 }
 window.doSrt = doSrt;
+
+function delProd(id) {
+  if (!isAdmin) { toast('Admin only.', 'error'); return; }
+  if (!confirm('Delete this product permanently?')) return;
+  fetch('https://neyomarket.com.ng/api/products?id=' + id, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ requesterId: 'admin' })
+  })
+  .then(function (r) { return r.json(); })
+  .then(function (d) {
+    if (d.ok) {
+      prods = prods.filter(function (p) { return p.id !== id; });
+      rGrid('mkt-grid', getActive());
+      toast('Product deleted.', 'success');
+    } else {
+      toast(d.error || 'Delete failed.', 'error');
+    }
+  })
+  .catch(function (e) {
+    console.error('Delete error:', e);
+    toast('Error deleting product.', 'error');
+  });
+}
+window.delProd = delProd;
 
 /* ═══ PRODUCT DETAIL ═══ */
 function opn(id) {
@@ -2838,7 +2924,7 @@ function swImg(el, src) {
 window.swImg = swImg;
 
 /* ═══ AFFILIATE LINK — product-specific, uses real GitHub Pages base URL ═══ */
-var SITE_BASE = 'https://neyomarket.com.ng/';
+var SITE_BASE = 'https://neyo-market.vercel.app/';
 
 function cpyAffProd(id) {
   var code = CU ? (CU.affCode || 'GUEST') : 'GUEST';
@@ -3967,7 +4053,7 @@ function sendResetEmail() {
       to_name:        user.name || 'NeyoMarket User',
       user_name:      user.name || 'NeyoMarket User',
       temp_password:  tempPass,
-      login_url:      'https://neyomarket.com.ng/'
+      login_url:      'https://neyo-market.vercel.app/'
     }
   };
 
@@ -4002,7 +4088,7 @@ function sendResetEmail() {
     } else if (detail.toLowerCase().includes('template')) {
       msg = 'Wrong Template ID. Double-check on EmailJS → Email Templates.';
     } else if (detail.toLowerCase().includes('block') || detail.toLowerCase().includes('origin') || detail.toLowerCase().includes('limit')) {
-      msg = 'Origin blocked. Go to EmailJS → Account → Security → Allowed Origins → add https://neyomarket.com.ng';
+      msg = 'Origin blocked. Go to EmailJS → Account → Security → Allowed Origins → add https://neyo-market.vercel.app';
     } else {
       msg = detail;
     }
@@ -6005,11 +6091,11 @@ function shareProduct(productId) {
   setMeta('meta[property="og:title"]',       productTitle);
   setMeta('meta[property="og:description"]', productDesc);
   setMeta('meta[property="og:url"]',         base);
-  setMeta('meta[property="og:image"]',       imgUrl || 'https://neyomarket.com.ng/og-image.png');
+  setMeta('meta[property="og:image"]',       imgUrl || 'https://neyo-market.vercel.app/og-image.png');
   setMeta('meta[property="og:type"]',        'product');
   setMeta('meta[name="twitter:title"]',      productTitle);
   setMeta('meta[name="twitter:description"]',productDesc);
-  setMeta('meta[name="twitter:image"]',      imgUrl || 'https://neyomarket.com.ng/og-image.png');
+  setMeta('meta[name="twitter:image"]',      imgUrl || 'https://neyo-market.vercel.app/og-image.png');
   /* Update page title so browser tab shows product name */
   document.title = productTitle;
 
