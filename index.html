@@ -5944,37 +5944,95 @@ function adminApprovePayout(withdrawalId, userId, amount) {
   )) return;
 
   var btn = document.getElementById('wbtn-' + withdrawalId);
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ Processing…'; }
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Verifying balance…'; }
 
-  fetch('/api/paystack?action=approve-payout', {
-    method:  'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify({
-      withdrawalId: withdrawalId,
-      userId:       userId,
-      amount:       amt,
-      flatFee:      FLAT_FEE,
-      netAmount:    netAmt,
-      masterKey:    masterKey
+  /* FIRST: Re-check user balance in database */
+  fetch('/api/payment?action=check-balance&userId=' + encodeURIComponent(String(userId)))
+    .then(function(r) { return r.json(); })
+    .then(function(balData) {
+      if (!balData.ok || balData.balance < amt) {
+        if (btn) { btn.disabled = false; btn.textContent = '✓ Approve'; }
+        toast('❌ Insufficient balance! User only has ₦' + (balData.balance || 0).toLocaleString(), 'fail');
+        return;
+      }
+
+      /* Balance OK — update status to 'completed' IMMEDIATELY */
+      if (btn) { btn.textContent = '⏳ Updating status…'; }
+      
+      fetch('/api/payment?action=update-withdrawal-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ withdrawalId: withdrawalId, status: 'completed' })
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(statusData) {
+        if (!statusData.ok) {
+          if (btn) { btn.disabled = false; btn.textContent = '✓ Approve'; }
+          toast('❌ Could not update status', 'fail');
+          return;
+        }
+
+        /* Status updated — now process Paystack transfer */
+        if (btn) { btn.textContent = '⏳ Processing Paystack…'; }
+
+        fetch('/api/payment?action=approve-payout', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({
+            withdrawalId: withdrawalId,
+            userId:       userId,
+            amount:       amt,
+            flatFee:      FLAT_FEE,
+            netAmount:    netAmt,
+            masterKey:    masterKey
+          })
+        })
+        .then(function(r){ return r.json(); })
+        .then(function(data) {
+          if (data.ok) {
+            toast('✅ ₦' + netAmt.toLocaleString() + ' sent to seller! (₦100 fee retained by platform)', 'ok');
+            var row = document.getElementById('wrow-' + withdrawalId);
+            if (row) row.style.cssText = 'opacity:.4;text-decoration:line-through';
+            if (btn) { btn.textContent = '✓ Done'; btn.style.background = 'var(--green-bg)'; }
+            setTimeout(function(){ aTab('pay', document.querySelector('.asb[onclick*="pay"]')); }, 1500);
+          } else {
+            /* Paystack failed — refund money back to user balance */
+            if (btn) { btn.disabled = false; btn.textContent = '✓ Approve'; }
+            toast('⚠️ Paystack rejected: ' + (data.error || 'Unknown error'), 'warn');
+            
+            /* Auto-refund: add amount back to user balance */
+            fetch('/api/payment?action=refund-balance', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ userId: userId, amount: amt, reason: 'Paystack transfer failed' })
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(rData) {
+              if (rData.ok) {
+                toast('💰 ₦' + amt.toLocaleString() + ' refunded to user balance', 'ok');
+              } else {
+                toast('⚠️ Manual refund needed: ' + rData.error, 'warn');
+              }
+            })
+            .catch(function(e) {
+              toast('⚠️ Could not auto-refund: ' + e.message, 'warn');
+            });
+          }
+        })
+        .catch(function(e) {
+          if (btn) { btn.disabled = false; btn.textContent = '✓ Approve'; }
+          toast('Network error: ' + e.message, 'fail');
+        });
+      })
+      .catch(function(e) {
+        if (btn) { btn.disabled = false; btn.textContent = '✓ Approve'; }
+        toast('Error updating status: ' + e.message, 'fail');
+      });
     })
-  })
-  .then(function(r){ return r.json(); })
-  .then(function(data) {
-    if (data.ok) {
-      toast('✅ ₦' + netAmt.toLocaleString() + ' sent to seller! (₦100 fee retained by platform)', 'ok');
-      var row = document.getElementById('wrow-' + withdrawalId);
-      if (row) row.style.cssText = 'opacity:.4;text-decoration:line-through';
-      if (btn) { btn.textContent = '✓ Done'; btn.style.background = 'var(--green-bg)'; }
-      setTimeout(function(){ aTab('pay', document.querySelector('.asb[onclick*="pay"]')); }, 1500);
-    } else {
+    .catch(function(e) {
       if (btn) { btn.disabled = false; btn.textContent = '✓ Approve'; }
-      toast('❌ ' + (data.error || 'Payout failed'), 'fail');
-    }
-  })
-  .catch(function(e) {
-    if (btn) { btn.disabled = false; btn.textContent = '✓ Approve'; }
-    toast('Network error: ' + e.message, 'fail');
-  });
+      toast('Error checking balance: ' + e.message, 'fail');
+    });
 }
 window.adminApprovePayout = adminApprovePayout;
 
