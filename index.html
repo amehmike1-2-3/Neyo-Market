@@ -1989,6 +1989,7 @@ footer{background:var(--text);color:#fff;border-top:1px solid rgba(255,255,255,.
 /* ═══ CONSTANTS ═══ */
 /* Paystack LIVE public key — backend uses PAYSTACK_SECRET_KEY from Vercel env vars */
 var PK            = 'pk_live_aaf3faacd1ff2cb720a5f1afaf79112c3fc322ca';
+var PKS           = PK;  /* Alias for promote/promo functions */
 var ADMIN_EMAIL   = 'admin@neyomarket.com';
 var ADMIN_PASS    = 'NEYO2026';
 var SUPPORT_PHONE = '+2349072212496';
@@ -6470,6 +6471,11 @@ function promoteProduct() {
     amount: fee * 100,
     ref: 'promo_' + Date.now() + '_' + productId,
     currency: 'NGN',
+    metadata: {
+      productId: parseInt(productId, 10),
+      duration: duration,
+      type: 'promotion'
+    },
     onClose: function() {
       toast('Payment cancelled.', 'warn');
     },
