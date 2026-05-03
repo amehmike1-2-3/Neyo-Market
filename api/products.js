@@ -58,6 +58,7 @@ function toProduct(r) {
     quantity:       r.quantity         !== undefined ? parseInt(r.quantity, 10) : null,
     location:       r.location         || r.seller_location || '',
     sellerBio:      r.seller_bio       || '',
+    isFeature:      r.is_featured      || false,
     createdAt:      r.created_at       || null,
   };
 }
@@ -257,6 +258,39 @@ module.exports = async function handler(req, res) {
 
       await sql`DELETE FROM products WHERE id = ${productId}`;
       return res.status(200).json({ ok: true });
+    }
+
+    /* ════════════════════════════════════════════════
+       POST ?action=promote
+       Mark product as featured (is_featured = true)
+    ════════════════════════════════════════════════ */
+    if (req.query.action === 'promote' && req.method === 'POST') {
+      const { productId, duration, amount, paystackRef } = req.body || {};
+      if (!productId || !paystackRef) return jsonErr(res, 400, 'productId and paystackRef required');
+
+      try {
+        /* Calculate expiration date based on duration */
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + (duration || 7));
+
+        /* Update product to featured */
+        await sql`
+          UPDATE products 
+          SET is_featured = true, featured_expires = ${expiresAt.toISOString()}
+          WHERE id = ${Number(productId)}
+        `;
+
+        /* Log promotion transaction */
+        await sql`
+          INSERT INTO promotions (product_id, duration_days, amount, paystack_ref, expires_at, created_at)
+          VALUES (${Number(productId)}, ${Number(duration || 7)}, ${Number(amount)}, ${String(paystackRef)}, ${expiresAt.toISOString()}, NOW())
+        `;
+
+        return res.status(200).json({ ok: true, message: 'Product promoted successfully' });
+      } catch (err) {
+        console.error('[products/promote]', err.message);
+        return jsonErr(res, 500, 'Could not promote product', err.message);
+      }
     }
 
     return jsonErr(res, 405, 'Method not allowed.');
