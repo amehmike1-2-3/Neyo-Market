@@ -211,6 +211,37 @@
 .lb-earn{font-weight:700;color:var(--gold);font-size:.9rem;}
 
 /* ══════════════════════════════════════
+   IMAGE CAROUSEL — Product Detail
+══════════════════════════════════════ */
+.img-carousel-wrap{position:relative;width:100%;background:var(--bg3);border-radius:12px;overflow:hidden;margin-bottom:16px;aspect-ratio:4/3;}
+.img-carousel-container{display:flex;width:100%;height:100%;transition:transform .3s ease;scroll-snap-type:x mandatory;}
+.img-carousel-slide{flex:0 0 100%;display:flex;align-items:center;justify-content:center;min-height:0;scroll-snap-align:start;}
+.img-carousel-slide img{width:100%;height:100%;object-fit:cover;}
+.img-carousel-slide.placeholder{background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:3rem;color:var(--muted);}
+.carousel-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.5);color:#fff;width:40px;height:40px;border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.2rem;transition:background .2s;z-index:10;}
+.carousel-nav:hover{background:rgba(0,0,0,.7);}
+.carousel-nav.prev{left:8px;}
+.carousel-nav.next{right:8px;}
+.carousel-dots{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:10;}
+.carousel-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.5);cursor:pointer;transition:background .2s;}
+.carousel-dot.active{background:rgba(255,255,255,.9);}
+
+/* ══════════════════════════════════════
+   ACCORDION / COLLAPSIBLE SECTIONS
+══════════════════════════════════════ */
+.accordion-section{border:1px solid var(--border);border-radius:10px;margin-bottom:12px;overflow:hidden;background:var(--card);}
+.accordion-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer;user-select:none;transition:background .2s;background:var(--bg3);}
+.accordion-header:hover{background:var(--bg2);}
+.accordion-header.active{background:var(--gold);}
+.accordion-header.active h4{color:#fff;}
+.accordion-header h4{margin:0;font-size:.95rem;font-weight:700;color:var(--text);transition:color .2s;}
+.accordion-toggle{font-size:1.2rem;font-weight:700;color:var(--text);transition:transform .3s;flex-shrink:0;}
+.accordion-header.active .accordion-toggle{transform:rotate(45deg);color:#fff;}
+.accordion-content{max-height:0;overflow:hidden;transition:max-height .3s ease;background:var(--card);}
+.accordion-content.show{max-height:2000px;}
+.accordion-body{padding:16px;}
+
+/* ══════════════════════════════════════
    RESET
 ══════════════════════════════════════ */
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -2775,113 +2806,168 @@ function opn(id) {
   var p = prods.find(function (x) { return Number(x.id) === numId; }); if (!p) return;
   document.getElementById('pd-title').textContent = p.name;
   var gi = p.imgs && p.imgs.length ? p.imgs : [];
-  var mh = gi[0] ? '<img class="pdmi" id="pd-mi" src="' + gi[0] + '" alt="' + p.name + '"/>' : '<div class="pdmi emj">' + p.emoji + '</div>';
-  var th = gi.length > 1 ? '<div class="pdg">' + gi.map(function (s, i) { return '<img src="' + s + '" class="' + (i === 0 ? 'on' : '') + '" onclick="swImg(this,\'' + s + '\')"/>'; }).join('') + '</div>' : '';
-  var starsHtml = '';
-  if (p.reviews > 0) {
-    var full = Math.floor(p.rating); var half = (p.rating - full) >= 0.5;
-    for (var si = 0; si < 5; si++) {
-      if (si < full) starsHtml += '<span style="color:var(--gold)">★</span>';
-      else if (si === full && half) starsHtml += '<span style="color:var(--gold)">½</span>';
-      else starsHtml += '<span style="color:var(--border)">★</span>';
-    }
-  }
+  
+  /* Pricing logic */
+  var discPrice  = parseFloat(p.discountPrice||p.discount_price||0);
+  var saleEndsAt = p.saleEndsAt||p.sale_ends_at||null;
+  var saleActive = discPrice > 0 && discPrice < p.price && (!saleEndsAt || new Date(saleEndsAt) > new Date());
+  var displayP   = saleActive ? discPrice : p.price;
+  var saving     = saleActive ? Math.round(p.price-discPrice) : 0;
+  
+  /* Seller info */
+  var verBadge   = (p.sellerVerified||p.seller_verified) ? ' <span style="background:#1d4ed8;color:#fff;padding:1px 7px;border-radius:4px;font-size:.6rem;font-weight:700">✓ Verified</span>' : '';
+  var trustBadge = (p.isVerified||p.is_verified) ? ' <span style="background:#b45309;color:#fff;padding:1px 7px;border-radius:4px;font-size:.6rem;font-weight:700">✓ Trusted</span>' : '';
+  var pdQty      = (p.quantity !== undefined && p.quantity !== null) ? parseInt(p.quantity, 10) : null;
+  var pdLocation = p.location || p.seller_location || '';
+  var pdBio      = p.sellerBio || p.seller_bio || '';
+  var pdStock    = pdQty !== null
+    ? (pdQty <= 0
+      ? '<span style="background:#fee2e2;color:#dc2626;padding:2px 8px;border-radius:12px;font-size:.7rem;font-weight:700">OUT OF STOCK</span>'
+      : pdQty <= 5
+        ? '<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:.7rem;font-weight:700">⚡ Only ' + pdQty + ' left</span>'
+        : '<span style="background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:12px;font-size:.7rem;font-weight:700">' + pdQty + ' in stock</span>')
+    : '';
+  
+  /* WhatsApp button */
+  var waPhone = String(p.sellerWhatsapp||p.seller_whatsapp||'');
+  var waMsg   = encodeURIComponent('Hi! I am interested in your ' + p.name + ' on NeyoMarket.');
+  var waLink  = waPhone ? 'https://wa.me/' + waPhone.replace(/[^0-9]/g,'') + '?text=' + waMsg : '';
+  
   document.getElementById('pd-body').innerHTML =
-    /* IMAGE — white bg, contain, no crop */
-    '<div style="background:#fff;display:flex;align-items:center;justify-content:center;height:260px;border-bottom:1px solid #e5e7eb;overflow:hidden">'
-    + (gi[0] ? '<img src="' + gi[0] + '" alt="' + p.name + '" style="max-height:250px;max-width:100%;object-fit:contain;padding:10px"/>' : '<div style="font-size:4rem">' + p.emoji + '</div>')
+    /* ════ IMAGE CAROUSEL ════ */
+    '<div style="padding:14px;">'
+    + '<div class="img-carousel-wrap">'
+    + '<div class="img-carousel-container" id="carousel-' + p.id + '" style="transform:translateX(0)">'
+    + (gi.length > 0 
+      ? gi.map(function(img){ return '<div class="img-carousel-slide"><img src="' + img + '" alt="' + p.name + '"/></div>'; }).join('')
+      : '<div class="img-carousel-slide placeholder">' + p.emoji + '</div>')
     + '</div>'
-    /* Thumbnails */
-    + (gi.length > 1 ? '<div style="display:flex;gap:6px;padding:10px 14px;border-bottom:1px solid #e5e7eb;background:#fff;overflow-x:auto">' + gi.map(function(s,i){ return '<img src="' + s + '" style="width:52px;height:52px;object-fit:contain;border:2px solid ' + (i===0?'#c9922a':'#e5e7eb') + ';border-radius:6px;cursor:pointer;background:#fff;flex-shrink:0" onclick="swImg(this,\''+s+'\')"/>'; }).join('') + '</div>' : '')
-    /* CONTENT — always white/light */
-    + '<div style="padding:16px 16px 0;background:#fff;">'
-    /* Type + cat tags */
-    + '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">'
-    + '<span style="background:#f3f4f6;color:#374151;padding:3px 10px;border-radius:20px;font-size:.7rem;font-weight:600">' + (p.type==='digital'?'⚡ Digital':p.type==='course'?'🎓 Course':'📦 Physical') + '</span>'
-    + '<span style="background:#f3f4f6;color:#374151;padding:3px 10px;border-radius:20px;font-size:.7rem;font-weight:600">🏷 ' + p.cat + '</span>'
-    + (p.reviews > 0 ? '<span style="background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:20px;font-size:.7rem;font-weight:600">⭐ ' + p.rating + ' (' + p.reviews + ')</span>' : '')
-    + '<span style="background:#d1fae5;color:#065f46;padding:3px 10px;border-radius:20px;font-size:.7rem;font-weight:600">🛡 Escrow</span>'
+    + (gi.length > 1 ? '<button class="carousel-nav prev" onclick="carouselNav(' + p.id + ', -1)">❮</button>' : '')
+    + (gi.length > 1 ? '<button class="carousel-nav next" onclick="carouselNav(' + p.id + ', 1)">❯</button>' : '')
+    + (gi.length > 1 ? '<div class="carousel-dots" id="dots-' + p.id + '">' + gi.map(function(img, i){ return '<span class="carousel-dot ' + (i===0?'active':'') + '" onclick="carouselGo(' + p.id + ',' + i + ')"></span>'; }).join('') + '</div>' : '')
     + '</div>'
-    /* Seller */
-    + (function(){
-        var verBadge   = (p.sellerVerified||p.seller_verified) ? ' <span style="background:#1d4ed8;color:#fff;padding:1px 7px;border-radius:4px;font-size:.6rem;font-weight:700">✓ Verified</span>' : '';
-        var trustBadge = (p.isVerified||p.is_verified) ? ' <span style="background:#b45309;color:#fff;padding:1px 7px;border-radius:4px;font-size:.6rem;font-weight:700">✓ Trusted</span>' : '';
-        var pdQty      = (p.quantity !== undefined && p.quantity !== null) ? parseInt(p.quantity, 10) : null;
-        var pdLocation = p.location || p.seller_location || '';
-        var pdBio      = p.sellerBio || p.seller_bio || '';
-        var pdStock    = pdQty !== null
-          ? (pdQty <= 0
-            ? '<span style="background:#fee2e2;color:#dc2626;padding:2px 8px;border-radius:12px;font-size:.7rem;font-weight:700">OUT OF STOCK</span>'
-            : pdQty <= 5
-              ? '<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:.7rem;font-weight:700">⚡ Only ' + pdQty + ' left</span>'
-              : '<span style="background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:12px;font-size:.7rem;font-weight:700">' + pdQty + ' in stock</span>')
-          : '';
-        return '<p style="font-size:.78rem;color:#6b7280;margin-bottom:4px">Sold by: <strong style="color:#c9922a">' + p.seller + '</strong>' + verBadge + trustBadge
-          + (pdLocation ? ' &nbsp;📍 <span style="color:#6b7280">' + pdLocation + '</span>' : '')
-          + '</p>'
-          + (pdStock ? '<div style="margin-bottom:10px">' + pdStock + '</div>' : '')
-          + (pdBio ? '<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:.82rem;color:#374151;line-height:1.6">'
-            + '<div style="font-weight:700;color:#111827;margin-bottom:4px;font-size:.78rem">About the Seller</div>'
-            + pdBio
-            + '</div>' : '');
-      })()
-    /* PRICE */
-    + (function(){
-        var isOnSale   = !!(p.isOnSale||p.is_on_sale);
-        var discPrice  = parseFloat(p.discountPrice||p.discount_price||0);
-        var saleEndsAt = p.saleEndsAt||p.sale_ends_at||null;
-        /* Show discount whenever discountPrice < price — no isOnSale flag required */
-        var saleActive = discPrice > 0 && discPrice < p.price && (!saleEndsAt || new Date(saleEndsAt) > new Date());
-        var displayP   = saleActive ? discPrice : p.price;
-        var saving     = saleActive ? Math.round(p.price-discPrice) : 0;
-        return '<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:14px">'
-          + (saleActive ? '<span style="text-decoration:line-through;color:#9ca3af;font-size:.95rem">&#x20a6;' + p.price.toLocaleString() + '</span>' : '')
-          + '<span style="font-size:1.7rem;font-weight:800;color:' + (saleActive?'#dc2626':'#111827') + ';font-family:serif">&#x20a6;' + displayP.toLocaleString() + '</span>'
-          + (saving > 0 ? '<span style="background:#fee2e2;color:#dc2626;padding:2px 8px;border-radius:20px;font-size:.72rem;font-weight:700">Save &#x20a6;' + saving.toLocaleString() + '</span>' : '')
-          + '</div>';
-      })()
-    /* Escrow note */
-    + '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:.79rem;color:#065f46;line-height:1.5">'
-    + '🛡️ <strong>Buyer Protected:</strong> Your funds are held in escrow until you confirm receipt. Full refund if not as described.'
     + '</div>'
-    /* WhatsApp + Action buttons */
-    + (function(){
-        var waPhone = String(p.sellerWhatsapp||p.seller_whatsapp||'');
-        var waMsg   = encodeURIComponent('Hi! I am interested in your ' + p.name + ' on NeyoMarket.');
-        var waLink  = waPhone ? 'https://wa.me/' + waPhone.replace(/[^0-9]/g,'') + '?text=' + waMsg : '';
-        var waBtn   = (CU && waLink)
-          ? '<a href="' + waLink + '" target="_blank" rel="noopener" style="display:block;width:100%;text-align:center;background:#25d366;color:#fff;padding:11px;border-radius:8px;font-weight:700;font-size:.85rem;margin-bottom:8px;text-decoration:none">💬 Contact Seller on WhatsApp</a>'
-          : '<button onclick="toast(\'Sign in to contact seller\',\'warn\')" style="width:100%;background:#f3f4f6;color:#6b7280;padding:11px;border-radius:8px;font-weight:700;font-size:.85rem;margin-bottom:8px;border:1px solid #e5e7eb;cursor:pointer">💬 Sign In to Contact Seller</button>';
-        return waBtn
-          + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">'
-          + '<button style="background:#c9922a;color:#fff;border:none;padding:12px;border-radius:8px;font-weight:700;font-size:.85rem;cursor:pointer" onclick="addCart(' + p.id + ');cM(\'m-pd\')">🛒 Add to Cart</button>'
-          + '<button onclick="shareProduct(' + p.id + ')" style="background:#fff;border:1.5px solid #25d366;color:#25d366;padding:12px;border-radius:8px;font-weight:700;font-size:.85rem;cursor:pointer">📤 Share</button>'
-          + '</div>'
-          + '<button onclick="cpyAffProd(' + p.id + ')" style="width:100%;background:#fff;border:1.5px solid #c9922a;color:#c9922a;padding:10px;border-radius:8px;font-weight:700;font-size:.82rem;cursor:pointer;margin-bottom:4px">🔗 Copy Affiliate Link</button>';
-      })()
-    /* DESCRIPTION — clearly below the buy buttons */
+    
+    /* ════ SLEEK PRICING BLOCK ON ONE LINE ════ */
+    + '<div style="padding:0 14px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">'
+    + '<div style="display:flex;align-items:baseline;gap:8px">'
+    + (saleActive ? '<span style="text-decoration:line-through;color:#9ca3af;font-size:.9rem">&#x20a6;' + p.price.toLocaleString() + '</span>' : '')
+    + '<span style="font-size:1.6rem;font-weight:800;color:' + (saleActive?'#dc2626':'#111827') + ';font-family:serif">&#x20a6;' + displayP.toLocaleString() + '</span>'
+    + (saving > 0 ? '<span style="background:#fee2e2;color:#dc2626;padding:2px 6px;border-radius:4px;font-size:.65rem;font-weight:700">Save &#x20a6;' + saving.toLocaleString() + '</span>' : '')
     + '</div>'
-    + '<div style="padding:16px;background:#f9fafb;border-top:1px solid #e5e7eb;">'
-    + '<h4 style="font-size:.88rem;font-weight:700;color:#374151;margin-bottom:8px">📋 Product Description</h4>'
-    + '<p style="font-size:.85rem;color:#374151;line-height:1.7;white-space:pre-wrap">' + (p.description||p.desc||'No description provided.') + '</p>'
+    + '<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">'
+    + '<span style="background:#f3f4f6;color:#374151;padding:3px 8px;border-radius:16px;font-size:.65rem;font-weight:600">' + (p.type==='digital'?'⚡ Digital':p.type==='course'?'🎓 Course':'📦 Physical') + '</span>'
+    + (p.reviews > 0 ? '<span style="background:#fef3c7;color:#92400e;padding:3px 8px;border-radius:16px;font-size:.65rem;font-weight:600">⭐ ' + p.rating + '</span>' : '<span style="background:#f3f4f6;color:#6b7280;padding:3px 8px;border-radius:16px;font-size:.65rem;font-weight:600">New</span>')
     + '</div>'
-    /* Reviews */
-    + '<div id="reviews-section-' + p.id + '" style="padding:16px;background:#fff;border-top:1px solid #e5e7eb;">'
-    + '<h4 style="font-size:.92rem;margin-bottom:12px;color:#111827">⭐ Reviews</h4>'
+    + '</div>'
+    
+    /* ════ ACTION BUTTONS — CONSOLIDATED ════ */
+    + '<div style="padding:0 14px 14px;">'
+    + '<button style="background:#c9922a;color:#fff;border:none;padding:13px 16px;border-radius:8px;font-weight:700;font-size:.9rem;cursor:pointer;width:100%;margin-bottom:8px;transition:background .2s" onclick="addCart(' + p.id + ');cM(\'m-pd\')" onmouseover="this.style.background=\'#a67318\'" onmouseout="this.style.background=\'#c9922a\'">🛒 Add to Cart</button>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+    + (CU && waLink
+      ? '<a href="' + waLink + '" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;background:#25d366;color:#fff;padding:10px;border-radius:8px;font-weight:600;font-size:.8rem;text-decoration:none;cursor:pointer">💬 WhatsApp</a>'
+      : '<button onclick="toast(\'Sign in to contact seller\',\'warn\')" style="background:#f3f4f6;color:#6b7280;padding:10px;border-radius:8px;font-weight:600;font-size:.8rem;border:1px solid #e5e7eb;cursor:pointer">💬 Message</button>')
+    + '<button onclick="shareProduct(' + p.id + ')" style="background:#fff;border:1.5px solid #25d366;color:#25d366;padding:10px;border-radius:8px;font-weight:600;font-size:.8rem;cursor:pointer">📤 Share</button>'
+    + '</div>'
+    + '<button onclick="cpyAffProd(' + p.id + ')" style="width:100%;background:#fff;border:1.5px solid #c9922a;color:#c9922a;padding:9px;border-radius:8px;font-weight:600;font-size:.78rem;cursor:pointer;margin-top:8px;transition:all .2s" onmouseover="this.style.background=\'#fff3cd\'" onmouseout="this.style.background=\'#fff\'">🔗 Copy Affiliate Link</button>'
+    + '</div>'
+    
+    /* ════ ESCROW NOTE ════ */
+    + '<div style="padding:0 14px 14px;">'
+    + '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 12px;font-size:.78rem;color:#065f46;line-height:1.5">'
+    + '🛡️ <strong>Buyer Protected:</strong> Escrow-held payment. Full refund if not as described.'
+    + '</div>'
+    + '</div>'
+    
+    /* ════ SELLER INFO ════ */
+    + '<div style="padding:0 14px 14px;">'
+    + '<p style="font-size:.78rem;color:#6b7280;margin-bottom:8px"><strong style="color:#c9922a">' + p.seller + '</strong>' + verBadge + trustBadge + (pdLocation ? ' &nbsp;📍 ' + pdLocation : '') + '</p>'
+    + (pdStock ? '<div style="margin-bottom:8px">' + pdStock + '</div>' : '')
+    + (pdBio ? '<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:10px 12px;font-size:.78rem;color:#374151;line-height:1.5">'
+      + '<strong style="color:#111827;display:block;margin-bottom:4px">About Seller</strong>'
+      + pdBio
+      + '</div>' : '')
+    + '</div>'
+    
+    /* ════ ACCORDION: DESCRIPTION ════ */
+    + '<div class="accordion-section">'
+    + '<div class="accordion-header" onclick="toggleAccordion(this)">'
+    + '<h4>📋 Description</h4>'
+    + '<span class="accordion-toggle">+</span>'
+    + '</div>'
+    + '<div class="accordion-content">'
+    + '<div class="accordion-body">'
+    + '<p style="font-size:.85rem;color:#374151;line-height:1.7;white-space:pre-wrap;margin:0">' + (p.description||p.desc||'No description provided.') + '</p>'
+    + '</div>'
+    + '</div>'
+    + '</div>'
+    
+    /* ════ ACCORDION: REVIEWS ════ */
+    + '<div class="accordion-section">'
+    + '<div class="accordion-header" onclick="toggleAccordion(this)">'
+    + '<h4>⭐ Reviews (' + (p.reviews || 0) + ')</h4>'
+    + '<span class="accordion-toggle">+</span>'
+    + '</div>'
+    + '<div class="accordion-content">'
+    + '<div class="accordion-body">'
     + '<div id="reviews-list-' + p.id + '"><p style="color:#6b7280;font-size:.82rem">Loading reviews...</p></div>'
-    + (CU ? '<div style="margin-top:14px;background:#f9fafb;border-radius:10px;padding:13px;border:1px solid #e5e7eb">'
-      + '<p style="font-size:.82rem;font-weight:600;margin-bottom:8px;color:#111827">Leave a Review</p>'
-      + '<div style="display:flex;gap:6px;margin-bottom:8px" id="star-pick-' + p.id + '">'
-      + [1,2,3,4,5].map(function(n){ return '<span onclick="pickStar(' + p.id + ',' + n + ')" style="font-size:1.4rem;cursor:pointer;color:#d1d5db" id="star-' + p.id + '-' + n + '">&#9733;</span>'; }).join('')
+    + (CU ? '<div style="margin-top:12px;padding-top:12px;border-top:1px solid #e5e7eb">'
+      + '<p style="font-size:.82rem;font-weight:600;margin-bottom:8px;color:#111827">Your Review</p>'
+      + '<div style="display:flex;gap:4px;margin-bottom:8px" id="star-pick-' + p.id + '">'
+      + [1,2,3,4,5].map(function(n){ return '<span onclick="pickStar(' + p.id + ',' + n + ')" style="font-size:1.3rem;cursor:pointer;color:#d1d5db" id="star-' + p.id + '-' + n + '">★</span>'; }).join('')
       + '</div>'
-      + '<textarea id="rev-comment-' + p.id + '" placeholder="Share your experience..." style="width:100%;background:#fff;border:1.5px solid #e5e7eb;color:#111827;padding:9px;border-radius:8px;font-size:.83rem;resize:none;height:72px;outline:none;font-family:inherit"></textarea>'
-      + '<button onclick="submitReview(' + p.id + ')" style="margin-top:8px;width:100%;background:linear-gradient(135deg,#c9922a,#a67318);color:#fff;border:none;padding:9px;border-radius:8px;font-weight:700;font-size:.83rem;cursor:pointer">Submit Review</button>'
-      + '</div>' : '<p style="font-size:.79rem;color:#6b7280;margin-top:10px"><a onclick="go(\'signin\')" style="color:#c9922a;cursor:pointer">Sign in</a> to leave a review</p>')
-    + '</div>';
+      + '<textarea id="rev-comment-' + p.id + '" placeholder="Share your experience..." style="width:100%;background:#f9fafb;border:1px solid #e5e7eb;color:#111827;padding:8px;border-radius:6px;font-size:.82rem;resize:none;height:64px;outline:none;font-family:inherit"></textarea>'
+      + '<button onclick="submitReview(' + p.id + ')" style="margin-top:8px;width:100%;background:#c9922a;color:#fff;border:none;padding:8px;border-radius:6px;font-weight:700;font-size:.8rem;cursor:pointer">Submit Review</button>'
+      + '</div>' : '<p style="font-size:.79rem;color:#6b7280;margin:0"><a onclick="go(\'signin\')" style="color:#c9922a;cursor:pointer">Sign in</a> to leave a review</p>')
+    + '</div>'
+    + '</div>'
+    + '</div>'
+    + '<div style="height:16px"></div>';
+  
   oM('m-pd');
-  /* Load reviews from Neon */
   loadReviews(p.id);
+  
+  /* Store carousel state */
+  window.carouselState = window.carouselState || {};
+  window.carouselState[p.id] = { current: 0, max: gi.length };
 }
+
+/* Carousel controls */
+window.carouselNav = function(productId, direction) {
+  var state = window.carouselState[productId];
+  if (!state) return;
+  var newIdx = state.current + direction;
+  if (newIdx < 0) newIdx = state.max - 1;
+  if (newIdx >= state.max) newIdx = 0;
+  carouselGo(productId, newIdx);
+};
+
+window.carouselGo = function(productId, idx) {
+  var state = window.carouselState[productId];
+  if (!state) return;
+  state.current = idx;
+  var carousel = document.getElementById('carousel-' + productId);
+  var dotsContainer = document.getElementById('dots-' + productId);
+  if (carousel) {
+    carousel.style.transform = 'translateX(' + (-idx * 100) + '%)';
+  }
+  if (dotsContainer) {
+    Array.from(dotsContainer.querySelectorAll('.carousel-dot')).forEach(function(dot, i) {
+      if (i === idx) dot.classList.add('active');
+      else dot.classList.remove('active');
+    });
+  }
+};
+
+/* Accordion toggle */
+window.toggleAccordion = function(headerEl) {
+  headerEl.classList.toggle('active');
+  var content = headerEl.nextElementSibling;
+  if (content && content.classList.contains('accordion-content')) {
+    content.classList.toggle('show');
+  }
+};
 window.opn = opn;
 
 var selectedStars = {};
