@@ -1980,6 +1980,7 @@ var MASTER_ADMIN = {
 
 /* ═══ STATE ═══ */
 var CU = null;          // current user
+var isAdmin = false;    // global admin flag
 var cart = [];
 var prods = [];
 var ords = [];
@@ -5098,10 +5099,11 @@ function updNav() {
   if (CU) {
     var init    = CU.name.charAt(0).toUpperCase();
     var isSeller = CU.role === 'seller';
-    var isAdmin  = CU.role === 'admin';
-    var dest     = isAdmin ? "'admin'" : isSeller ? "'seller'" : "'profile'";
-    var label    = isAdmin ? '⚙ Admin' : isSeller ? '🏪 Dashboard' : CU.name.split(' ')[0];
-    var chipStyle = (isSeller || isAdmin)
+    var localIsAdmin  = CU.role === 'admin';
+    isAdmin = localIsAdmin;  /* Update global flag */
+    var dest     = localIsAdmin ? "'admin'" : isSeller ? "'seller'" : "'profile'";
+    var label    = localIsAdmin ? '⚙ Admin' : isSeller ? '🏪 Dashboard' : CU.name.split(' ')[0];
+    var chipStyle = (isSeller || localIsAdmin)
       ? 'display:flex;align-items:center;gap:6px;background:rgba(240,192,64,.12);border:1px solid rgba(240,192,64,.3);padding:4px 12px 4px 4px;border-radius:50px;cursor:pointer'
       : 'display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);padding:4px 10px 4px 4px;border-radius:50px;cursor:pointer';
 
@@ -5109,10 +5111,11 @@ function updNav() {
       '<button class="ci" onclick="openCart()">🛒<span class="cib" id="cart-badge">0</span></button>'
       + '<div style="' + chipStyle + '" onclick="go(' + dest + ')">'
       + '<div class="uav">' + init + '</div>'
-      + '<span style="font-size:.78rem;font-weight:' + (isSeller||isAdmin?'700':'500') + ';color:' + (isSeller||isAdmin?'var(--gold)':'var(--text)') + ';max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'
+      + '<span style="font-size:.78rem;font-weight:' + (isSeller||localIsAdmin?'700':'500') + ';color:' + (isSeller||localIsAdmin?'var(--gold)':'var(--text)') + ';max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'
       + label + '</span></div>'
       + '<button onclick="doSignOut()" style="background:none;border:1px solid var(--border2);color:var(--muted);padding:6px 12px;border-radius:4px;font-size:.68rem;font-weight:500;cursor:pointer;letter-spacing:.3px;text-transform:uppercase">Sign Out</button>';
   } else {
+    isAdmin = false;  /* Clear global flag when logged out */
     nr.innerHTML =
       '<button class="bo" onclick="go(\'signin\')">Sign In</button>'
       + '<button class="bg" onclick="go(\'signup\')">Sign Up</button>'
@@ -6245,6 +6248,9 @@ function apvP(id) {
       var p = prods.find(function(x){ return String(x.id) === String(id); });
       if (p) { p.status = 'active'; p.badge = ''; }
       toast('✅ Product approved and now live!', 'ok');
+      /* Refresh home grid */
+      rGrid('home-grid', getActive().slice(0, 8));
+      rGrid('mkt-grid', getActive());
       /* Refresh admin panel */
       aTab('ov', document.querySelector('.asb.on'));
     } else {
