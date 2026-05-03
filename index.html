@@ -166,13 +166,32 @@
   text-decoration:none;font-size:1.4rem;
 }
 .wa-fab:hover,.wa-fab:active{transform:scale(1.08);}
-/* Desktop: push WA fab above bottom nav */
+
+.promote-fab{
+  position:fixed;
+  bottom:calc(var(--bnav) + 76px);
+  left:16px;
+  width:48px;height:48px;
+  background:linear-gradient(135deg,#f0c040,#d4af37);
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 16px rgba(240,192,64,.5);
+  z-index:991;
+  cursor:pointer;transition:all .2s;
+  border:none;font-size:1.4rem;
+  color:#fff;font-weight:bold;
+}
+.promote-fab:hover,.promote-fab:active{transform:scale(1.08);box-shadow:0 6px 20px rgba(240,192,64,.6);}
+
+/* Desktop: push both FABs above bottom nav */
 @media(min-width:769px){
   .wa-fab{bottom:24px;}
+  .promote-fab{bottom:84px;}
 }
 /* Mobile safety: ensure both FABs never overlap */
 @media(max-width:480px){
   .wa-fab{bottom:calc(var(--bnav) + 12px);left:12px;width:44px;height:44px;font-size:1.2rem;}
+  .promote-fab{bottom:calc(var(--bnav) + 64px);left:12px;width:44px;height:44px;font-size:1.1rem;}
 }
 
 /* Hot deals */
@@ -949,6 +968,10 @@ footer{background:var(--text);color:#fff;border-top:1px solid rgba(255,255,255,.
    target="_blank" rel="noopener noreferrer" title="WhatsApp Support">
   <svg viewBox="0 0 24 24" width="26" height="26" fill="#fff"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
 </a>
+
+<button class="promote-fab" id="promote-fab" onclick="openPromoteModal()" title="Promote Your Product">
+  🚀
+</button>
 
 <!-- ═══════════════════════════════════════
      HOME PAGE
@@ -2626,6 +2649,8 @@ function mkCard(p) {
     ? '<span class="verified-badge"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>Verified</span>' : '';
   var trustBadge = (p.isVerified || p.is_verified)
     ? '<span class="trust-badge">&#x2713; Trusted</span>' : '';
+  var featuredBadge = (p.is_featured || p.isFeature)
+    ? '<span class="featured-badge" style="background:linear-gradient(135deg,#f0c040,#d4af37);color:#fff;padding:3px 8px;border-radius:3px;font-size:.65rem;font-weight:700;text-transform:uppercase;margin-left:6px">⭐ Featured</span>' : '';
 
   var qty        = (p.quantity !== undefined && p.quantity !== null) ? parseInt(p.quantity, 10) : null;
   var location   = p.location || p.seller_location || '';
@@ -2639,7 +2664,7 @@ function mkCard(p) {
     + (outOfStock ? '<span class="sale-badge" style="background:#6b7280">OUT OF STOCK</span>' : saleActive ? '<span class="sale-badge">SALE</span>' : (p.badge && p.badge !== 'Pending Review' ? '<span class="pb1">' + p.badge + '</span>' : ''))
     + '<span class="pb2 ' + tc + '">' + tl + '</span>'
     + '<span class="el">\uD83D\uDEE1 Escrow</span></div>'
-    + '<div class="pcb"><h4>' + p.name + verBadge + trustBadge + '</h4>'
+    + '<div class="pcb"><h4>' + p.name + verBadge + trustBadge + featuredBadge + '</h4>'
     + '<div class="pcs">by ' + p.seller + (location ? ' \u00b7 \uD83D\uDCCD' + location : '') + (p.reviews > 0 ? ' \u00b7 \u2B50' + p.rating : '') + '</div>'
     + (lowStock ? '<div style="font-size:.7rem;color:var(--orange);font-weight:700;margin-bottom:3px">\u26a1 Only ' + qty + ' left!</div>' : '')
     + (saleActive && saving > 0 ? '<div class="savings-tag">\uD83D\uDD25 Save \u20a6' + saving.toLocaleString() + ' (' + savePct + '% OFF)</div>' : '')
@@ -2666,7 +2691,13 @@ function rGrid(cid, items) {
     el.innerHTML = '<div class="eg"><div style="font-size:2.2rem;margin-bottom:10px">\uD83D\uDCE6</div><p>No products yet. Be the first to list one!</p></div>';
     return;
   }
-  el.innerHTML = items.map(mkCard).join('');
+  /* Sort featured products to top */
+  var sorted = items.sort(function(a, b) {
+    var aFeat = (a.is_featured || a.isFeature) ? 1 : 0;
+    var bFeat = (b.is_featured || b.isFeature) ? 1 : 0;
+    return bFeat - aFeat;
+  });
+  el.innerHTML = sorted.map(mkCard).join('');
 }
 
 function fHome(el, cat) {
@@ -6375,6 +6406,105 @@ function cM(id) { var el = document.getElementById(id); if (el) el.classList.rem
 window.oM = oM; window.cM = cM;
 document.addEventListener('click', function (e) { if (e.target.classList.contains('ov')) e.target.classList.remove('open'); });
 
+/* ═══ PROMOTE PRODUCT ═══ */
+function openPromoteModal() {
+  if (!CU) {
+    toast('Please sign in to promote products.', 'warn');
+    return;
+  }
+  
+  /* Fetch user's products for selection */
+  fetch('/api/products?sellerId=' + encodeURIComponent(String(CU.id)))
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var userProds = (data.products || []).filter(function(p) { return p.status === 'active'; });
+      
+      if (!userProds.length) {
+        toast('You have no active products to promote.', 'warn');
+        return;
+      }
+      
+      var sel = document.getElementById('promote-product-select');
+      sel.innerHTML = '<option value="">Choose your product...</option>' + 
+        userProds.map(function(p) {
+          return '<option value="' + p.id + '">' + p.name.substring(0, 40) + '</option>';
+        }).join('');
+      
+      sel.onchange = function() {
+        if (!this.value) {
+          document.getElementById('promote-product-info').style.display = 'none';
+          return;
+        }
+        var prod = userProds.find(function(p) { return String(p.id) === String(this.value); }.bind(this));
+        if (prod) {
+          document.getElementById('promote-prod-name').textContent = prod.name;
+          document.getElementById('promote-prod-price').textContent = prod.price.toLocaleString();
+          document.getElementById('promote-product-info').style.display = 'block';
+        }
+      };
+      
+      var modal = document.getElementById('m-promote');
+      if (modal) modal.classList.add('open');
+    })
+    .catch(function(e) {
+      toast('Error loading products: ' + e.message, 'fail');
+    });
+}
+window.openPromoteModal = openPromoteModal;
+
+function promoteProduct() {
+  var productId = document.getElementById('promote-product-select').value;
+  var duration = parseInt(document.getElementById('promote-duration').value, 10);
+  
+  if (!productId) {
+    toast('Please select a product.', 'warn');
+    return;
+  }
+  
+  var feeMap = { 7: 500, 14: 850, 30: 1500 };
+  var fee = feeMap[duration] || 500;
+  
+  var handler = PaystackPop.setup({
+    key: PKS,
+    email: CU.email,
+    amount: fee * 100,
+    ref: 'promo_' + Date.now() + '_' + productId,
+    currency: 'NGN',
+    onClose: function() {
+      toast('Payment cancelled.', 'warn');
+    },
+    onSuccess: function(response) {
+      toast('⏳ Processing promotion...', 'ok');
+      
+      fetch('/api/products?action=promote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: parseInt(productId, 10),
+          duration: duration,
+          amount: fee,
+          paystackRef: response.reference
+        })
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.ok) {
+          toast('✅ Product promoted! It\'s now featured at the top for ' + duration + ' days.', 'ok');
+          cM('m-promote');
+          setTimeout(function() { location.reload(); }, 1500);
+        } else {
+          toast('❌ ' + (data.error || 'Promotion failed'), 'fail');
+        }
+      })
+      .catch(function(e) {
+        toast('Error: ' + e.message, 'fail');
+      });
+    }
+  });
+  handler.openIframe();
+}
+window.promoteProduct = promoteProduct;
+
 /* ═══ TOAST ═══ */
 function toast(msg, type) {
   var t = document.getElementById('toast'); if (!t) return;
@@ -7184,6 +7314,48 @@ validateSell();
         <div style="font-size:.72rem;color:var(--muted);margin-top:10px;text-align:center">Funds go directly to your wallet after verification</div>
       </div>
 
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PROMOTE PRODUCT MODAL ═══ -->
+<div class="ov" id="m-promote">
+  <div class="ms" style="max-width:500px">
+    <div class="mh">
+      <h3>🚀 Promote Your Product</h3>
+      <button class="mx" onclick="cM('m-promote')">✕</button>
+    </div>
+    <div class="mb">
+      <div style="background:rgba(240,192,64,.1);border:1px solid rgba(240,192,64,.3);border-radius:8px;padding:12px 14px;margin-bottom:16px;font-size:.85rem;color:var(--text);line-height:1.5">
+        <strong>⭐ Featured Listing</strong> — Move your product to the top of the marketplace for 7 days. Sellers report 3x more visibility!
+      </div>
+
+      <div class="fg">
+        <label>Select Product to Promote</label>
+        <select id="promote-product-select" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:.9rem;outline:none">
+          <option value="">Choose your product...</option>
+        </select>
+      </div>
+
+      <div id="promote-product-info" style="background:var(--bg3);border-radius:6px;padding:12px;margin-bottom:16px;display:none;font-size:.85rem">
+        <div style="margin-bottom:8px"><strong>Product:</strong> <span id="promote-prod-name"></span></div>
+        <div style="margin-bottom:8px"><strong>Current Price:</strong> ₦<span id="promote-prod-price"></span></div>
+        <div style="color:var(--gold);font-weight:600">Promotion Fee: ₦500</div>
+      </div>
+
+      <div class="fg">
+        <label>Promotion Duration</label>
+        <select id="promote-duration" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:.9rem;outline:none">
+          <option value="7">7 Days - ₦500</option>
+          <option value="14">14 Days - ₦850</option>
+          <option value="30">30 Days - ₦1,500</option>
+        </select>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:20px">
+        <button class="sbtn" style="flex:1;background:var(--gold)" onclick="promoteProduct()">✓ Pay & Promote</button>
+        <button onclick="cM('m-promote')" style="flex:1;background:none;border:1px solid var(--border);border-radius:6px;padding:10px;cursor:pointer;color:var(--text)">Cancel</button>
+      </div>
     </div>
   </div>
 </div>
