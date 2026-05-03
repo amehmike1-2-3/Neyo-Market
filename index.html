@@ -155,17 +155,18 @@
 .wa-fab{
   position:fixed;
   bottom:calc(var(--bnav) + 16px);
-  left:16px;                        /* LEFT side — away from chat bot */
+  left:16px;
   width:48px;height:48px;
   background:#25d366;
   border-radius:50%;
   display:flex;align-items:center;justify-content:center;
   box-shadow:0 4px 16px rgba(37,211,102,.4);
-  z-index:991;                      /* above nav, below modals */
-  cursor:pointer;transition:transform .2s;
+  z-index:991;
+  cursor:grab;transition:transform .2s;
   text-decoration:none;font-size:1.4rem;
 }
 .wa-fab:hover,.wa-fab:active{transform:scale(1.08);}
+.wa-fab.dragging{cursor:grabbing;opacity:.9;}
 
 .promote-fab{
   position:fixed;
@@ -177,11 +178,12 @@
   display:flex;align-items:center;justify-content:center;
   box-shadow:0 4px 16px rgba(240,192,64,.5);
   z-index:991;
-  cursor:pointer;transition:all .2s;
+  cursor:grab;transition:all .2s;
   border:none;font-size:1.4rem;
   color:#fff;font-weight:bold;
 }
 .promote-fab:hover,.promote-fab:active{transform:scale(1.08);box-shadow:0 6px 20px rgba(240,192,64,.6);}
+.promote-fab.dragging{cursor:grabbing;opacity:.9;}
 
 /* Desktop: push both FABs above bottom nav */
 @media(min-width:769px){
@@ -2658,10 +2660,10 @@ function mkCard(p) {
   var outOfStock = qty !== null && qty <= 0;
   var lowStock   = qty !== null && qty > 0 && qty <= 5;
 
-  return '<div class="pcard' + (outOfStock ? ' out-of-stock' : '') + '"'
+  return '<div class="pcard' + (outOfStock ? ' out-of-stock' : '') + '" style="' + (p.is_featured ? 'border:2px solid #f0c040;box-shadow:0 0 12px rgba(240,192,64,.3)' : '') + ';border-radius:20px;position:relative"'
     + (outOfStock ? '' : ' onclick="opn(' + p.id + ')"') + timerData + '>'
-    + (isAdmin ? '<button class="admin-delete-btn" onclick="event.stopPropagation();delProd(' + p.id + ')" title="Delete product">🗑️</button>' : '')
-    + '<div class="pci">' + mi
+    + (isAdmin ? '<button class="admin-delete-btn" onclick="event.stopPropagation();delProd(' + p.id + ')" title="Delete product" style="position:absolute;top:8px;right:8px;background:rgba(220,38,38,.85);color:#fff;border:none;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:.9rem;cursor:pointer;z-index:10;opacity:0;transition:all .2s">🗑️</button>' : '')
+    + '<div class="pci" onmouseover="this.parentElement.querySelector(\'.admin-delete-btn\') && (this.parentElement.querySelector(\'.admin-delete-btn\').style.opacity = \'1\')" onmouseout="this.parentElement.querySelector(\'.admin-delete-btn\') && (this.parentElement.querySelector(\'.admin-delete-btn\').style.opacity = \'0\')">' + mi
     + (outOfStock ? '<span class="sale-badge" style="background:#6b7280">OUT OF STOCK</span>' : saleActive ? '<span class="sale-badge">SALE</span>' : (p.badge && p.badge !== 'Pending Review' ? '<span class="pb1">' + p.badge + '</span>' : ''))
     + '<span class="pb2 ' + tc + '">' + tl + '</span>'
     + '<span class="el">\uD83D\uDEE1 Escrow</span></div>'
@@ -2775,24 +2777,22 @@ function opn(id) {
   var p = prods.find(function (x) { return Number(x.id) === numId; }); if (!p) return;
   document.getElementById('pd-title').textContent = p.name;
   var gi = p.imgs && p.imgs.length ? p.imgs : [];
-  var mh = gi[0] ? '<img class="pdmi" id="pd-mi" src="' + gi[0] + '" alt="' + p.name + '"/>' : '<div class="pdmi emj">' + p.emoji + '</div>';
-  var th = gi.length > 1 ? '<div class="pdg">' + gi.map(function (s, i) { return '<img src="' + s + '" class="' + (i === 0 ? 'on' : '') + '" onclick="swImg(this,\'' + s + '\')"/>'; }).join('') + '</div>' : '';
-  var starsHtml = '';
-  if (p.reviews > 0) {
-    var full = Math.floor(p.rating); var half = (p.rating - full) >= 0.5;
-    for (var si = 0; si < 5; si++) {
-      if (si < full) starsHtml += '<span style="color:var(--gold)">★</span>';
-      else if (si === full && half) starsHtml += '<span style="color:var(--gold)">½</span>';
-      else starsHtml += '<span style="color:var(--border)">★</span>';
-    }
-  }
-  document.getElementById('pd-body').innerHTML =
-    /* IMAGE — white bg, contain, no crop */
-    '<div style="background:#fff;display:flex;align-items:center;justify-content:center;height:260px;border-bottom:1px solid #e5e7eb;overflow:hidden">'
-    + (gi[0] ? '<img src="' + gi[0] + '" alt="' + p.name + '" style="max-height:250px;max-width:100%;object-fit:contain;padding:10px"/>' : '<div style="font-size:4rem">' + p.emoji + '</div>')
+  
+  /* Image Carousel HTML */
+  var carouselHtml = '<div style="position:relative;background:#fff;display:flex;align-items:center;justify-content:center;height:300px;border-bottom:1px solid #e5e7eb;overflow:hidden">'
+    + '<div id="carousel-main-' + p.id + '" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#fff">'
+    + (gi[0] ? '<img src="' + gi[0] + '" alt="' + p.name + '" style="max-height:100%;max-width:100%;object-fit:contain;padding:10px"/>' : '<div style="font-size:4rem">' + p.emoji + '</div>')
     + '</div>'
-    /* Thumbnails */
-    + (gi.length > 1 ? '<div style="display:flex;gap:6px;padding:10px 14px;border-bottom:1px solid #e5e7eb;background:#fff;overflow-x:auto">' + gi.map(function(s,i){ return '<img src="' + s + '" style="width:52px;height:52px;object-fit:contain;border:2px solid ' + (i===0?'#c9922a':'#e5e7eb') + ';border-radius:6px;cursor:pointer;background:#fff;flex-shrink:0" onclick="swImg(this,\''+s+'\')"/>'; }).join('') + '</div>' : '')
+    + (gi.length > 1 ? '<button onclick="carouselPrev(' + p.id + ')" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.5);color:#fff;border:none;width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:1.2rem;display:flex;align-items:center;justify-content:center">‹</button>'
+      + '<button onclick="carouselNext(' + p.id + ')" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.5);color:#fff;border:none;width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:1.2rem;display:flex;align-items:center;justify-content:center">›</button>' : '')
+    + '</div>';
+  
+  /* Thumbnail dots */
+  var dotsHtml = gi.length > 1 ? '<div style="display:flex;gap:6px;padding:10px 14px;border-bottom:1px solid #e5e7eb;background:#fff;justify-content:center">'
+    + gi.map(function(s,i){ return '<div onclick="carouselGoto(' + p.id + ',' + i + ')" style="width:10px;height:10px;border-radius:50%;background:' + (i===0?'#c9922a':'#e5e7eb') + ';cursor:pointer;transition:.3s" id="dot-' + p.id + '-' + i + '"></div>'; }).join('')
+    + '</div>' : '';
+
+  document.getElementById('pd-body').innerHTML = carouselHtml + dotsHtml
     /* CONTENT — always white/light */
     + '<div style="padding:16px 16px 0;background:#fff;">'
     /* Type + cat tags */
@@ -2801,6 +2801,7 @@ function opn(id) {
     + '<span style="background:#f3f4f6;color:#374151;padding:3px 10px;border-radius:20px;font-size:.7rem;font-weight:600">🏷 ' + p.cat + '</span>'
     + (p.reviews > 0 ? '<span style="background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:20px;font-size:.7rem;font-weight:600">⭐ ' + p.rating + ' (' + p.reviews + ')</span>' : '')
     + '<span style="background:#d1fae5;color:#065f46;padding:3px 10px;border-radius:20px;font-size:.7rem;font-weight:600">🛡 Escrow</span>'
+    + (p.is_featured ? '<span style="background:linear-gradient(135deg,#f0c040,#d4af37);color:#fff;padding:3px 10px;border-radius:20px;font-size:.7rem;font-weight:600">⭐ Featured</span>' : '')
     + '</div>'
     /* Seller */
     + (function(){
@@ -2830,7 +2831,6 @@ function opn(id) {
         var isOnSale   = !!(p.isOnSale||p.is_on_sale);
         var discPrice  = parseFloat(p.discountPrice||p.discount_price||0);
         var saleEndsAt = p.saleEndsAt||p.sale_ends_at||null;
-        /* Show discount whenever discountPrice < price — no isOnSale flag required */
         var saleActive = discPrice > 0 && discPrice < p.price && (!saleEndsAt || new Date(saleEndsAt) > new Date());
         var displayP   = saleActive ? discPrice : p.price;
         var saving     = saleActive ? Math.round(p.price-discPrice) : 0;
@@ -2844,45 +2844,100 @@ function opn(id) {
     + '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:.79rem;color:#065f46;line-height:1.5">'
     + '🛡️ <strong>Buyer Protected:</strong> Your funds are held in escrow until you confirm receipt. Full refund if not as described.'
     + '</div>'
-    /* WhatsApp + Action buttons */
+    /* Action buttons */
     + (function(){
         var waPhone = String(p.sellerWhatsapp||p.seller_whatsapp||'');
         var waMsg   = encodeURIComponent('Hi! I am interested in your ' + p.name + ' on NeyoMarket.');
         var waLink  = waPhone ? 'https://wa.me/' + waPhone.replace(/[^0-9]/g,'') + '?text=' + waMsg : '';
         var waBtn   = (CU && waLink)
-          ? '<a href="' + waLink + '" target="_blank" rel="noopener" style="display:block;width:100%;text-align:center;background:#25d366;color:#fff;padding:11px;border-radius:8px;font-weight:700;font-size:.85rem;margin-bottom:8px;text-decoration:none">💬 Contact Seller on WhatsApp</a>'
-          : '<button onclick="toast(\'Sign in to contact seller\',\'warn\')" style="width:100%;background:#f3f4f6;color:#6b7280;padding:11px;border-radius:8px;font-weight:700;font-size:.85rem;margin-bottom:8px;border:1px solid #e5e7eb;cursor:pointer">💬 Sign In to Contact Seller</button>';
+          ? '<a href="' + waLink + '" target="_blank" rel="noopener" style="display:block;width:100%;text-align:center;background:#25d366;color:#fff;padding:11px;border-radius:8px;font-weight:700;font-size:.85rem;margin-bottom:8px;text-decoration:none">💬 Contact Seller</a>'
+          : '<button onclick="toast(\'Sign in to contact seller\',\'warn\')" style="width:100%;background:#f3f4f6;color:#6b7280;padding:11px;border-radius:8px;font-weight:700;font-size:.85rem;margin-bottom:8px;border:1px solid #e5e7eb;cursor:pointer">💬 Contact</button>';
         return waBtn
           + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">'
           + '<button style="background:#c9922a;color:#fff;border:none;padding:12px;border-radius:8px;font-weight:700;font-size:.85rem;cursor:pointer" onclick="addCart(' + p.id + ');cM(\'m-pd\')">🛒 Add to Cart</button>'
           + '<button onclick="shareProduct(' + p.id + ')" style="background:#fff;border:1.5px solid #25d366;color:#25d366;padding:12px;border-radius:8px;font-weight:700;font-size:.85rem;cursor:pointer">📤 Share</button>'
           + '</div>'
-          + '<button onclick="cpyAffProd(' + p.id + ')" style="width:100%;background:#fff;border:1.5px solid #c9922a;color:#c9922a;padding:10px;border-radius:8px;font-weight:700;font-size:.82rem;cursor:pointer;margin-bottom:4px">🔗 Copy Affiliate Link</button>';
+          + '<button onclick="cpyAffProd(' + p.id + ')" style="width:100%;background:#fff;border:1.5px solid #c9922a;color:#c9922a;padding:10px;border-radius:8px;font-weight:700;font-size:.82rem;cursor:pointer;margin-bottom:4px">🔗 Affiliate Link</button>';
       })()
-    /* DESCRIPTION — clearly below the buy buttons */
-    + '</div>'
-    + '<div style="padding:16px;background:#f9fafb;border-top:1px solid #e5e7eb;">'
-    + '<h4 style="font-size:.88rem;font-weight:700;color:#374151;margin-bottom:8px">📋 Product Description</h4>'
-    + '<p style="font-size:.85rem;color:#374151;line-height:1.7;white-space:pre-wrap">' + (p.description||p.desc||'No description provided.') + '</p>'
-    + '</div>'
-    /* Reviews */
-    + '<div id="reviews-section-' + p.id + '" style="padding:16px;background:#fff;border-top:1px solid #e5e7eb;">'
-    + '<h4 style="font-size:.92rem;margin-bottom:12px;color:#111827">⭐ Reviews</h4>'
+    /* Accordion: Description */
+    + '<div style="border-top:1px solid #e5e7eb;margin-top:16px">'
+    + '<button onclick="toggleAccordion(\'desc-' + p.id + '\')" style="width:100%;text-align:left;background:#f9fafb;padding:14px 16px;border:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:700;color:#111827;font-size:.88rem">'
+    + '<span>📋 Product Description</span><span id="arrow-desc-' + p.id + '" style="transition:.3s">+</span></button>'
+    + '<div id="desc-' + p.id + '" style="display:none;padding:14px 16px;background:#fff;border-bottom:1px solid #e5e7eb">'
+    + '<p style="font-size:.85rem;color:#374151;line-height:1.7;white-space:pre-wrap;margin:0">' + (p.description||p.desc||'No description provided.') + '</p>'
+    + '</div></div>'
+    /* Accordion: Reviews */
+    + '<div>'
+    + '<button onclick="toggleAccordion(\'reviews-' + p.id + '\')" style="width:100%;text-align:left;background:#f9fafb;padding:14px 16px;border:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:700;color:#111827;font-size:.88rem">'
+    + '<span>⭐ Reviews</span><span id="arrow-reviews-' + p.id + '" style="transition:.3s">+</span></button>'
+    + '<div id="reviews-' + p.id + '" style="display:none;padding:14px 16px;background:#fff;border-bottom:1px solid #e5e7eb">'
     + '<div id="reviews-list-' + p.id + '"><p style="color:#6b7280;font-size:.82rem">Loading reviews...</p></div>'
-    + (CU ? '<div style="margin-top:14px;background:#f9fafb;border-radius:10px;padding:13px;border:1px solid #e5e7eb">'
+    + (CU ? '<div style="margin-top:14px;background:#f9fafb;border-radius:8px;padding:12px;border:1px solid #e5e7eb">'
       + '<p style="font-size:.82rem;font-weight:600;margin-bottom:8px;color:#111827">Leave a Review</p>'
       + '<div style="display:flex;gap:6px;margin-bottom:8px" id="star-pick-' + p.id + '">'
-      + [1,2,3,4,5].map(function(n){ return '<span onclick="pickStar(' + p.id + ',' + n + ')" style="font-size:1.4rem;cursor:pointer;color:#d1d5db" id="star-' + p.id + '-' + n + '">&#9733;</span>'; }).join('')
+      + [1,2,3,4,5].map(function(n){ return '<span onclick="pickStar(' + p.id + ',' + n + ')" style="font-size:1.2rem;cursor:pointer;color:#d1d5db" id="star-' + p.id + '-' + n + '">★</span>'; }).join('')
       + '</div>'
-      + '<textarea id="rev-comment-' + p.id + '" placeholder="Share your experience..." style="width:100%;background:#fff;border:1.5px solid #e5e7eb;color:#111827;padding:9px;border-radius:8px;font-size:.83rem;resize:none;height:72px;outline:none;font-family:inherit"></textarea>'
-      + '<button onclick="submitReview(' + p.id + ')" style="margin-top:8px;width:100%;background:linear-gradient(135deg,#c9922a,#a67318);color:#fff;border:none;padding:9px;border-radius:8px;font-weight:700;font-size:.83rem;cursor:pointer">Submit Review</button>'
+      + '<textarea id="rev-comment-' + p.id + '" placeholder="Share your experience..." style="width:100%;background:#fff;border:1.5px solid #e5e7eb;color:#111827;padding:9px;border-radius:6px;font-size:.83rem;resize:none;height:60px;outline:none;font-family:inherit"></textarea>'
+      + '<button onclick="submitReview(' + p.id + ')" style="margin-top:8px;width:100%;background:linear-gradient(135deg,#c9922a,#a67318);color:#fff;border:none;padding:9px;border-radius:6px;font-weight:700;font-size:.83rem;cursor:pointer">Submit Review</button>'
       + '</div>' : '<p style="font-size:.79rem;color:#6b7280;margin-top:10px"><a onclick="go(\'signin\')" style="color:#c9922a;cursor:pointer">Sign in</a> to leave a review</p>')
+    + '</div></div>'
     + '</div>';
+    
   oM('m-pd');
-  /* Load reviews from Neon */
   loadReviews(p.id);
+  /* Initialize carousel index */
+  window['carousel_' + p.id] = 0;
 }
 window.opn = opn;
+
+var carouselState = {};
+function carouselNext(productId) {
+  var gi = prods.find(function(p) { return Number(p.id) === Number(productId); }).imgs || [];
+  if (!gi.length) return;
+  var idx = (carouselState[productId] || 0) + 1;
+  if (idx >= gi.length) idx = 0;
+  updateCarousel(productId, idx, gi);
+}
+window.carouselNext = carouselNext;
+
+function carouselPrev(productId) {
+  var gi = prods.find(function(p) { return Number(p.id) === Number(productId); }).imgs || [];
+  if (!gi.length) return;
+  var idx = (carouselState[productId] || 0) - 1;
+  if (idx < 0) idx = gi.length - 1;
+  updateCarousel(productId, idx, gi);
+}
+window.carouselPrev = carouselPrev;
+
+function carouselGoto(productId, idx) {
+  var gi = prods.find(function(p) { return Number(p.id) === Number(productId); }).imgs || [];
+  updateCarousel(productId, idx, gi);
+}
+window.carouselGoto = carouselGoto;
+
+function updateCarousel(productId, idx, gi) {
+  carouselState[productId] = idx;
+  var mainEl = document.getElementById('carousel-main-' + productId);
+  if (mainEl) {
+    mainEl.innerHTML = '<img src="' + gi[idx] + '" alt="Product image" style="max-height:100%;max-width:100%;object-fit:contain;padding:10px"/>';
+  }
+  for (var i = 0; i < gi.length; i++) {
+    var dot = document.getElementById('dot-' + productId + '-' + i);
+    if (dot) dot.style.background = i === idx ? '#c9922a' : '#e5e7eb';
+  }
+}
+window.updateCarousel = updateCarousel;
+
+function toggleAccordion(id) {
+  var el = document.getElementById(id);
+  var arrow = document.getElementById('arrow-' + id);
+  if (el) {
+    var isOpen = el.style.display !== 'none';
+    el.style.display = isOpen ? 'none' : 'block';
+    if (arrow) arrow.textContent = isOpen ? '+' : '−';
+  }
+}
+window.toggleAccordion = toggleAccordion;
 
 var selectedStars = {};
 function pickStar(productId, n) {
@@ -7365,6 +7420,67 @@ validateSell();
     </div>
   </div>
 </div>
+
+<!-- ═══ DRAGGABLE FABs INIT ═══ -->
+<script>
+(function() {
+  var fabIDs = ['wa-fab', 'promote-fab'];
+  var dragState = {};
+  
+  fabIDs.forEach(function(id) {
+    var fab = document.getElementById(id);
+    if (!fab) return;
+    
+    fab.addEventListener('mousedown', startDrag);
+    fab.addEventListener('touchstart', startDrag);
+  });
+  
+  function startDrag(e) {
+    e.preventDefault();
+    var fab = e.currentTarget;
+    fab.classList.add('dragging');
+    
+    var x = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+    var y = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+    var rect = fab.getBoundingClientRect();
+    
+    dragState.id = fab.id;
+    dragState.startX = x;
+    dragState.startY = y;
+    dragState.fabStartX = rect.left;
+    dragState.fabStartY = rect.top;
+    
+    document.addEventListener('mousemove', moveDrag);
+    document.addEventListener('touchmove', moveDrag);
+    document.addEventListener('mouseup', stopDrag);
+    document.addEventListener('touchend', stopDrag);
+  }
+  
+  function moveDrag(e) {
+    if (!dragState.id) return;
+    
+    var x = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+    var y = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+    
+    var fab = document.getElementById(dragState.id);
+    var newX = dragState.fabStartX + (x - dragState.startX);
+    var newY = dragState.fabStartY + (y - dragState.startY);
+    
+    fab.style.left = Math.max(0, Math.min(newX, window.innerWidth - 48)) + 'px';
+    fab.style.bottom = 'auto';
+    fab.style.top = Math.max(0, Math.min(newY, window.innerHeight - 48)) + 'px';
+  }
+  
+  function stopDrag() {
+    if (dragState.id) document.getElementById(dragState.id).classList.remove('dragging');
+    dragState = {};
+    document.removeEventListener('mousemove', moveDrag);
+    document.removeEventListener('touchmove', moveDrag);
+    document.removeEventListener('mouseup', stopDrag);
+    document.removeEventListener('touchend', stopDrag);
+  }
+})();
+</script>
 
 </body>
 </html>
