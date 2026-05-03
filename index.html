@@ -2662,7 +2662,7 @@ function mkCard(p) {
 
   return '<div class="pcard' + (outOfStock ? ' out-of-stock' : '') + '" style="' + (p.is_featured ? 'border:2px solid #f0c040;box-shadow:0 0 12px rgba(240,192,64,.3)' : '') + ';border-radius:20px;position:relative"'
     + (outOfStock ? '' : ' onclick="opn(' + p.id + ')"') + timerData + '>'
-    + (isAdmin ? '<button class="admin-delete-btn" onclick="event.stopPropagation();delProd(' + p.id + ')" title="Delete product" style="position:absolute;top:8px;right:8px;background:rgba(220,38,38,.85);color:#fff;border:none;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:.9rem;cursor:pointer;z-index:10;opacity:0;transition:all .2s">🗑️</button>' : '')
+    + (CU && CU.role === 'admin' ? '<button class="admin-delete-btn" onclick="event.stopPropagation();delProd(' + p.id + ')" title="Delete product" style="position:absolute;top:8px;right:8px;background:rgba(220,38,38,.85);color:#fff;border:none;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:.9rem;cursor:pointer;z-index:10;opacity:0;transition:all .2s">🗑️</button>' : '')
     + '<div class="pci" onmouseover="this.parentElement.querySelector(\'.admin-delete-btn\') && (this.parentElement.querySelector(\'.admin-delete-btn\').style.opacity = \'1\')" onmouseout="this.parentElement.querySelector(\'.admin-delete-btn\') && (this.parentElement.querySelector(\'.admin-delete-btn\').style.opacity = \'0\')">' + mi
     + (outOfStock ? '<span class="sale-badge" style="background:#6b7280">OUT OF STOCK</span>' : saleActive ? '<span class="sale-badge">SALE</span>' : (p.badge && p.badge !== 'Pending Review' ? '<span class="pb1">' + p.badge + '</span>' : ''))
     + '<span class="pb2 ' + tc + '">' + tl + '</span>'
@@ -2746,7 +2746,7 @@ function doSrt(v) {
 window.doSrt = doSrt;
 
 function delProd(id) {
-  if (!isAdmin) { toast('Admin only.', 'error'); return; }
+  if (!CU || CU.role !== 'admin') { toast('Admin only.', 'error'); return; }
   if (!confirm('Delete this product permanently?')) return;
   fetch('https://neyomarket.com.ng/api/products?id=' + id, {
     method: 'DELETE',
@@ -6466,21 +6466,29 @@ document.addEventListener('click', function (e) { if (e.target.classList.contain
 function openPromoteModal() {
   if (!CU) {
     toast('Please sign in to promote products.', 'warn');
+    go('signin');
     return;
   }
   
-  /* Fetch user's products for selection */
-  fetch('/api/products?sellerId=' + encodeURIComponent(String(CU.id)))
+  /* Open modal first */
+  var modal = document.getElementById('m-promote');
+  if (modal) modal.classList.add('open');
+  
+  /* Then load products */
+  fetch('https://neyomarket.com.ng/api/products?sellerId=' + encodeURIComponent(String(CU.id)))
     .then(function(r) { return r.json(); })
     .then(function(data) {
       var userProds = (data.products || []).filter(function(p) { return p.status === 'active'; });
       
       if (!userProds.length) {
-        toast('You have no active products to promote.', 'warn');
+        var sel = document.getElementById('promote-product-select');
+        if (sel) sel.innerHTML = '<option value="">No active products. Upload one to promote.</option>';
         return;
       }
       
       var sel = document.getElementById('promote-product-select');
+      if (!sel) return;
+      
       sel.innerHTML = '<option value="">Choose your product...</option>' + 
         userProds.map(function(p) {
           return '<option value="' + p.id + '">' + p.name.substring(0, 40) + '</option>';
@@ -6498,11 +6506,9 @@ function openPromoteModal() {
           document.getElementById('promote-product-info').style.display = 'block';
         }
       };
-      
-      var modal = document.getElementById('m-promote');
-      if (modal) modal.classList.add('open');
     })
     .catch(function(e) {
+      console.error('Promote error:', e);
       toast('Error loading products: ' + e.message, 'fail');
     });
 }
@@ -6537,7 +6543,7 @@ function promoteProduct() {
     onSuccess: function(response) {
       toast('⏳ Processing promotion...', 'ok');
       
-      fetch('/api/products?action=promote', {
+      fetch('https://neyomarket.com.ng/api/products?action=promote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
