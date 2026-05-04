@@ -815,6 +815,23 @@ textarea.fi{resize:vertical;min-height:88px}
 .cpc-badge{display:inline-block;padding:2px 6px;background:rgba(56,139,253,.2);color:var(--blue);font-size:.65rem;border-radius:3px;margin-left:4px;font-weight:600}
 
 /* ══════════════════════════════════════
+   RADIO BUTTON STYLING
+══════════════════════════════════════ */
+input[type="radio"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--gold);
+  margin: 0;
+}
+input[type="radio"]:hover {
+  transform: scale(1.1);
+}
+input[type="radio"]:checked {
+  accent-color: var(--gold);
+}
+
+/* ══════════════════════════════════════
    ORDERS
 ══════════════════════════════════════ */
 .ord{background:#fff;border:1px solid var(--border);border-radius:var(--r);
@@ -1380,16 +1397,16 @@ footer{background:var(--text);color:#fff;border-top:1px solid rgba(255,255,255,.
 
       <!-- PRODUCT CONDITION -->
       <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:14px">
-        <div style="font-size:.78rem;font-weight:700;color:var(--text);margin-bottom:10px">✨ Product Condition</div>
-        <div style="display:flex;gap:16px;align-items:center">
-          <div style="display:flex;align-items:center;gap:8px;cursor:pointer">
-            <input type="radio" id="s-cond-new" name="s-condition" value="new" checked style="width:18px;height:18px;cursor:pointer;accent-color:var(--gold)"/>
-            <label for="s-cond-new" style="cursor:pointer;font-size:.85rem;color:var(--text);margin:0">New</label>
-          </div>
-          <div style="display:flex;align-items:center;gap:8px;cursor:pointer">
-            <input type="radio" id="s-cond-used" name="s-condition" value="used" style="width:18px;height:18px;cursor:pointer;accent-color:var(--gold)"/>
-            <label for="s-cond-used" style="cursor:pointer;font-size:.85rem;color:var(--text);margin:0">Used</label>
-          </div>
+        <div style="font-size:.78rem;font-weight:700;color:var(--text);margin-bottom:12px">✨ Product Condition</div>
+        <div style="display:flex;gap:20px;align-items:center">
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;margin:0;font-size:.85rem;color:var(--text)">
+            <input type="radio" name="s-condition" value="new" checked/>
+            <span>New</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;margin:0;font-size:.85rem;color:var(--text)">
+            <input type="radio" name="s-condition" value="used"/>
+            <span>Used</span>
+          </label>
         </div>
       </div>
 
@@ -7675,6 +7692,17 @@ window.addVarOption = addVarOption;
 window.updateVarOption = updateVarOption;
 window.removeVarOption = removeVarOption;
 window.removeVarGroup = removeVarGroup;
+
+/* ════ EXPOSE FILTERING & PRODUCT FUNCTIONS TO WINDOW ════ */
+window.renderVariations = renderVariations;
+window.selectVar = selectVar;
+window.openFilterModal = openFilterModal;
+window.closeFilterModal = closeFilterModal;
+window.applyFilters = applyFilters;
+window.renderWholesale = renderWholesale;
+window.makeOffer = makeOffer;
+window.updateSocialMeta = updateSocialMeta;
+window.shareProduct = shareProduct;
 
 /* ═══ INIT ═══ */
 loadAll();
