@@ -1,8 +1,6 @@
-// /api/products.js — NeyoMarket Products API
-// FIX 2: Digital products MUST have a file_url — 400 returned if missing
-// FIX 3: GET with sellerId uses WHERE seller_id = $1 (authenticated session ID)
-// FIX 5: Every route and catch returns res.json() — never HTML
-// All ID lookups: Number() for product IDs, String() for user IDs
+// /api/products.js — NeyoMarket Products API with Condition Field
+// Added: condition field (new/used) for physical and used products
+// All other functionality preserved: file_url, seller_id checks, Neon DB, etc.
 
 'use strict';
 
@@ -60,6 +58,7 @@ function toProduct(r) {
     sellerBio:      r.seller_bio       || '',
     isFeature:      r.is_featured      || false,
     createdAt:      r.created_at       || null,
+    condition:      r.condition        || null,
   };
 }
 
@@ -86,8 +85,7 @@ module.exports = async function handler(req, res) {
       let rows;
 
       if (sellerId) {
-        /* FIX 3: strict WHERE seller_id = authenticated seller's ID
-           Never return other sellers' products — even if the query string is tampered */
+        /* Get all products for a specific seller */
         rows = await sql`
           SELECT * FROM products
           WHERE seller_id = ${Number(sellerId)}
@@ -155,6 +153,7 @@ module.exports = async function handler(req, res) {
       const sellerEmail    = p.sellerEmail || '';
       const productEmoji   = p.emoji       || '📦';
       const productBadge   = p.badge       || '';
+      const productCondition = p.condition || null;
 
       const rows = await sql`
         INSERT INTO products (
@@ -163,7 +162,7 @@ module.exports = async function handler(req, res) {
           commission, description, seller, seller_id, seller_email, seller_whatsapp,
           rating, reviews, emoji, imgs, status, badge, date, escrow,
           file_ext, file_name, file_url, is_verified, disputed,
-          quantity, location, seller_bio, created_at
+          quantity, location, seller_bio, created_at, condition
         ) VALUES (
           ${id}, ${p.name}, ${productType}, ${productCat}, ${parseFloat(p.price)},
           ${discountPrice}, ${isOnSale}, ${saleEndsAt}, ${shippingFee},
@@ -175,7 +174,8 @@ module.exports = async function handler(req, res) {
           ${p.quantity !== undefined && p.quantity !== null ? parseInt(p.quantity, 10) : null},
           ${p.location || ''},
           ${p.sellerBio || p.seller_bio || ''},
-          NOW()
+          NOW(),
+          ${productCondition}
         )
         RETURNING *
       `;
@@ -203,6 +203,7 @@ module.exports = async function handler(req, res) {
       const newLocation       = (p.location       !== undefined) ? String(p.location || '')       : null;
       const newSellerBio      = (p.sellerBio      !== undefined || p.seller_bio !== undefined) ? String(p.sellerBio || p.seller_bio || '') : null;
       const newSaleEndsAt     = (p.saleEndsAt     !== undefined) ? (p.saleEndsAt || null)  : null;
+      const newCondition      = (p.condition      !== undefined) ? (p.condition || null)   : null;
 
       let newDiscountPrice = null;
       if (p.discountPrice !== undefined && p.discountPrice !== null)
@@ -227,7 +228,8 @@ module.exports = async function handler(req, res) {
           disputed        = COALESCE(${newDisputed},       disputed),
           quantity        = COALESCE(${newQuantity},      quantity),
           location        = COALESCE(${newLocation},      location),
-          seller_bio      = COALESCE(${newSellerBio},     seller_bio)
+          seller_bio      = COALESCE(${newSellerBio},     seller_bio),
+          condition       = COALESCE(${newCondition},     condition)
         WHERE id = ${productId}
       `;
       return res.status(200).json({ ok: true });
