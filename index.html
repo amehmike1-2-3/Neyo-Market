@@ -14,12 +14,12 @@
 <meta name="theme-color" content="#f0c040"/>
 <link rel="canonical" href="https://neyomarket.com.ng/"/>
 
-<!-- ═══ DYNAMIC OPEN GRAPH (Product-specific social sharing) ═══ -->
-<meta property="og:type" id="og-type" content="website"/>
-<meta property="og:url" id="og-url" content="https://neyomarket.com.ng/"/>
-<meta property="og:title" id="og-title" content="NeyoMarket — Nigeria's Secure Digital &amp; Physical Marketplace"/>
-<meta property="og:description" id="og-description" content="Buy, sell, and earn on NeyoMarket. Escrow-protected payments, verified sellers. Zero scam guarantee."/>
-<meta property="og:image" id="og-image" content="https://neyomarket.com.ng/og-image.png"/>
+<!-- ═══ OPEN GRAPH (Facebook / WhatsApp previews) ═══ -->
+<meta property="og:type" content="website"/>
+<meta property="og:url" content="https://neyomarket.com.ng/"/>
+<meta property="og:title" content="NeyoMarket — Nigeria's Secure Digital &amp; Physical Marketplace"/>
+<meta property="og:description" content="Buy, sell, and earn on NeyoMarket. Escrow-protected payments, verified sellers. Zero scam guarantee."/>
+<meta property="og:image" content="https://neyomarket.com.ng/og-image.png"/>
 <meta property="og:image:width" content="1200"/>
 <meta property="og:image:height" content="630"/>
 <meta property="og:site_name" content="NeyoMarket"/>
@@ -27,9 +27,9 @@
 
 <!-- ═══ TWITTER CARD ═══ -->
 <meta name="twitter:card" content="summary_large_image"/>
-<meta name="twitter:title" id="twitter-title" content="NeyoMarket — Nigeria's Secure Marketplace"/>
-<meta name="twitter:description" id="twitter-description" content="Buy, sell, and earn. Escrow-protected. Verified sellers. Zero scam guarantee."/>
-<meta name="twitter:image" id="twitter-image" content="https://neyomarket.com.ng/og-image.png"/>
+<meta name="twitter:title" content="NeyoMarket — Nigeria's Secure Marketplace"/>
+<meta name="twitter:description" content="Buy, sell, and earn. Escrow-protected. Verified sellers. Zero scam guarantee."/>
+<meta name="twitter:image" content="https://neyomarket.com.ng/og-image.png"/>
 
 <!-- ═══ GOOGLE SITE VERIFICATION (replace with your code from Search Console) ═══ -->
 <meta name="google-site-verification" content="YOUR_GOOGLE_SEARCH_CONSOLE_VERIFICATION_CODE"/>
@@ -754,102 +754,6 @@ textarea.fi{resize:vertical;min-height:88px}
 .rmv:active{color:var(--red)}
 
 /* ══════════════════════════════════════
-   PRODUCT VARIATIONS
-══════════════════════════════════════ */
-.var-group{margin:12px 0;padding:12px;background:var(--bg3);border-radius:8px;border:1px solid var(--border)}
-.var-label{font-weight:600;font-size:.85rem;margin-bottom:8px;color:var(--text)}
-.var-opts{display:flex;flex-wrap:wrap;gap:8px}
-.var-opt{padding:8px 12px;border:2px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer;transition:all var(--tr);font-size:.8rem;}
-.var-opt:hover{border-color:var(--gold);background:rgba(201,146,42,.08)}
-.var-opt.selected{border-color:var(--gold);background:rgba(201,146,42,.2);color:var(--gold);font-weight:600}
-.var-adj{font-size:.7rem;color:var(--muted);margin-top:2px}
-
-/* ══════════════════════════════════════
-   ADVANCED FILTERING — Z-INDEX FIXED
-══════════════════════════════════════ */
-.fil-btn{width:100%;padding:12px;background:var(--gold);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:.9rem;transition:all var(--tr)}
-.fil-btn:active{background:var(--gold2);transform:translateY(-2px)}
-
-/* ══════════════════════════════════════
-   FLOATING ACTION BUTTONS — Z-INDEX STACK
-══════════════════════════════════════ */
-.fil-fab{position:fixed;bottom:calc(var(--bnav) + 76px);right:16px;width:48px;height:48px;background:linear-gradient(135deg,#2563eb,#1e40af);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(37,99,235,.4);z-index:899;cursor:pointer;transition:all .2s;border:none;font-size:1.2rem;color:#fff;}
-.fil-fab:active{transform:scale(1.08);box-shadow:0 6px 20px rgba(37,99,235,.5)}
-@media(min-width:769px){.fil-fab{bottom:84px}}
-@media(max-width:480px){.fil-fab{bottom:calc(var(--bnav) + 72px);right:12px;width:44px;height:44px;font-size:1rem}}
-
-.fil-ov{position:fixed;bottom:0;left:0;right:0;max-height:90vh;background:#fff;border-radius:16px 16px 0 0;padding:20px;overflow-y:auto;z-index:898;animation:slideUp .3s ease-out;box-shadow:0 -4px 16px var(--shadow)}
-
-.cfab{position:fixed;bottom:calc(var(--bnav) + 14px);right:16px;z-index:901;width:50px;height:50px;border-radius:50%;background:var(--gold);border:none;display:flex;align-items:center;justify-content:center;font-size:1.25rem;box-shadow:0 4px 14px rgba(201,146,42,.4);cursor:pointer;transition:var(--tr)}
-@media(min-width:769px){.cfab{bottom:20px}}
-.cfab:active{transform:scale(.9)}
-
-.cp2{position:fixed;bottom:calc(var(--bnav) + 70px);right:8px;z-index:900;width:calc(100vw - 16px);max-width:320px;background:#fff;border:1px solid var(--border);border-radius:12px;display:none;flex-direction:column;box-shadow:var(--shadow-md);overflow:hidden;max-height:420px}
-@media(min-width:769px){.cp2{bottom:78px}}
-.cp2.open{display:flex}
-
-.fil-ov.hidden{display:none}
-@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
-
-.fil-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:12px}
-.fil-hd h3{margin:0;font-size:1rem;font-weight:600;color:var(--text)}
-.fil-cl{background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--text)}
-
-.fil-sec{margin-bottom:18px}
-.fil-sec-title{font-weight:600;font-size:.9rem;margin-bottom:8px;color:var(--text)}
-.fil-ck{display:flex;align-items:center;gap:8px;margin-bottom:6px;cursor:pointer}
-.fil-ck input{cursor:pointer}
-.fil-ck label{cursor:pointer;font-size:.85rem;color:var(--text)}
-
-.fil-range{display:flex;gap:8px;align-items:center}
-.fil-range input{flex:1;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:.8rem;color:var(--text);background:var(--surface)}
-
-/* ══════════════════════════════════════
-   WHOLESALE & CPC BADGE
-══════════════════════════════════════ */
-.ws-sec{background:rgba(240,192,64,.05);border:1px solid rgba(240,192,64,.2);border-radius:8px;padding:12px;margin:12px 0}
-.ws-label{font-size:.7rem;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:.5px}
-.ws-price{font-size:1.15rem;color:var(--gold);font-weight:700;margin:6px 0}
-.offer-btn{width:100%;padding:10px;background:none;border:2px solid var(--blue);color:var(--blue);border-radius:8px;cursor:pointer;font-weight:600;transition:all var(--tr);margin-top:8px;font-size:.85rem}
-.offer-btn:active{background:var(--blue-bg)}
-
-.cpc-badge{display:inline-block;padding:2px 6px;background:rgba(56,139,253,.2);color:var(--blue);font-size:.65rem;border-radius:3px;margin-left:4px;font-weight:600}
-
-/* ══════════════════════════════════════
-   RADIO BUTTON STYLING
-══════════════════════════════════════ */
-input[type="radio"] {
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
-  accent-color: var(--gold);
-  margin: 0;
-}
-input[type="radio"]:hover {
-  transform: scale(1.1);
-}
-input[type="radio"]:checked {
-  accent-color: var(--gold);
-}
-
-/* ══════════════════════════════════════
-   CHECKBOX STYLING (Filter & Forms)
-══════════════════════════════════════ */
-input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  cursor: pointer;
-  accent-color: var(--gold);
-  margin: 0;
-}
-input[type="checkbox"]:hover {
-  transform: scale(1.1);
-}
-input[type="checkbox"]:checked {
-  accent-color: var(--gold);
-}
-
-/* ══════════════════════════════════════
    ORDERS
 ══════════════════════════════════════ */
 .ord{background:#fff;border:1px solid var(--border);border-radius:var(--r);
@@ -871,6 +775,18 @@ input[type="checkbox"]:checked {
 /* ══════════════════════════════════════
    CHAT
 ══════════════════════════════════════ */
+.cfab{position:fixed;bottom:calc(var(--bnav) + 14px);right:14px;z-index:995;
+      width:50px;height:50px;border-radius:50%;background:var(--gold);border:none;
+      display:flex;align-items:center;justify-content:center;font-size:1.25rem;
+      box-shadow:0 4px 14px rgba(201,146,42,.4);cursor:pointer;transition:var(--tr)}
+@media(min-width:769px){.cfab{bottom:20px}}
+.cfab:active{transform:scale(.9)}
+.cp2{position:fixed;bottom:calc(var(--bnav) + 70px);right:8px;z-index:994;
+     width:calc(100vw - 16px);max-width:320px;background:#fff;
+     border:1px solid var(--border);border-radius:12px;display:none;
+     flex-direction:column;box-shadow:var(--shadow-md);overflow:hidden;max-height:420px}
+@media(min-width:769px){.cp2{bottom:78px}}
+.cp2.open{display:flex}
 .ch2{background:var(--bg3);padding:12px 14px;border-bottom:1px solid var(--border);
      display:flex;align-items:center;gap:9px}
 .cav{width:28px;height:28px;border-radius:50%;background:var(--gold);
@@ -1381,39 +1297,6 @@ footer{background:var(--text);color:#fff;border-top:1px solid rgba(255,255,255,.
           <p>PDF · ZIP · MP4 · Max 200MB</p>
         </div>
         <input type="file" id="dfile-inp" accept=".pdf,.zip,.mp4,video/mp4,application/pdf,application/zip" style="display:none" onchange="onFilePick(event)"/>
-      </div>
-
-      <!-- PRODUCT VARIATIONS -->
-      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:14px">
-        <div style="font-size:.78rem;font-weight:700;color:var(--text);margin-bottom:10px">📦 Product Variations (Optional)</div>
-        <p style="font-size:.75rem;color:var(--muted);margin-bottom:12px">Add size, color, or other options. Buyers can select variations and prices adjust automatically.</p>
-        <div id="var-list"></div>
-        <button type="button" onclick="addVarGroup()" style="padding:8px 12px;background:var(--blue);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.8rem;font-weight:600">+ Add Variation Group</button>
-      </div>
-
-      <!-- WHOLESALE / BULK PRICING -->
-      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:14px">
-        <div style="font-size:.78rem;font-weight:700;color:var(--gold);margin-bottom:10px">💼 Wholesale Bulk Discount (Optional)</div>
-        <div class="fg" style="margin:0">
-          <label>Price per Unit for 10+ Orders (₦)</label>
-          <input class="fi" type="number" id="s-bulk-price" placeholder="e.g. 4000 (leave empty if no bulk discount)"/>
-          <p class="hint">Buyers who order 10+ units get this discounted price. Shown in product details.</p>
-        </div>
-      </div>
-
-      <!-- PRODUCT CONDITION -->
-      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:14px">
-        <div style="font-size:.78rem;font-weight:700;color:var(--text);margin-bottom:12px">✨ Product Condition</div>
-        <div style="display:flex;gap:20px;align-items:center">
-          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;margin:0;font-size:.85rem;color:var(--text)">
-            <input type="radio" name="s-condition" value="new" checked/>
-            <span>New</span>
-          </label>
-          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;margin:0;font-size:.85rem;color:var(--text)">
-            <input type="radio" name="s-condition" value="used"/>
-            <span>Used</span>
-          </label>
-        </div>
       </div>
 
       <div class="fg"><label>Payout Email <span class="rq">*</span></label><input class="fi" type="email" id="s-email" placeholder="seller@email.com" oninput="validateSell()"/></div>
@@ -2651,10 +2534,7 @@ function submitProduct() {
     date:           new Date().toLocaleDateString(),
     fileExt:        digitalFileData ? digitalFileData.ext  : null,
     fileName:       digitalFileData ? digitalFileData.name : null,
-    fileUrl:        null,  /* filled below if digital upload succeeds */
-    bulkPrice:      parseFloat(gv('s-bulk-price') || '0') || null,
-    condition:      document.querySelector('input[name="s-condition"]:checked')?.value || 'new',
-    variations:     window.sellVariations || []
+    fileUrl:        null   /* filled below if digital upload succeeds */
   };
 
   var pType = payload.type;
@@ -2924,16 +2804,6 @@ function opn(id) {
   /* Normalize: Neon returns numeric IDs; onclick may pass string or number */
   var numId = Number(id);
   var p = prods.find(function (x) { return Number(x.id) === numId; }); if (!p) return;
-  
-  /* ════ CPC DEDUCTION: ₦50 per click for "Sponsored" products ════ */
-  if ((p.badge || '').toLowerCase().includes('sponsored') && CU && p.sellerId) {
-    fetch('/api/payment?action=deduct_cpc', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ productId: p.id, sellerId: p.sellerId, amount: 50 })
-    }).catch(function(e){ console.log('CPC deduction sent'); });
-  }
-  
   document.getElementById('pd-title').textContent = p.name;
   var gi = p.imgs && p.imgs.length ? p.imgs : [];
   
@@ -3053,38 +2923,9 @@ function opn(id) {
     + '</div>'
     + '</div>'
     + '</div>'
-    
-    /* ════ PRODUCT VARIATIONS ════ */
-    + '<div style="padding:0 14px 14px;" id="prod-var"></div>'
-    
-    /* ════ WHOLESALE ════ */
-    + '<div style="padding:0 14px 14px;" id="prod-ws"></div>'
-    
-    /* ════ MAKE AN OFFER BUTTON ════ */
-    + ((p.sellerWhatsapp || p.seller_whatsapp) ? '<div style="padding:0 14px 14px;"><button class="offer-btn" onclick="makeOffer()" style="border-color:var(--orange);color:var(--orange);">💬 Make an Offer</button></div>' : '')
-    
     + '<div style="height:16px"></div>';
   
   oM('m-pd');
-  window.currentProduct = p;
-  window.selectedVar = null;
-  
-  /* ════ UPDATE SOCIAL META & RENDER FEATURES ════ */
-  updateSocialMeta(p);
-  renderVariations(p);
-  renderWholesale(p);
-  
-  /* ════ ADD CPC BADGE IF SPONSORED ════ */
-  if ((p.badge || '').toLowerCase().includes('sponsored')) {
-    var titleEl = document.getElementById('pd-title');
-    if (titleEl && !titleEl.querySelector('.cpc-badge')) {
-      var badge = document.createElement('span');
-      badge.className = 'cpc-badge';
-      badge.textContent = '₦50/click';
-      titleEl.appendChild(badge);
-    }
-  }
-  
   loadReviews(p.id);
   
   /* Store carousel state */
@@ -7449,267 +7290,6 @@ function loadAffiliateDash() {
 }
 window.loadAffiliateDash = loadAffiliateDash;
 
-/* ═══ PRODUCT VARIATIONS & FILTERING ═══ */
-var allVariations = {};
-
-function renderVariations(p) {
-  if (!p.variations || p.variations.length === 0) {
-    var varDiv = document.getElementById('prod-var');
-    if (varDiv) varDiv.innerHTML = '';
-    return;
-  }
-  allVariations[p.id] = p.variations;
-  var html = '';
-  p.variations.forEach(function(group, idx){
-    if (!group.options || group.options.length === 0) return;
-    html += '<div class="var-group"><div class="var-label">' + (group.name || 'Option') + '</div>';
-    html += '<div class="var-opts" data-group="' + idx + '">';
-    group.options.forEach(function(opt, optIdx){
-      var adj = opt.priceAdjustment ? (opt.priceAdjustment > 0 ? '+₦' : '-₦') + Math.abs(opt.priceAdjustment) : '';
-      html += '<div class="var-opt" onclick="selectVar(' + idx + ',' + optIdx + ',event)">' + opt.name;
-      if (adj) html += '<div class="var-adj">' + adj + '</div>';
-      html += '</div>';
-    });
-    html += '</div></div>';
-  });
-  var varDiv = document.getElementById('prod-var');
-  if (varDiv) varDiv.innerHTML = html;
-}
-
-function selectVar(gIdx, oIdx, e){
-  e.stopPropagation();
-  var group = document.querySelector('[data-group="' + gIdx + '"]');
-  if (!group) return;
-  group.querySelectorAll('.var-opt').forEach(function(o){ o.classList.remove('selected'); });
-  var opt = e.target.closest('.var-opt');
-  if (opt) opt.classList.add('selected');
-  
-  var p = window.currentProduct;
-  if (p && allVariations[p.id]) {
-    var v = allVariations[p.id][gIdx];
-    if (v && v.options && v.options[oIdx]) {
-      var adj = v.options[oIdx].priceAdjustment;
-      if (adj) {
-        var newP = p.price + adj;
-        var priceEl = document.getElementById('pdprice');
-        if (priceEl) priceEl.textContent = '₦' + newP.toLocaleString();
-      }
-    }
-  }
-  window.selectedVar = {gIdx: gIdx, oIdx: oIdx};
-}
-
-/* ═══ ADVANCED FILTERING ═══ */
-function openFilterModal(){
-  var modal = document.getElementById('fil-ov');
-  if (modal) modal.classList.remove('hidden');
-}
-
-function closeFilterModal(){
-  var modal = document.getElementById('fil-ov');
-  if (modal) modal.classList.add('hidden');
-  applyFilters();
-}
-
-function applyFilters(){
-  var search = (document.getElementById('market-search') || {}).value || '';
-  var minP = parseFloat(document.getElementById('fil-min')?.value || 0);
-  var maxP = parseFloat(document.getElementById('fil-max')?.value || Infinity);
-  
-  var cats = [];
-  ['courses','ebooks','soft','fashion','elec'].forEach(function(c){
-    if (document.getElementById('fil-' + c)?.checked) {
-      cats.push(c === 'soft' ? 'software' : c);
-    }
-  });
-  
-  var cond = [];
-  if (document.getElementById('fil-new')?.checked) cond.push('new');
-  if (document.getElementById('fil-used')?.checked) cond.push('used');
-  
-  var verOnly = document.getElementById('fil-verified')?.checked;
-  
-  var filtered = getActive().filter(function(p){
-    var price = parseFloat(p.discountPrice || p.discount_price || p.price || 0);
-    var matchSearch = !search || p.name.toLowerCase().includes(search) || (p.description || p.desc || '').toLowerCase().includes(search);
-    var matchPrice = price >= minP && price <= maxP;
-    var matchCat = !cats.length || cats.includes(p.cat || 'other');
-    var matchCond = !cond.length || cond.includes(p.condition || 'new');
-    var matchVer = !verOnly || p.sellerVerified || p.seller_verified;
-    return matchSearch && matchPrice && matchCat && matchCond && matchVer;
-  });
-  
-  rGrid('market-grid', filtered);
-  var cnt = document.getElementById('market-cnt');
-  if (cnt) cnt.textContent = 'Showing ' + filtered.length + ' products';
-}
-
-/* ═══ WHOLESALE & OFFER ═══ */
-function renderWholesale(p){
-  var ws = document.getElementById('prod-ws');
-  if (!ws) return;
-  if (!p.bulkPrice || p.bulkPrice <= 0) {
-    ws.innerHTML = '';
-    return;
-  }
-  var save = Math.round(((p.price - p.bulkPrice) / p.price) * 100);
-  ws.innerHTML = '<div class="ws-sec">' +
-    '<div class="ws-label">💼 Bulk Discount (10+ units)</div>' +
-    '<div class="ws-price">₦' + p.bulkPrice.toLocaleString() + ' per unit</div>' +
-    '<div style="font-size:.75rem;color:var(--green);">Save ' + save + '% per unit</div>' +
-    '</div>';
-}
-
-function makeOffer(){
-  var p = window.currentProduct;
-  if (!CU) { toast('Sign in first', 'warn'); return; }
-  var waNum = p.sellerWhatsapp || p.seller_whatsapp || '2349072212496';
-  var wa = 'https://wa.me/' + waNum.replace(/[^0-9]/g,'') + '?text=' + encodeURIComponent('Hi, interested in: ' + p.name + ' (₦' + (p.price||0).toLocaleString() + '). Can we negotiate the price?');
-  window.open(wa, '_blank');
-}
-
-/* ═══ SOCIAL SHARING & OPEN GRAPH ═══ */
-function updateSocialMeta(p){
-  var img = (p.imgs && p.imgs.length > 0) ? p.imgs[0] : 'https://neyomarket.com.ng/og-image.png';
-  var title = p.name + ' - NeyoMarket';
-  var desc = (p.description || p.desc || 'Amazing product on NeyoMarket').substring(0, 120);
-  var url = 'https://neyomarket.com.ng?p=' + p.id;
-  
-  var ogType = document.getElementById('og-type');
-  var ogUrl = document.getElementById('og-url');
-  var ogTitle = document.getElementById('og-title');
-  var ogDesc = document.getElementById('og-description');
-  var ogImg = document.getElementById('og-image');
-  var twTitle = document.getElementById('twitter-title');
-  var twDesc = document.getElementById('twitter-description');
-  var twImg = document.getElementById('twitter-image');
-  
-  if (ogType) ogType.setAttribute('content', 'product');
-  if (ogUrl) ogUrl.setAttribute('content', url);
-  if (ogTitle) ogTitle.setAttribute('content', title);
-  if (ogDesc) ogDesc.setAttribute('content', desc);
-  if (ogImg) ogImg.setAttribute('content', img);
-  if (twTitle) twTitle.setAttribute('content', title);
-  if (twDesc) twDesc.setAttribute('content', desc);
-  if (twImg) twImg.setAttribute('content', img);
-}
-
-function shareProduct(){
-  var p = window.currentProduct;
-  if (!p) return;
-  var url = 'https://neyomarket.com.ng?p=' + p.id;
-  var txt = encodeURIComponent(p.name + ' - ₦' + (p.discountPrice || p.discount_price || p.price).toLocaleString() + ' on NeyoMarket');
-  var wa = 'https://wa.me/?text=' + txt + ' ' + url;
-  var tw = 'https://twitter.com/intent/tweet?text=' + txt + '&url=' + url;
-  var fb = 'https://www.facebook.com/sharer/sharer.php?u=' + url;
-  
-  Swal.fire({
-    title: '📤 Share Product',
-    html: '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding:12px 0">' +
-      '<button onclick="window.open(\'' + wa + '\',\'_blank\')" style="padding:8px 14px;background:#25d366;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.8rem;font-weight:600">💬 WhatsApp</button>' +
-      '<button onclick="window.open(\'' + tw + '\',\'_blank\')" style="padding:8px 14px;background:#1DA1F2;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.8rem;font-weight:600">𝕏 Twitter</button>' +
-      '<button onclick="window.open(\'' + fb + '\',\'_blank\')" style="padding:8px 14px;background:#1877F2;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.8rem;font-weight:600">f Facebook</button>' +
-      '<button onclick="navigator.clipboard.writeText(\'' + url + '\');alert(\'Link copied!\')" style="padding:8px 14px;background:#666;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.8rem;font-weight:600">🔗 Copy</button>' +
-      '</div>',
-    showConfirmButton: false,
-    didOpen: function(){ document.querySelector('.swal2-popup').style.zIndex = '9999'; }
-  });
-}
-
-/* ═══ SELL FORM: VARIATION MANAGEMENT ═══ */
-window.sellVariations = [];
-
-function addVarGroup() {
-  var idx = window.sellVariations.length;
-  var group = {name: '', options: []};
-  window.sellVariations.push(group);
-  renderVarGroups();
-}
-
-function renderVarGroups() {
-  var list = document.getElementById('var-list');
-  if (!list) return;
-  
-  var html = '';
-  window.sellVariations.forEach(function(group, idx){
-    html += '<div style="background:#fff;border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:12px">';
-    html += '<div style="display:flex;gap:8px;margin-bottom:10px">';
-    html += '<input type="text" placeholder="e.g., Size" value="' + (group.name || '') + '" onchange="updateVarGroupName(' + idx + ', this.value)" style="flex:1;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:.85rem"/>';
-    html += '<button type="button" onclick="removeVarGroup(' + idx + ')" style="padding:6px 12px;background:var(--red);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.8rem;font-weight:600">Remove</button>';
-    html += '</div>';
-    
-    html += '<div style="margin-bottom:10px">';
-    group.options.forEach(function(opt, optIdx){
-      html += '<div style="display:flex;gap:6px;margin-bottom:6px;align-items:center">';
-      html += '<input type="text" placeholder="Option (e.g., Small)" value="' + opt.name + '" onchange="updateVarOption(' + idx + ', ' + optIdx + ', \'name\', this.value)" style="flex:1;padding:6px;border:1px solid var(--border);border-radius:4px;font-size:.8rem"/>';
-      html += '<input type="number" placeholder="±price" value="' + (opt.priceAdjustment || 0) + '" onchange="updateVarOption(' + idx + ', ' + optIdx + ', \'price\', this.value)" style="width:80px;padding:6px;border:1px solid var(--border);border-radius:4px;font-size:.8rem"/>';
-      html += '<button type="button" onclick="removeVarOption(' + idx + ', ' + optIdx + ')" style="padding:4px 8px;background:#dc2626;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:.75rem">×</button>';
-      html += '</div>';
-    });
-    html += '</div>';
-    
-    html += '<button type="button" onclick="addVarOption(' + idx + ')" style="width:100%;padding:6px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:.8rem;color:var(--text)">+ Add Option</button>';
-    html += '</div>';
-  });
-  
-  list.innerHTML = html;
-}
-
-function updateVarGroupName(idx, name) {
-  if (window.sellVariations[idx]) {
-    window.sellVariations[idx].name = name;
-  }
-}
-
-function addVarOption(idx) {
-  if (window.sellVariations[idx]) {
-    window.sellVariations[idx].options.push({name: '', priceAdjustment: 0});
-    renderVarGroups();
-  }
-}
-
-function updateVarOption(idx, optIdx, field, val) {
-  if (window.sellVariations[idx] && window.sellVariations[idx].options[optIdx]) {
-    if (field === 'name') {
-      window.sellVariations[idx].options[optIdx].name = val;
-    } else if (field === 'price') {
-      window.sellVariations[idx].options[optIdx].priceAdjustment = parseFloat(val) || 0;
-    }
-  }
-}
-
-function removeVarOption(idx, optIdx) {
-  if (window.sellVariations[idx]) {
-    window.sellVariations[idx].options.splice(optIdx, 1);
-    renderVarGroups();
-  }
-}
-
-function removeVarGroup(idx) {
-  window.sellVariations.splice(idx, 1);
-  renderVarGroups();
-}
-
-/* ════ EXPOSE FUNCTIONS TO WINDOW ════ */
-window.addVarGroup = addVarGroup;
-window.renderVarGroups = renderVarGroups;
-window.updateVarGroupName = updateVarGroupName;
-window.addVarOption = addVarOption;
-window.updateVarOption = updateVarOption;
-window.removeVarOption = removeVarOption;
-window.removeVarGroup = removeVarGroup;
-
-/* ════ EXPOSE FILTERING & PRODUCT FUNCTIONS TO WINDOW ════ */
-window.renderVariations = renderVariations;
-window.selectVar = selectVar;
-window.openFilterModal = openFilterModal;
-window.closeFilterModal = closeFilterModal;
-window.applyFilters = applyFilters;
-window.renderWholesale = renderWholesale;
-window.makeOffer = makeOffer;
-window.updateSocialMeta = updateSocialMeta;
-window.shareProduct = shareProduct;
-
 /* ═══ INIT ═══ */
 loadAll();
 updNav();
@@ -7870,78 +7450,6 @@ validateSell();
       </div>
     </div>
   </div>
-</div>
-
-<!-- ═══ ADVANCED FILTER MODAL ═══ -->
-<button class="fil-fab" onclick="openFilterModal()" title="Open Filters">⚙️</button>
-
-<div id="fil-ov" class="fil-ov hidden">
-  <div class="fil-hd">
-    <h3>🔍 Filters</h3>
-    <button class="fil-cl" onclick="closeFilterModal()">✕</button>
-  </div>
-
-  <!-- Category Filter -->
-  <div class="fil-sec">
-    <div class="fil-sec-title">Category</div>
-    <div class="fil-ck">
-      <input type="checkbox" id="fil-all" onchange="applyFilters()" checked/>
-      <label for="fil-all">All Categories</label>
-    </div>
-    <div class="fil-ck">
-      <input type="checkbox" id="fil-courses" onchange="applyFilters()"/>
-      <label for="fil-courses">Courses</label>
-    </div>
-    <div class="fil-ck">
-      <input type="checkbox" id="fil-ebooks" onchange="applyFilters()"/>
-      <label for="fil-ebooks">eBooks</label>
-    </div>
-    <div class="fil-ck">
-      <input type="checkbox" id="fil-soft" onchange="applyFilters()"/>
-      <label for="fil-soft">Software</label>
-    </div>
-    <div class="fil-ck">
-      <input type="checkbox" id="fil-fashion" onchange="applyFilters()"/>
-      <label for="fil-fashion">Fashion</label>
-    </div>
-    <div class="fil-ck">
-      <input type="checkbox" id="fil-elec" onchange="applyFilters()"/>
-      <label for="fil-elec">Electronics</label>
-    </div>
-  </div>
-
-  <!-- Price Range Filter -->
-  <div class="fil-sec">
-    <div class="fil-sec-title">Price Range (₦)</div>
-    <div class="fil-range">
-      <input class="fil-range" type="number" id="fil-min" placeholder="Min" onchange="applyFilters()"/>
-      <span style="color:var(--muted);">—</span>
-      <input class="fil-range" type="number" id="fil-max" placeholder="Max" onchange="applyFilters()"/>
-    </div>
-  </div>
-
-  <!-- Product Condition Filter -->
-  <div class="fil-sec">
-    <div class="fil-sec-title">Product Condition</div>
-    <div class="fil-ck">
-      <input type="checkbox" id="fil-new" onchange="applyFilters()" checked/>
-      <label for="fil-new">New</label>
-    </div>
-    <div class="fil-ck">
-      <input type="checkbox" id="fil-used" onchange="applyFilters()"/>
-      <label for="fil-used">Used</label>
-    </div>
-  </div>
-
-  <!-- Verified Sellers -->
-  <div class="fil-sec">
-    <div class="fil-ck">
-      <input type="checkbox" id="fil-verified" onchange="applyFilters()"/>
-      <label for="fil-verified">✅ Verified Sellers Only</label>
-    </div>
-  </div>
-
-  <button class="fil-btn" onclick="closeFilterModal()">✓ Apply Filters</button>
 </div>
 
 </body>
