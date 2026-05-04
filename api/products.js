@@ -25,11 +25,6 @@ function toProduct(r) {
   let imgs = r.imgs;
   if (typeof imgs === 'string') { try { imgs = JSON.parse(imgs); } catch(e) { imgs = []; } }
   if (!Array.isArray(imgs)) imgs = [];
-  
-  let variations = r.variations;
-  if (typeof variations === 'string') { try { variations = JSON.parse(variations); } catch(e) { variations = []; } }
-  if (!Array.isArray(variations)) variations = [];
-  
   return {
     id:             r.id,
     name:           r.name             || '',
@@ -65,9 +60,6 @@ function toProduct(r) {
     sellerBio:      r.seller_bio       || '',
     isFeature:      r.is_featured      || false,
     createdAt:      r.created_at       || null,
-    bulkPrice:      r.bulk_price       ? parseFloat(r.bulk_price) : null,
-    condition:      r.condition        || 'new',
-    variations:     variations,
   };
 }
 
@@ -164,10 +156,6 @@ module.exports = async function handler(req, res) {
       const productEmoji   = p.emoji       || '📦';
       const productBadge   = p.badge       || '';
 
-      const bulkPrice      = (p.bulkPrice != null) ? parseFloat(p.bulkPrice) : null;
-      const condition      = p.condition || 'new';
-      const variations     = JSON.stringify(p.variations || []);
-
       const rows = await sql`
         INSERT INTO products (
           id, name, type, cat, price,
@@ -175,7 +163,7 @@ module.exports = async function handler(req, res) {
           commission, description, seller, seller_id, seller_email, seller_whatsapp,
           rating, reviews, emoji, imgs, status, badge, date, escrow,
           file_ext, file_name, file_url, is_verified, disputed,
-          quantity, location, seller_bio, created_at, bulk_price, condition, variations
+          quantity, location, seller_bio, created_at
         ) VALUES (
           ${id}, ${p.name}, ${productType}, ${productCat}, ${parseFloat(p.price)},
           ${discountPrice}, ${isOnSale}, ${saleEndsAt}, ${shippingFee},
@@ -187,7 +175,7 @@ module.exports = async function handler(req, res) {
           ${p.quantity !== undefined && p.quantity !== null ? parseInt(p.quantity, 10) : null},
           ${p.location || ''},
           ${p.sellerBio || p.seller_bio || ''},
-          NOW(), ${bulkPrice}, ${condition}, ${variations}
+          NOW()
         )
         RETURNING *
       `;
@@ -215,9 +203,6 @@ module.exports = async function handler(req, res) {
       const newLocation       = (p.location       !== undefined) ? String(p.location || '')       : null;
       const newSellerBio      = (p.sellerBio      !== undefined || p.seller_bio !== undefined) ? String(p.sellerBio || p.seller_bio || '') : null;
       const newSaleEndsAt     = (p.saleEndsAt     !== undefined) ? (p.saleEndsAt || null)  : null;
-      const newBulkPrice      = (p.bulkPrice      !== undefined && p.bulkPrice !== null) ? parseFloat(p.bulkPrice) : null;
-      const newCondition      = (p.condition      !== undefined) ? String(p.condition)     : null;
-      const newVariations     = (p.variations     !== undefined) ? JSON.stringify(p.variations || []) : null;
 
       let newDiscountPrice = null;
       if (p.discountPrice !== undefined && p.discountPrice !== null)
@@ -242,10 +227,7 @@ module.exports = async function handler(req, res) {
           disputed        = COALESCE(${newDisputed},       disputed),
           quantity        = COALESCE(${newQuantity},      quantity),
           location        = COALESCE(${newLocation},      location),
-          seller_bio      = COALESCE(${newSellerBio},     seller_bio),
-          bulk_price      = COALESCE(${newBulkPrice},     bulk_price),
-          condition       = COALESCE(${newCondition},     condition),
-          variations      = COALESCE(${newVariations},    variations)
+          seller_bio      = COALESCE(${newSellerBio},     seller_bio)
         WHERE id = ${productId}
       `;
       return res.status(200).json({ ok: true });
