@@ -21,3 +21,17 @@
     }
   ]
 }
+
+{
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Permissions-Policy",
+          "value": "clipboard-write=(self)"
+        }
+      ]
+    }
+  ]
+}
