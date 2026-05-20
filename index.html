@@ -204,6 +204,18 @@
 
 /* Hot deals */
 .hot-deals-section{background:linear-gradient(135deg,rgba(220,38,38,.08),rgba(201,146,42,.06));border:1px solid rgba(220,38,38,.2);border-radius:12px;padding:16px;margin-bottom:24px;}
+/* ── ANNOUNCEMENTS ── */
+.ann-section{margin-bottom:22px;}
+.ann-item{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:8px;display:flex;align-items:flex-start;gap:12px;transition:.15s;}
+.ann-item:hover{border-color:var(--gold);background:var(--card);}
+.ann-badge{display:inline-block;font-size:.6rem;font-weight:800;padding:2px 8px;border-radius:12px;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;flex-shrink:0;margin-top:2px;}
+.ann-badge.info{background:rgba(56,139,253,.15);color:#388bfd;}
+.ann-badge.promo{background:rgba(201,146,42,.15);color:var(--gold);}
+.ann-badge.alert{background:rgba(248,81,73,.12);color:var(--red);}
+.ann-badge.new{background:rgba(46,160,67,.15);color:var(--green);}
+.ann-title{font-size:.88rem;font-weight:700;color:var(--text);margin-bottom:3px;}
+.ann-body{font-size:.79rem;color:var(--muted);line-height:1.55;}
+.ann-date{font-size:.68rem;color:var(--muted2);margin-top:4px;}
 .hot-deals-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
 .hot-deals-header h2{margin:0;font-size:1.1rem;}
 .hot-deals-badge{background:var(--red);color:#fff;font-size:.65rem;font-weight:800;padding:2px 8px;border-radius:20px;letter-spacing:.5px;animation:pulse-badge 1.5s infinite;}
@@ -1496,6 +1508,16 @@ footer{background:var(--text);color:#fff;border-top:1px solid rgba(255,255,255,.
       </div>
     </div>
 
+    <!-- ══ ANNOUNCEMENTS / NEWS ══ -->
+    <div class="ann-section" id="ann-section" style="display:none">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <span style="font-size:1.1rem">📣</span>
+        <h2 style="margin:0;font-size:1rem;font-weight:700">Platform Updates</h2>
+        <span style="font-size:.68rem;color:var(--muted);background:var(--bg3);border:1px solid var(--border);padding:2px 8px;border-radius:12px" id="ann-count"></span>
+      </div>
+      <div id="ann-list"></div>
+    </div>
+
     <!-- ══ COMMUNITY BANNER ══ -->
     <div style="background:linear-gradient(135deg,#0a1628,#0d2137);border-radius:16px;padding:22px;margin:24px 0;border:1px solid rgba(37,211,102,.2)">
       <div style="text-align:center;margin-bottom:16px">
@@ -2595,7 +2617,7 @@ footer{background:var(--text);color:#fff;border-top:1px solid rgba(255,255,255,.
       <button class="asb" onclick="aTab('awallet',this)">🏦 Admin Wallet</button>
       <button class="asb" onclick="aTab('dis',this)">⚖️ Disputes & Refunds</button>
       <div class="asl">System</div>
-      <button class="asb" onclick="aTab('set',this)">⚙️ Settings</button>
+      <button class="asb" onclick="aTab('set',this)" id="asb-set">⚙️ Settings</button>
       <div style="margin-top:14px;padding:0 3px">
         <button onclick="doSignOut()" style="width:100%;background:rgba(255,58,92,.08);color:var(--red);border:1px solid rgba(255,58,92,.18);padding:8px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer">Sign Out</button>
       </div>
@@ -2863,6 +2885,7 @@ function loadAll() {
       rGrid('home-grid', getActive().slice(0, 8));
       rGrid('mkt-grid',  getActive());
       renderHotDeals(prods);        /* FLASH SALES: populate Hot Deals section */
+      loadAnnouncements();            /* ANNOUNCEMENTS: load platform news */
       startCountdownTicker();       /* START: live countdown tickers on all sale cards */
       var hc = document.getElementById('hero-cnt');
       if (hc) hc.textContent = getActive().length;
@@ -7332,6 +7355,55 @@ function aTab(tab, btn) {
     window.prods  = allProds;
     prods         = allProds;
 
+    /* ─── ANNOUNCEMENTS ─── */
+    if (tab === 'ann') {
+      c.innerHTML =
+        '<div class="ah"><h1>Announcements & News</h1><p>Post updates visible to all users on the home page</p></div>'
+        + '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:20px">'
+        + '<h3 style="margin:0 0 16px;font-size:.95rem">Post New Announcement</h3>'
+        + '<div class="fg" style="margin-bottom:12px"><label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:5px">Title</label>'
+        + '<input id="ann-title" class="fi" placeholder="e.g. New Feature: Google Login is Live!" style="font-size:.88rem"/></div>'
+        + '<div class="fg" style="margin-bottom:12px"><label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:5px">Message</label>'
+        + '<textarea id="ann-content" class="fi" rows="3" placeholder="Describe the update or news..." style="resize:vertical;font-size:.86rem;line-height:1.6"></textarea></div>'
+        + '<div class="fg" style="margin-bottom:16px"><label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:5px">Badge Label</label>'
+        + '<select id="ann-badge" class="fi" style="font-size:.86rem">'
+        + '<option value="Info">Info</option>'
+        + '<option value="New">New</option>'
+        + '<option value="Promo">Promo</option>'
+        + '<option value="Alert">Alert</option>'
+        + '<option value="Urgent">Urgent</option>'
+        + '</select></div>'
+        + '<button onclick="adminSubmitAnnouncement()" class="sbtn" style="width:100%">📣 Post Announcement</button>'
+        + '</div>'
+        + '<div id="ann-admin-list"><div style="text-align:center;padding:16px;color:var(--muted);font-size:.82rem">Loading announcements...</div></div>';
+
+      /* Load existing announcements for admin view */
+      fetch('/api/reviews?type=announcements')
+        .then(function(r){ return r.json(); })
+        .then(function(data) {
+          var items = data.announcements || [];
+          var listEl = document.getElementById('ann-admin-list');
+          if (!listEl) return;
+          if (!items.length) {
+            listEl.innerHTML = '<p style="color:var(--muted);font-size:.82rem;text-align:center;padding:16px">No announcements yet.</p>';
+            return;
+          }
+          listEl.innerHTML = '<h3 style="font-size:.9rem;margin-bottom:12px">Existing Announcements (' + items.length + ')</h3>'
+            + items.map(function(a) {
+                var dateStr = a.created_at ? new Date(a.created_at).toLocaleDateString() : '';
+                return '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px">'
+                  + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap">'
+                  + '<div style="font-weight:700;font-size:.86rem">' + (a.title||'') + '</div>'
+                  + '<span style="font-size:.65rem;background:var(--bg3);border:1px solid var(--border);padding:2px 8px;border-radius:10px;white-space:nowrap">' + (a.badge_text||'Info') + '</span>'
+                  + '</div>'
+                  + '<div style="font-size:.78rem;color:var(--muted);margin-top:4px;line-height:1.5">' + (a.content||'') + '</div>'
+                  + (dateStr ? '<div style="font-size:.68rem;color:var(--muted2);margin-top:6px">' + dateStr + '</div>' : '')
+                  + '</div>';
+              }).join('');
+        }).catch(function(){});
+      return;
+    }
+
     /* ─── OVERVIEW ─── */
     if (tab === 'ov') {
       var pending   = (window.prods || []).filter(function(p){ return p.status === 'pending'; });
@@ -8466,6 +8538,84 @@ function renderHotDeals(products) {
   }
 }
 window.renderHotDeals = renderHotDeals;
+
+/* ══════════════════════════════════════════════════════════════
+   ANNOUNCEMENTS — loads from /api/reviews?type=announcements
+   Renders on home page in #ann-section.
+   Also available for admin to post via aTab announcements panel.
+══════════════════════════════════════════════════════════════ */
+function loadAnnouncements() {
+  var section = document.getElementById('ann-section');
+  var list    = document.getElementById('ann-list');
+  var cnt     = document.getElementById('ann-count');
+  if (!list) return;
+
+  fetch('/api/reviews?type=announcements')
+    .then(function(r){ return r.json(); })
+    .then(function(data) {
+      var items = data.announcements || [];
+      if (!items.length) {
+        if (section) section.style.display = 'none';
+        return;
+      }
+      if (section) section.style.display = 'block';
+      if (cnt) cnt.textContent = items.length + ' update' + (items.length > 1 ? 's' : '');
+
+      list.innerHTML = items.map(function(a) {
+        var badge = a.badge_text || 'Info';
+        var badgeClass = badge.toLowerCase().indexOf('promo') !== -1 ? 'promo'
+                       : badge.toLowerCase().indexOf('alert') !== -1 || badge.toLowerCase().indexOf('urgent') !== -1 ? 'alert'
+                       : badge.toLowerCase().indexOf('new') !== -1 ? 'new' : 'info';
+        var dateStr = a.created_at ? new Date(a.created_at).toLocaleDateString('en-NG', { day:'numeric', month:'short', year:'numeric' }) : '';
+        return '<div class="ann-item">'
+          + '<span class="ann-badge ' + badgeClass + '">' + badge + '</span>'
+          + '<div style="flex:1;min-width:0">'
+          + '<div class="ann-title">' + (a.title || '') + '</div>'
+          + '<div class="ann-body">' + (a.content || '') + '</div>'
+          + (dateStr ? '<div class="ann-date">' + dateStr + '</div>' : '')
+          + '</div></div>';
+      }).join('');
+    })
+    .catch(function(e) {
+      console.warn('[announcements] Could not load:', e.message);
+      if (section) section.style.display = 'none';
+    });
+}
+window.loadAnnouncements = loadAnnouncements;
+
+/* Admin: post a new announcement */
+function adminPostAnnouncement(title, content, badge_text) {
+  if (!window.CU || window.CU.role !== 'admin') { toast('Admin only.', 'fail'); return; }
+  if (!title || !content) { toast('Title and content required.', 'fail'); return; }
+  fetch('/api/reviews?type=announcements', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ title: title, content: content, badge_text: badge_text || 'Info', adminId: String(window.CU.id) })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(data) {
+    if (data.ok) {
+      toast('Announcement posted!', 'ok');
+      loadAnnouncements();
+    } else {
+      toast(data.error || 'Failed to post.', 'fail');
+    }
+  })
+  .catch(function(e){ toast('Error: ' + e.message, 'fail'); });
+}
+window.adminPostAnnouncement = adminPostAnnouncement;
+
+function adminSubmitAnnouncement() {
+  var title   = (document.getElementById('ann-title')   || {}).value || '';
+  var content = (document.getElementById('ann-content') || {}).value || '';
+  var badge   = (document.getElementById('ann-badge')   || {}).value || 'Info';
+  if (!title.trim() || !content.trim()) { toast('Title and message are required.', 'fail'); return; }
+  adminPostAnnouncement(title.trim(), content.trim(), badge);
+  var t = document.getElementById('ann-title');   if (t) t.value = '';
+  var b = document.getElementById('ann-content'); if (b) b.value = '';
+  setTimeout(function(){ aTab('ann', document.querySelector('.asb.on')); }, 800);
+}
+window.adminSubmitAnnouncement = adminSubmitAnnouncement;
 
 /* ════════════════════════════════════════════════════════
    LIVE COUNTDOWN TICKER — ticks every second
@@ -10139,6 +10289,5 @@ window.anCurrentTab = anCurrentTab;
     else { window.__refCode = localStorage.getItem('nm_ref') || ''; }
   } catch(e) { window.__refCode = ''; }
 })();
-window.GOOGLE_CLIENT_ID = '850245958205-fh4fdhcs1epra5u1v0nfouetcada8rd2.apps.googleusercontent.com';
 
 </script>
