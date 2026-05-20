@@ -1875,32 +1875,6 @@ footer{background:var(--text);color:#fff;border-top:1px solid rgba(255,255,255,.
       <div class="fg"><label>Email <span class="rq">*</span></label><input class="fi" type="email" id="co-email" placeholder="you@email.com" oninput="vCo()"/></div>
       <div class="tr2"><input type="checkbox" id="co-cb" onchange="vCo()"/><label for="co-cb">I agree to the <a onclick="oM('m-terms')">Terms of Service</a> and escrow release process.</label></div>
       <div class="em" id="co-err"></div>
-      <!-- Transfer info banner — shown when Paystack opens, so users can copy from OUR page -->
-      <div id="psk-transfer-banner" style="display:none;background:linear-gradient(135deg,#1e3a5f,#0f2a4a);border:1.5px solid #3b82f6;border-radius:12px;padding:16px;margin-bottom:12px">
-        <div style="font-size:.72rem;font-weight:800;color:#93c5fd;text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px">💳 Transfer Details — Tap to Copy</div>
-        <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,.06);border-radius:8px;padding:10px 12px;margin-bottom:8px;cursor:pointer;border:1px solid rgba(255,255,255,.1)" onclick="copyTransferDetail('psk-acc-num','Account Number')">
-          <div>
-            <div style="font-size:.62rem;color:#93c5fd;margin-bottom:3px">Account Number</div>
-            <div id="psk-acc-num" style="font-family:monospace;font-size:1.05rem;font-weight:800;color:#fff;letter-spacing:2px">—</div>
-          </div>
-          <div style="font-size:.7rem;color:#60a5fa;font-weight:700;background:rgba(96,165,250,.15);padding:4px 10px;border-radius:6px">📋 Tap to Copy</div>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,.06);border-radius:8px;padding:10px 12px;margin-bottom:8px;cursor:pointer;border:1px solid rgba(255,255,255,.1)" onclick="copyTransferDetail('psk-bank-name','Bank Name')">
-          <div>
-            <div style="font-size:.62rem;color:#93c5fd;margin-bottom:3px">Bank Name</div>
-            <div id="psk-bank-name" style="font-size:.92rem;font-weight:700;color:#fff">—</div>
-          </div>
-          <div style="font-size:.7rem;color:#60a5fa;font-weight:700;background:rgba(96,165,250,.15);padding:4px 10px;border-radius:6px">📋 Tap to Copy</div>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,.06);border-radius:8px;padding:10px 12px;cursor:pointer;border:1px solid rgba(255,255,255,.1)" onclick="copyTransferDetail('psk-amount','Amount')">
-          <div>
-            <div style="font-size:.62rem;color:#93c5fd;margin-bottom:3px">Amount to Send</div>
-            <div id="psk-amount" style="font-family:'Cormorant Garamond',serif;font-size:1.15rem;font-weight:800;color:#fcd34d">—</div>
-          </div>
-          <div style="font-size:.7rem;color:#60a5fa;font-weight:700;background:rgba(96,165,250,.15);padding:4px 10px;border-radius:6px">📋 Tap to Copy</div>
-        </div>
-        <div style="font-size:.7rem;color:rgba(255,255,255,.45);margin-top:10px;text-align:center">ℹ️ These details appear when you choose bank transfer in the Paystack window</div>
-      </div>
       <button class="pb3" id="co-pay" disabled onclick="processPaystack('digital')">🔐 Pay Securely with Paystack</button>
       <button class="pb3" id="co-wallet-pay" disabled onclick="processWalletPay('digital')" style="background:linear-gradient(135deg,#0f2027,#203a43);margin-top:8px">👛 Pay with Wallet</button>
       <div id="co-wallet-bal" style="font-size:.75rem;color:var(--muted);text-align:center;margin-top:4px"></div>
@@ -2074,30 +2048,26 @@ footer{background:var(--text);color:#fff;border-top:1px solid rgba(255,255,255,.
         <div id="seller-analytics-summary" style="margin-bottom:16px"></div>
         <!-- Products list -->
         <div id="seller-products-list"></div>
-
-        <!-- ══ INCOMING ORDERS section — always visible, fetched from DB ══ -->
-        <div id="seller-incoming-wrap" style="margin-top:24px">
-          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">
-            <h3 style="font-size:1rem;font-weight:700">📬 Incoming Orders</h3>
-            <button onclick="loadSellerOrders()" style="background:none;border:1px solid var(--border);color:var(--muted);font-size:.72rem;padding:4px 10px;border-radius:6px;cursor:pointer">🔄 Refresh</button>
-          </div>
-          <!-- Tabs: pending | history -->
-          <div style="display:flex;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:14px">
-            <button id="so-tab-pending" onclick="soTab('pending')" style="flex:1;padding:9px;font-size:.78rem;font-weight:700;border:none;background:var(--gold);color:#fff;cursor:pointer">⏳ Pending</button>
-            <button id="so-tab-history" onclick="soTab('history')" style="flex:1;padding:9px;font-size:.78rem;font-weight:600;border:none;background:var(--bg3);color:var(--muted);cursor:pointer">📋 Order History</button>
-          </div>
-          <div id="so-pending-panel">
-            <div style="color:var(--muted);font-size:.82rem;text-align:center;padding:18px">Loading orders…</div>
-          </div>
-          <div id="so-history-panel" style="display:none">
-            <div style="color:var(--muted);font-size:.82rem;text-align:center;padding:18px">Loading history…</div>
-          </div>
-        </div>
       </div>
     </div>
 
     <!-- ══ TAB: MY ORDERS ══ -->
     <div id="panel-orders" class="dash-panel" style="display:none">
+
+      <!-- 📢 Platform Announcements Card -->
+      <div id="ann-card" style="background:linear-gradient(135deg,rgba(201,146,42,.08),rgba(201,146,42,.03));border:1px solid rgba(201,146,42,.25);border-radius:14px;padding:16px;margin-bottom:18px">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+          <div style="font-weight:800;font-size:.95rem;color:var(--text)">📢 Platform Announcements</div>
+          <button onclick="loadAnnouncements()" style="background:none;border:none;font-size:.72rem;color:var(--muted);cursor:pointer;padding:3px 8px;border-radius:6px;border:1px solid var(--border)">🔄 Refresh</button>
+        </div>
+        <div id="ann-list" style="margin-bottom:14px">
+          <div style="color:var(--muted);font-size:.8rem;text-align:center;padding:12px">Loading announcements…</div>
+        </div>
+        <button onclick="copyAffLinkDash()" style="width:100%;background:linear-gradient(135deg,#25d366,#1da851);color:#fff;border:none;padding:12px;border-radius:10px;font-weight:700;font-size:.84rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+          🔗 Copy My Referral Link &amp; Share
+        </button>
+      </div>
+
       <h3 style="font-size:1rem;font-weight:700;margin-bottom:16px">📦 My Orders</h3>
       <div id="ord-list"></div>
     </div>
@@ -4471,17 +4441,18 @@ function processPaystack(mode) {
         items:         cart.map(function(i) {
           var prod = (window.prods || []).find(function(p){ return Number(p.id) === Number(i.id); });
           return {
-            id:       i.id,
-            name:     i.name,
-            type:     i.type,
-            price:    i.price,
-            qty:      i.qty || 1,
-            emoji:    i.emoji,
-            sellerId: i.sellerId || (prod && prod.sellerId) || null,
+            id:              i.id,
+            name:            i.name,
+            type:            i.type,
+            price:           i.price,
+            qty:             i.qty || 1,
+            emoji:           i.emoji,
+            sellerId:        i.sellerId || (prod && prod.sellerId) || null,
+            selected_variant: i.selectedVariant || null,
             /* The actual downloadable file URL — NOT the product image */
-            fileUrl:  (prod && (prod.fileUrl || prod.file_url)) || null,
-            fileName: (prod && (prod.fileName || prod.file_name)) || null,
-            fileExt:  (prod && (prod.fileExt  || prod.file_ext))  || null
+            fileUrl:         (prod && (prod.fileUrl || prod.file_url)) || null,
+            fileName:        (prod && (prod.fileName || prod.file_name)) || null,
+            fileExt:         (prod && (prod.fileExt  || prod.file_ext))  || null
           };
         }),
         total:         total,
@@ -4601,8 +4572,6 @@ function processPaystack(mode) {
   }
 
   try {
-    /* Show our transfer banner BEFORE Paystack opens so buyer can reference it */
-    if (typeof showTransferBanner === 'function') showTransferBanner(ngnAmount);
     PaystackPop.setup(cfg).openIframe();
   } catch (err) {
     toast('Paystack error: ' + (err.message || 'Unknown') + '. Please refresh and try again.', 'fail');
@@ -4647,7 +4616,6 @@ function renderOrders() {
 
   list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:.82rem">⏳ Loading orders…</div>';
 
-  /* Always fetch from DB — survives refresh */
   fetch('/api/payment?action=orders&userId=' + encodeURIComponent(String(CU.id)))
     .then(function(r){ return r.json(); })
     .then(function(data) {
@@ -4664,175 +4632,166 @@ function renderOrders() {
       }
 
       list.innerHTML = myOrders.map(function (o) {
-        var allDig = o.items.every(function(i){ return i.type==='digital'||i.type==='course'; });
-        var isPhys = o.items.some(function(i){ return i.type==='physical'; });
-        var isPaid = o.status === 'paid'
-                 || o.status === 'success'
-                 || o.status === 'escrow_held'
-                 || o.status === 'completed';
-        var isDone = o.collected || o.status==='completed';
+        var allDig  = o.items.every(function(i){ return i.type==='digital'||i.type==='course'; });
+        var isPhys  = o.items.some(function(i){ return i.type==='physical'; });
+        var isPaid  = o.status==='paid'||o.status==='success'||o.status==='escrow_held'||o.status==='completed';
+        var isDone  = o.collected || o.status==='completed';
+        var isEscrow   = o.status === 'escrow_held';
+        var isDisputed = o.status === 'disputed' || o.disputed;
 
-        /* Action button — tied to DB status, survives refresh */
+        /* ── Status badge config ── */
+        var statusEmoji, statusLabel, statusBg, statusColor;
+        if (isDone)       { statusEmoji='✅'; statusLabel='Completed';    statusBg='#d1fae5'; statusColor='#065f46'; }
+        else if(isDisputed){statusEmoji='⚖️'; statusLabel='Disputed';     statusBg='#fef2f2'; statusColor='#991b1b'; }
+        else if(isEscrow) { statusEmoji='🛡️'; statusLabel='Escrow Held';  statusBg='#eff6ff'; statusColor='#1e40af'; }
+        else if(isPaid)   { statusEmoji='🔒'; statusLabel='Paid · Escrow';statusBg='#dbeafe'; statusColor='#1e40af'; }
+        else              { statusEmoji='⏳'; statusLabel='Pending';       statusBg='#fef3c7'; statusColor='#92400e'; }
+
+        /* ── Hero badge line ── */
+        var heroBadge;
+        if (isDone)     heroBadge = '<div style="display:inline-flex;align-items:center;gap:6px;background:#d1fae5;color:#065f46;border:1px solid #6ee7b7;padding:6px 14px;border-radius:50px;font-size:.75rem;font-weight:800;letter-spacing:.4px;margin-bottom:14px">✅ ORDER COMPLETE</div>';
+        else if(isPaid && isPhys) heroBadge = '<div style="display:inline-flex;align-items:center;gap:6px;background:#dbeafe;color:#1e40af;border:1px solid #93c5fd;padding:6px 14px;border-radius:50px;font-size:.75rem;font-weight:800;letter-spacing:.4px;margin-bottom:14px">🚚 PENDING SHIPMENT</div>';
+        else if(isPaid) heroBadge = '<div style="display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,rgba(201,146,42,.15),rgba(201,146,42,.08));color:#92400e;border:1px solid rgba(201,146,42,.35);padding:6px 14px;border-radius:50px;font-size:.75rem;font-weight:800;letter-spacing:.4px;margin-bottom:14px">🟢 ESCROW SECURED · PAID</div>';
+        else heroBadge = '<div style="display:inline-flex;align-items:center;gap:6px;background:#fef3c7;color:#92400e;border:1px solid #fcd34d;padding:6px 14px;border-radius:50px;font-size:.75rem;font-weight:800;letter-spacing:.4px;margin-bottom:14px">⏳ AWAITING PAYMENT</div>';
+
+        /* ── Itemized breakdown ── */
+        var itemsHtml = o.items.map(function(item) {
+          var imgSrc = item.image || item.img || '';
+          var imgEl = imgSrc
+            ? '<img src="'+imgSrc+'" style="width:52px;height:52px;border-radius:8px;object-fit:cover;flex-shrink:0;border:1px solid var(--border)" onerror="this.style.display=\'none\'">'
+            : '<div style="width:52px;height:52px;border-radius:8px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0">'+(item.emoji||'📦')+'</div>';
+          var variantBadge = (item.selected_variant || item.selectedVariant)
+            ? '<span style="display:inline-block;background:linear-gradient(135deg,rgba(201,146,42,.12),rgba(201,146,42,.06));color:var(--gold);border:1px solid rgba(201,146,42,.3);padding:3px 10px;border-radius:50px;font-size:.68rem;font-weight:700;margin-top:5px;letter-spacing:.2px">🎨 Variant: '+(item.selected_variant||item.selectedVariant)+'</span>'
+            : '';
+          return '<div style="display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--border)">'
+            + imgEl
+            + '<div style="flex:1;min-width:0">'
+            + '<div style="font-weight:700;font-size:.88rem;color:var(--text);margin-bottom:2px">'+(item.emoji?item.emoji+' ':'')+item.name+'</div>'
+            + variantBadge
+            + '<div style="font-size:.75rem;color:var(--muted);margin-top:4px">Qty: '+(item.qty||1)+' &nbsp;·&nbsp; ₦'+Number(item.price||0).toLocaleString()+'</div>'
+            + '</div>'
+            + '</div>';
+        }).join('');
+
+        /* ── Customer / shipping info ── */
+        var customerHtml = '';
+        if (o.customer) {
+          var cName  = o.customer.name    || '';
+          var cPhone = o.customer.whatsapp|| '';
+          var cAddr  = o.customer.address || '';
+          var cEmail = o.customer.email   || '';
+          if (cName || cPhone || cAddr) {
+            var waLink = cPhone ? ' <a href="https://wa.me/'+cPhone.replace(/\D/g,'')+'" target="_blank" style="color:#25d366;font-weight:700;font-size:.72rem;text-decoration:none">💬 WhatsApp</a>' : '';
+            customerHtml = '<div style="background:linear-gradient(135deg,rgba(37,99,235,.06),rgba(37,99,235,.03));border:1px solid #bfdbfe;border-radius:10px;padding:14px;margin-top:12px">'
+              + '<div style="font-size:.7rem;font-weight:800;color:#1d4ed8;text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px">📋 Customer & Delivery Info</div>'
+              + (cName  ? '<div style="font-size:.82rem;margin-bottom:4px;color:var(--text)">👤 <strong>'+cName+'</strong></div>' : '')
+              + (cPhone ? '<div style="font-size:.82rem;margin-bottom:4px;color:var(--text)">📞 '+cPhone+waLink+'</div>' : '')
+              + (cEmail ? '<div style="font-size:.78rem;margin-bottom:4px;color:var(--muted)">✉️ '+cEmail+'</div>' : '')
+              + (cAddr  ? '<div style="font-size:.82rem;color:var(--text);margin-top:6px;padding-top:8px;border-top:1px solid #bfdbfe">📍 '+cAddr+'</div>' : '')
+              + '</div>';
+          }
+        }
+
+        /* ── Action button logic (unchanged) ── */
         var actionBtn = '';
         if (allDig && (isPaid || isDone)) {
-          /* Resolve file URL at render time — look in items first, then order top-level */
           var rawFileUrl = '';
-          /* Priority 1: file URL stored on each item (set at checkout + webhook) */
           for (var ii = 0; ii < o.items.length; ii++) {
             var itm = o.items[ii];
             var candidate = itm.fileUrl || itm.file_url || '';
-            /* Skip ImgBB image URLs that are just the preview thumbnail */
-            if (candidate && candidate.length > 10 &&
-                candidate.indexOf('/image/') === -1) {
-              rawFileUrl = candidate; break;
-            }
-            /* Accept any URL — prefer ones that look like real file downloads */
-            if (candidate && candidate.length > 10 && !rawFileUrl) {
-              rawFileUrl = candidate;
-            }
+            if (candidate && candidate.length > 10 && candidate.indexOf('/image/') === -1) { rawFileUrl = candidate; break; }
+            if (candidate && candidate.length > 10 && !rawFileUrl) rawFileUrl = candidate;
           }
-          /* Priority 2: top-level order file_url */
           if (!rawFileUrl) rawFileUrl = o.fileUrl || o.file_url || '';
-
-          /* Normalize URL based on type:
-             base64 data URL  : "data:application/pdf;base64,..." — use directly, perfect for PDF
-             Google Drive      : /file/d/ID/view → /uc?export=download&id=ID
-             Dropbox           : ?dl=0 → ?dl=1
-             ImgBB image link  : skip — these are preview images not files
-             Everything else   : use as-is                                     */
           var cleanUrl = rawFileUrl;
           if (cleanUrl && cleanUrl.indexOf('data:') !== 0) {
-            /* Google Drive viewer → direct download */
             var gdMatch = cleanUrl.match(/drive\.google\.com\/file\/d\/([^\/]+)/);
-            if (gdMatch) {
-              cleanUrl = 'https://drive.google.com/uc?export=download&id=' + gdMatch[1];
-            }
-            /* Dropbox preview → direct download CDN */
-            if (cleanUrl.indexOf('dropbox.com') !== -1) {
-              cleanUrl = cleanUrl.replace('?dl=0','?dl=1').replace('www.dropbox.com','dl.dropboxusercontent.com');
-            }
-            /* ImgBB image display pages are NOT files — skip them */
-            if (cleanUrl.indexOf('ibb.co') !== -1 && cleanUrl.indexOf('i.ibb.co') === -1) {
-              cleanUrl = ''; /* force fallback to markDL live fetch */
-            }
+            if (gdMatch) cleanUrl = 'https://drive.google.com/uc?export=download&id=' + gdMatch[1];
+            if (cleanUrl.indexOf('dropbox.com') !== -1) cleanUrl = cleanUrl.replace('?dl=0','?dl=1').replace('www.dropbox.com','dl.dropboxusercontent.com');
+            if (cleanUrl.indexOf('ibb.co') !== -1 && cleanUrl.indexOf('i.ibb.co') === -1) cleanUrl = '';
           }
-
-          /* Determine download filename */
           var dlName = 'download';
           for (var fi = 0; fi < o.items.length; fi++) {
             var fit = o.items[fi];
             if (fit.fileName || fit.file_name) { dlName = fit.fileName || fit.file_name; break; }
             if (fit.name) { dlName = fit.name + (fit.fileExt || fit.file_ext || ''); break; }
           }
-
           if (cleanUrl) {
-            /* Direct anchor — works for both base64 data: URLs and https: URLs.
-               download attr forces Save As on desktop.
-               target="_blank" is mobile fallback.
-               onclick fires escrow release without blocking the download. */
-            actionBtn = '<a href="' + cleanUrl + '" download="' + dlName.replace(/"/g,'') + '" '
-              + 'target="_blank" rel="noopener noreferrer" class="dl-btn" '
-              + 'onclick="markDLEscrow(\'' + o.id + '\')">⬇️ Download Product</a>';
+            actionBtn = '<a href="'+cleanUrl+'" download="'+dlName.replace(/"/g,'')+'" target="_blank" rel="noopener noreferrer" class="dl-btn" onclick="markDLEscrow(\''+o.id+'\')">⬇️ Download Product</a>';
           } else {
-            /* fileUrl missing or was an ImgBB image link — fetch correct URL live */
-            actionBtn = '<button onclick="markDL(\'' + o.id + '\')" class="dl-btn">⬇️ Download Product</button>';
+            actionBtn = '<button onclick="markDL(\''+o.id+'\')" class="dl-btn">⬇️ Download Product</button>';
           }
         } else if (isDone) {
-          actionBtn = '<div style="color:var(--green);font-size:.84rem;font-weight:600;margin-top:10px;padding:10px 14px;background:var(--green-bg);border-radius:6px;text-align:center">✅ Order Complete</div>';
+          actionBtn = '<div style="color:var(--green);font-size:.84rem;font-weight:600;padding:12px 14px;background:var(--green-bg);border-radius:8px;text-align:center">✅ Order Complete — Thank you!</div>';
         } else if (isPhys && isPaid) {
-          /* Physical: buyer gets DVC code to show seller; seller enters it to release funds.
-             SELLER DETECTION FIX: check sellerId on items, seller name, OR if the user is
-             viewing in seller dashboard context. Default to buyer view if ambiguous. */
-          var isBuyer  = !CU || (o.userId === String(CU.id))
-                      || (o.customer && o.customer.email && CU.email &&
-                          o.customer.email.toLowerCase() === CU.email.toLowerCase());
-          var isSeller = CU && o.items && o.items.some(function(i){
-            return String(i.sellerId || i.seller_id || '') === String(CU.id)
-                || String(i.seller   || '').toLowerCase() === String(CU.name||'').toLowerCase();
-          });
-          /* If the logged-in user is neither detected buyer NOR seller (data mismatch),
-             prefer seller view so they can always confirm delivery */
+          var isBuyer  = !CU || (o.userId === String(CU.id)) || (o.customer && o.customer.email && CU.email && o.customer.email.toLowerCase() === CU.email.toLowerCase());
+          var isSeller = CU && o.items && o.items.some(function(i){ return String(i.sellerId||i.seller_id||'')===String(CU.id)||String(i.seller||'').toLowerCase()===String(CU.name||'').toLowerCase(); });
           if (isSeller || (!isBuyer && CU && CU.role === 'seller')) {
             var statusBtns = '';
-            if (o.status === 'paid' || o.status === 'escrow_held') {
-              statusBtns = '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">'
-                + '<button onclick="updateOrderStatus(\'' + o.id + '\',\'preparing\')" style="flex:1;background:rgba(245,158,11,.1);border:1px solid #f59e0b;color:#f59e0b;padding:8px;border-radius:6px;font-size:.75rem;font-weight:700;cursor:pointer">📦 Preparing</button>'
-                + '<button onclick="updateOrderStatus(\'' + o.id + '\',\'shipped\')" style="flex:1;background:rgba(59,130,246,.1);border:1px solid #3b82f6;color:#3b82f6;padding:8px;border-radius:6px;font-size:.75rem;font-weight:700;cursor:pointer">🚚 Shipped</button>'
+            if (o.status==='paid'||o.status==='escrow_held') {
+              statusBtns = '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">'
+                + '<button onclick="updateOrderStatus(\''+o.id+'\',\'preparing\')" style="flex:1;background:rgba(245,158,11,.1);border:1px solid #f59e0b;color:#f59e0b;padding:10px;border-radius:8px;font-size:.78rem;font-weight:700;cursor:pointer">📦 Preparing</button>'
+                + '<button onclick="updateOrderStatus(\''+o.id+'\',\'shipped\')" style="flex:1;background:rgba(59,130,246,.1);border:1px solid #3b82f6;color:#3b82f6;padding:10px;border-radius:8px;font-size:.78rem;font-weight:700;cursor:pointer">🚚 Shipped</button>'
                 + '</div>';
-            } else if (o.status === 'preparing') {
-              statusBtns = '<div style="display:flex;gap:6px;margin-top:8px">'
-                + '<button onclick="updateOrderStatus(\'' + o.id + '\',\'shipped\')" style="flex:1;background:rgba(59,130,246,.1);border:1px solid #3b82f6;color:#3b82f6;padding:8px;border-radius:6px;font-size:.75rem;font-weight:700;cursor:pointer">🚚 Mark as Shipped</button>'
-                + '</div>';
-            } else if (o.status === 'shipped') {
-              statusBtns = '<div style="display:flex;gap:6px;margin-top:8px">'
-                + '<button onclick="updateOrderStatus(\'' + o.id + '\',\'delivered\')" style="flex:1;background:rgba(16,185,129,.1);border:1px solid #10b981;color:#10b981;padding:8px;border-radius:6px;font-size:.75rem;font-weight:700;cursor:pointer">✅ Mark as Delivered</button>'
-                + '</div>';
+            } else if (o.status==='preparing') {
+              statusBtns = '<div style="display:flex;gap:6px;margin-bottom:8px"><button onclick="updateOrderStatus(\''+o.id+'\',\'shipped\')" style="flex:1;background:rgba(59,130,246,.1);border:1px solid #3b82f6;color:#3b82f6;padding:10px;border-radius:8px;font-size:.78rem;font-weight:700;cursor:pointer">🚚 Mark as Shipped</button></div>';
+            } else if (o.status==='shipped') {
+              statusBtns = '<div style="display:flex;gap:6px;margin-bottom:8px"><button onclick="updateOrderStatus(\''+o.id+'\',\'delivered\')" style="flex:1;background:rgba(16,185,129,.1);border:1px solid #10b981;color:#10b981;padding:10px;border-radius:8px;font-size:.78rem;font-weight:700;cursor:pointer">✅ Mark as Delivered</button></div>';
             }
-            actionBtn = statusBtns + '<button onclick="openDVC(\'' + o.id + '\',\'seller\')" style="width:100%;background:var(--gold);color:#fff;border:none;padding:14px;border-radius:6px;font-weight:700;font-size:.88rem;cursor:pointer;margin-top:8px">📦 Confirm Delivery — Enter Code</button>';
+            actionBtn = statusBtns + '<button onclick="openDVC(\''+o.id+'\',\'seller\')" style="width:100%;background:var(--gold);color:#fff;border:none;padding:14px;border-radius:8px;font-weight:700;font-size:.88rem;cursor:pointer">📦 Confirm Delivery — Enter Code</button>';
           } else {
-            actionBtn = '<button onclick="openDVC(\'' + o.id + '\',\'buyer\')" style="width:100%;background:var(--blue);color:#fff;border:none;padding:14px;border-radius:6px;font-weight:700;font-size:.88rem;cursor:pointer;margin-top:10px">🔐 Get Delivery Code</button>';
+            actionBtn = '<button onclick="openDVC(\''+o.id+'\',\'buyer\')" style="width:100%;background:var(--blue);color:#fff;border:none;padding:14px;border-radius:8px;font-weight:700;font-size:.88rem;cursor:pointer">🔐 Get Delivery Code</button>';
           }
         } else if (isPaid) {
-          /* escrow_held/paid but item type logic above didn't match — safe confirm fallback */
-          actionBtn = '<button onclick="markCol(\'' + o.id + '\')" style="width:100%;background:var(--green);color:#fff;border:none;padding:14px;border-radius:6px;font-weight:700;font-size:.88rem;cursor:pointer;margin-top:10px">✅ Confirm Receipt & Release Payment</button>';
+          actionBtn = '<button onclick="markCol(\''+o.id+'\')" style="width:100%;background:var(--green);color:#fff;border:none;padding:14px;border-radius:8px;font-weight:700;font-size:.88rem;cursor:pointer">✅ Confirm Receipt & Release Payment</button>';
         } else {
-          /* Genuinely awaiting Paystack webhook — ref not yet confirmed */
-          actionBtn = '<div style="color:var(--orange);font-size:.78rem;margin-top:8px;padding:8px 12px;background:var(--orange-bg);border-radius:6px;text-align:center">⏳ Awaiting payment confirmation…</div>';
+          actionBtn = '<div style="color:var(--orange);font-size:.78rem;padding:10px 12px;background:var(--orange-bg);border-radius:8px;text-align:center">⏳ Awaiting payment confirmation…</div>';
         }
 
-        var isEscrow    = o.status === 'escrow_held';
-        var isDisputed  = o.status === 'disputed' || o.disputed;
-        var statusLabel = isDone      ? 'Completed'
-                        : isDisputed  ? '⚖️ Disputed'
-                        : isEscrow    ? '🛡️ Escrow Held'
-                        : isPaid      ? 'Paid · Escrow'
-                        : 'Pending';
-        var statusBg    = isDone      ? '#d1fae5'
-                        : isDisputed  ? '#fef2f2'
-                        : isEscrow    ? '#eff6ff'
-                        : isPaid      ? '#dbeafe'
-                        : '#fef3c7';
-        var statusColor = isDone      ? '#065f46'
-                        : isDisputed  ? '#991b1b'
-                        : isEscrow    ? '#1e40af'
-                        : isPaid      ? '#1e40af'
-                        : '#92400e';
-
-        /* Dispute button: shown for paid/escrow orders that are not yet complete or disputed */
+        /* ── Dispute button ── */
         var disputeBtn = '';
         if (isPaid && !isDone && !isDisputed) {
-          disputeBtn = '<button onclick="disputeOrder(\'' + o.id + '\')" style="width:100%;margin-top:8px;background:transparent;border:1px solid var(--red);color:var(--red);padding:10px;border-radius:6px;font-size:.8rem;font-weight:600;cursor:pointer">⚖️ Dispute This Order</button>';
+          disputeBtn = '<button onclick="disputeOrder(\''+o.id+'\')" style="width:100%;margin-top:8px;background:transparent;border:1px solid var(--red);color:var(--red);padding:10px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer">⚖️ Dispute This Order</button>';
         } else if (isDisputed) {
-          disputeBtn = '<div style="color:#991b1b;font-size:.78rem;margin-top:8px;padding:8px 12px;background:#fef2f2;border-radius:6px;text-align:center;border:1px solid #fecaca">⚖️ Dispute raised — Admin reviewing within 24h</div>';
+          disputeBtn = '<div style="color:#991b1b;font-size:.78rem;margin-top:8px;padding:10px 12px;background:#fef2f2;border-radius:8px;text-align:center;border:1px solid #fecaca">⚖️ Dispute raised — Admin reviewing within 24h</div>';
         }
 
-        var addrRow = '';
-        if (isPhys && o.customer) {
-          var addr = o.customer.address || ''; var phone = o.customer.whatsapp || '';
-          if (addr || phone) {
-            addrRow = '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:10px;margin:8px 0;font-size:.79rem">'
-              + '<div style="color:#1d4ed8;font-weight:600;margin-bottom:3px">📦 Delivery</div>'
-              + (phone ? '<div>📞 ' + phone + '</div>' : '')
-              + (addr  ? '<div>📍 ' + addr  + '</div>' : '')
-              + '</div>';
-          }
-        }
-
-        return '<div style="background:var(--bg2);border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.06)">'
-          + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;flex-wrap:wrap;gap:6px">'
-          + '<div><div style="font-size:.7rem;color:var(--muted)">Order</div>'
-          + '<div style="font-weight:700;font-size:.88rem">' + o.id + '</div></div>'
-          + '<span style="background:' + statusBg + ';color:' + statusColor + ';padding:3px 10px;border-radius:50px;font-size:.65rem;font-weight:700">' + statusLabel + '</span>'
+        /* ── INVOICE CARD ── */
+        return '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,.07)">'
+          /* Card top accent bar */
+          + '<div style="height:4px;background:'+(isDone?'linear-gradient(90deg,#059669,#34d399)':isPaid?'linear-gradient(90deg,#c9922a,#f5c97a)':'linear-gradient(90deg,#d97706,#fcd34d)')+'"></div>'
+          /* Header section */
+          + '<div style="padding:16px 16px 0">'
+          + heroBadge
+          + '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:12px">'
+          + '<div>'
+          + '<div style="font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:2px">Order ID</div>'
+          + '<div style="font-family:\'Cormorant Garamond\',serif;font-size:1.05rem;font-weight:700;color:var(--text);letter-spacing:.3px">' + o.id + '</div>'
           + '</div>'
-          + (isPhys ? buildOrderTracker(o.status) : '')
-          + '<div style="font-size:.82rem;color:var(--text);margin-bottom:4px">' + o.items.map(function(i){ return i.emoji+' '+i.name.substring(0,28); }).join(', ') + '</div>'
-          + addrRow
-          + '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-top:6px">'
-          + '<span style="font-family:serif;font-size:1.1rem;font-weight:700;color:var(--gold)">' + currSymbol(o.currency) + o.total.toLocaleString() + '</span>'
-          + '<span style="font-size:.7rem;color:var(--muted)">' + (o.date||'') + '</span>'
+          + '<div style="text-align:right">'
+          + '<div style="font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:2px">Total</div>'
+          + '<div style="font-family:\'Cormorant Garamond\',serif;font-size:1.3rem;font-weight:700;color:var(--gold)">₦' + Number(o.total||0).toLocaleString() + '</div>'
           + '</div>'
+          + '</div>'
+          + '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;padding-bottom:12px;border-bottom:1px solid var(--border)">'
+          + '<span style="background:'+statusBg+';color:'+statusColor+';padding:3px 12px;border-radius:50px;font-size:.65rem;font-weight:800;letter-spacing:.3px">'+statusEmoji+' '+statusLabel+'</span>'
+          + '<span style="font-size:.72rem;color:var(--muted)">📅 ' + (o.date||'') + '</span>'
+          + '</div>'
+          + '</div>'
+          /* Tracker for physical */
+          + (isPhys ? '<div style="padding:0 16px">' + buildOrderTracker(o.status) + '</div>' : '')
+          /* Items breakdown */
+          + '<div style="padding:0 16px">'
+          + '<div style="font-size:.68rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;padding-top:14px;margin-bottom:4px">🧾 Items</div>'
+          + itemsHtml
+          + '</div>'
+          /* Customer info */
+          + '<div style="padding:0 16px">' + customerHtml + '</div>'
+          /* Actions */
+          + '<div style="padding:14px 16px 16px">'
           + actionBtn
           + disputeBtn
+          + '</div>'
           + '</div>';
       }).join('');
     })
@@ -5552,8 +5511,6 @@ function refreshProf() {
   switchDashTab('seller', document.getElementById('tab-seller'));
   renderSellerDash();
   renderOrders();
-  /* Load seller incoming orders from DB on profile open */
-  setTimeout(function(){ if (typeof loadSellerOrders === 'function') loadSellerOrders(); }, 800);
   /* Render tier badge */
   if (typeof renderTierGrid === 'function') renderTierGrid();
 }
@@ -5566,7 +5523,6 @@ function switchDashTab(name, btn) {
   }
   if (name === 'seller') {
     setTimeout(function(){ loadWalletBalance(); }, 400);
-    setTimeout(function(){ if (typeof loadSellerOrders === 'function') loadSellerOrders(); }, 600);
   }
   if (name === 'affiliate') {
     setTimeout(function(){ loadAffiliateDash(); }, 300);
@@ -6588,249 +6544,6 @@ function renderSellerPage() {
   }
 }
 window.renderSellerPage = renderSellerPage;
-
-/* ════════════════════════════════════════════════════════════════
-   SELLER INCOMING ORDERS — fetched fresh from DB on every load
-   Uses ?sellerId= endpoint so data survives page refresh
-════════════════════════════════════════════════════════════════ */
-var _soAllOrders = [];   /* cached orders for this seller */
-var _soCurrentTab = 'pending';
-
-function soTab(tab) {
-  _soCurrentTab = tab;
-  var pendBtn = document.getElementById('so-tab-pending');
-  var histBtn = document.getElementById('so-tab-history');
-  var pendPanel = document.getElementById('so-pending-panel');
-  var histPanel = document.getElementById('so-history-panel');
-  if (!pendPanel || !histPanel) return;
-  if (tab === 'pending') {
-    if (pendBtn) { pendBtn.style.background='var(--gold)'; pendBtn.style.color='#fff'; pendBtn.style.fontWeight='700'; }
-    if (histBtn) { histBtn.style.background='var(--bg3)'; histBtn.style.color='var(--muted)'; histBtn.style.fontWeight='600'; }
-    pendPanel.style.display = 'block';
-    histPanel.style.display = 'none';
-  } else {
-    if (histBtn) { histBtn.style.background='var(--gold)'; histBtn.style.color='#fff'; histBtn.style.fontWeight='700'; }
-    if (pendBtn) { pendBtn.style.background='var(--bg3)'; pendBtn.style.color='var(--muted)'; pendBtn.style.fontWeight='600'; }
-    histPanel.style.display = 'block';
-    pendPanel.style.display = 'none';
-  }
-  renderSellerOrderLists();
-}
-
-function loadSellerOrders() {
-  if (!window.CU || !window.CU.id) return;
-  var pendPanel = document.getElementById('so-pending-panel');
-  var histPanel = document.getElementById('so-history-panel');
-  if (pendPanel) pendPanel.innerHTML = '<div style="color:var(--muted);font-size:.82rem;text-align:center;padding:18px">⏳ Loading orders…</div>';
-  if (histPanel) histPanel.innerHTML = '<div style="color:var(--muted);font-size:.82rem;text-align:center;padding:18px">⏳ Loading…</div>';
-
-  fetch('/api/payment?action=orders&sellerId=' + encodeURIComponent(String(CU.id)))
-    .then(function(r){ return r.json(); })
-    .then(function(d) {
-      _soAllOrders = d.orders || [];
-      renderSellerOrderLists();
-    })
-    .catch(function() {
-      if (pendPanel) pendPanel.innerHTML = '<div style="color:var(--muted);font-size:.82rem;text-align:center;padding:18px">Could not load orders. Tap 🔄 Refresh.</div>';
-    });
-}
-
-function renderSellerOrderLists() {
-  var myProds = window.prods ? prods.filter(function(p){ return window.CU && (p.seller === CU.name || p.sellerEmail === maskEmail(CU.email) || (p.sellerId && String(p.sellerId) === String(CU.id))); }) : [];
-  var pending = _soAllOrders.filter(function(o){ return o.status !== 'completed' && !o.collected; });
-  var history = _soAllOrders.filter(function(o){ return o.status === 'completed' || o.collected; });
-  var pendPanel = document.getElementById('so-pending-panel');
-  var histPanel = document.getElementById('so-history-panel');
-  if (pendPanel) pendPanel.innerHTML = pending.length ? pending.map(function(o){ return buildSellerOrderCard(o, myProds, true); }).join('') : '<div style="text-align:center;padding:20px;color:var(--muted);font-size:.84rem">✅ No pending orders right now.<br><span style="font-size:.78rem">New orders appear here instantly when buyers pay.</span></div>';
-  if (histPanel) histPanel.innerHTML = history.length ? history.map(function(o){ return buildSellerOrderCard(o, myProds, false); }).join('') : '<div style="text-align:center;padding:20px;color:var(--muted);font-size:.84rem">No completed orders yet.</div>';
-}
-
-function buildSellerOrderCard(o, myProds, isPending) {
-  var myItems = o.items ? o.items.filter(function(i){ return myProds.some(function(p){ return p.id === i.id || (p.sellerId && String(p.sellerId) === String(CU && CU.id)); }); }) : (o.items || []);
-  if (!myItems.length) myItems = o.items || [];
-  var isPhys  = myItems.some(function(i){ return i.type === 'physical'; });
-  var isDig   = myItems.every(function(i){ return i.type === 'digital' || i.type === 'course'; });
-  var myTotal = myItems.reduce(function(s,i){ return s + (i.price||0) * (i.qty||1); }, 0);
-  var myPayout = Math.round(myTotal * 0.9);
-  var custName  = (o.customer && o.customer.name) || 'Customer';
-  var custPhone = (o.customer && (o.customer.whatsapp || o.customer.phone)) || '';
-  var custAddr  = (o.customer && (o.customer.address || o.customer.addr)) || '';
-
-  /* Status bar */
-  var statusBg, statusColor, statusLabel;
-  if (o.collected || o.status === 'completed') { statusBg='var(--green-bg)'; statusColor='var(--green)'; statusLabel='✅ Complete — Paid Out'; }
-  else if (o.status === 'shipped')  { statusBg='#dbeafe'; statusColor='#1e40af'; statusLabel='🚚 Shipped'; }
-  else if (o.status === 'preparing'){ statusBg='#fef3c7'; statusColor='#92400e'; statusLabel='📦 Preparing'; }
-  else if (o.status === 'disputed') { statusBg='var(--red-bg)'; statusColor='var(--red)'; statusLabel='⚖️ Disputed'; }
-  else { statusBg='#fef3c7'; statusColor='#92400e'; statusLabel='⏳ Pending Delivery Confirmation'; }
-
-  /* Items with variant badge */
-  var itemsHtml = myItems.map(function(item) {
-    var variantBadge = (item.selected_variant || item.selectedVariant)
-      ? ' <span style="display:inline-block;background:linear-gradient(135deg,rgba(201,146,42,.12),rgba(201,146,42,.06));color:var(--gold);border:1px solid rgba(201,146,42,.3);padding:2px 8px;border-radius:50px;font-size:.65rem;font-weight:700;margin-left:4px">🎨 '+(item.selected_variant||item.selectedVariant)+'</span>'
-      : '';
-    return '<div style="font-size:.82rem;color:var(--text);padding:4px 0">'+(item.emoji||'📦')+' '+item.name.substring(0,35)+variantBadge+'</div>';
-  }).join('');
-
-  /* Shipping card */
-  var shipCard = '';
-  if (isPhys && (custPhone || custAddr)) {
-    var waLink = custPhone ? ' <a href="https://wa.me/'+custPhone.replace(/\D/g,'')+'" target="_blank" style="color:#25d366;font-weight:700;font-size:.72rem;text-decoration:none">💬 WhatsApp</a>' : '';
-    shipCard = '<div style="background:rgba(37,99,235,.06);border:1px solid #bfdbfe;border-radius:8px;padding:10px 12px;margin:10px 0">'
-      + '<div style="color:#1d4ed8;font-weight:700;font-size:.75rem;margin-bottom:6px">📦 Ship to This Address</div>'
-      + (custPhone ? '<div style="font-size:.8rem;margin-bottom:3px">📞 '+custPhone+waLink+'</div>' : '')
-      + (custAddr  ? '<div style="font-size:.8rem;color:var(--text)">📍 '+custAddr+'</div>' : '')
-      + '</div>';
-  }
-
-  /* Digital note */
-  var digNote = '';
-  if (isDig && isPending) {
-    digNote = '<div style="background:rgba(240,192,64,.06);border:1px solid rgba(240,192,64,.18);border-radius:8px;padding:9px 12px;margin:8px 0;font-size:.78rem;color:var(--muted)">⚡ <strong style="color:var(--gold)">Digital order</strong> — Payout releases after buyer confirms download.</div>';
-  }
-
-  /* DVC input for physical pending */
-  var dvcHtml = '';
-  if (isPhys && isPending && !o.collected) {
-    var dvcInputId = 'dvc-so-' + o.id;
-    var dvcErrId   = 'dvc-so-err-' + o.id;
-    dvcHtml = '<div style="margin-top:10px;padding:12px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px">'
-      + '<div style="font-size:.78rem;font-weight:700;color:#92400e;margin-bottom:8px">📦 Enter Buyer 6-Digit Delivery Code to Release Funds</div>'
-      + '<div style="display:flex;gap:8px;align-items:center">'
-      + '<input id="' + dvcInputId + '" type="text" inputmode="numeric" maxlength="6" placeholder="● ● ● ● ● ●" style="flex:1;padding:10px;border:2px solid #fde68a;border-radius:6px;font-size:1.1rem;letter-spacing:8px;text-align:center;background:var(--bg2);outline:none;font-weight:700" oninput="this.value=this.value.replace(/[^0-9]/g,&quot;&quot;)"/>'
-      + '<button onclick="sellerClaimFromSO(&quot;' + o.id + '&quot;)" style="background:#c9922a;color:#fff;border:none;padding:10px 16px;border-radius:6px;font-weight:800;font-size:.82rem;cursor:pointer;white-space:nowrap">✅ Claim</button>'
-      + '</div>'
-      + '<div id="' + dvcErrId + '" style="font-size:.75rem;color:#dc2626;margin-top:5px;min-height:14px"></div>'
-      + '</div>';
-  }
-
-  /* Status update buttons */
-  var statusBtns = '';
-  if (isPhys && isPending) {
-    var oid = o.id;
-    if (o.status === 'paid' || o.status === 'escrow_held') {
-      statusBtns = '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">'
-        + '<button onclick="updateOrderStatus(&quot;'+oid+'&quot;,&quot;preparing&quot;)" style="flex:1;background:rgba(245,158,11,.1);border:1px solid #f59e0b;color:#f59e0b;padding:9px;border-radius:7px;font-size:.76rem;font-weight:700;cursor:pointer">📦 Preparing</button>'
-        + '<button onclick="updateOrderStatus(&quot;'+oid+'&quot;,&quot;shipped&quot;)" style="flex:1;background:rgba(59,130,246,.1);border:1px solid #3b82f6;color:#3b82f6;padding:9px;border-radius:7px;font-size:.76rem;font-weight:700;cursor:pointer">🚚 Shipped</button>'
-        + '</div>';
-    } else if (o.status === 'preparing') {
-      statusBtns = '<div style="display:flex;margin-top:10px"><button onclick="updateOrderStatus(&quot;'+oid+'&quot;,&quot;shipped&quot;)" style="flex:1;background:rgba(59,130,246,.1);border:1px solid #3b82f6;color:#3b82f6;padding:9px;border-radius:7px;font-size:.76rem;font-weight:700;cursor:pointer">🚚 Mark as Shipped</button></div>';
-    } else if (o.status === 'shipped') {
-      statusBtns = '<div style="display:flex;margin-top:10px"><button onclick="updateOrderStatus(&quot;'+oid+'&quot;,&quot;delivered&quot;)" style="flex:1;background:rgba(16,185,129,.1);border:1px solid #10b981;color:#10b981;padding:9px;border-radius:7px;font-size:.76rem;font-weight:700;cursor:pointer">✅ Mark as Delivered</button></div>';
-    }
-  }
-
-  return '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.06)">'
-    + '<div style="height:3px;background:'+(isPending?'linear-gradient(90deg,#c9922a,#f5c97a)':'linear-gradient(90deg,#059669,#34d399)')+'"></div>'
-    + '<div style="padding:14px">'
-    + '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px;margin-bottom:8px">'
-    + '<div><div style="font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.6px">Order</div>'
-    + '<div style="font-weight:700;font-size:.88rem;color:var(--text)">'+o.id+'</div>'
-    + '<div style="font-size:.74rem;color:var(--muted);margin-top:2px">👤 '+custName+' · '+(o.date||'')+'</div></div>'
-    + '<div style="text-align:right"><span style="background:'+statusBg+';color:'+statusColor+';padding:3px 10px;border-radius:50px;font-size:.65rem;font-weight:700">'+statusLabel+'</span>'
-    + '<div style="font-size:1.1rem;font-weight:700;color:var(--gold);margin-top:6px">₦'+myPayout.toLocaleString()+' <span style="font-size:.65rem;color:var(--muted)">payout</span></div></div>'
-    + '</div>'
-    + itemsHtml
-    + shipCard + digNote + statusBtns + dvcHtml
-    + (custPhone ? '<a href="https://wa.me/'+custPhone.replace(/\D/g,'')+'" target="_blank" style="display:inline-flex;align-items:center;gap:5px;margin-top:10px;background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.25);color:var(--green);padding:6px 14px;border-radius:7px;font-size:.76rem;font-weight:700;text-decoration:none">💬 Message Buyer on WhatsApp</a>' : '')
-    + '</div></div>';
-}
-
-function sellerClaimFromSO(orderId) {
-  var inp = document.getElementById('dvc-so-' + orderId);
-  var errEl = document.getElementById('dvc-so-err-' + orderId);
-  if (!inp) return;
-  var code = inp.value.trim();
-  if (code.length !== 6 || isNaN(code)) {
-    if (errEl) errEl.textContent = '❌ Enter the 6-digit code from the buyer.';
-    return;
-  }
-  if (errEl) errEl.textContent = '';
-  /* Re-use existing sellerClaimFunds which reads dvc-claim-<id> input —
-     so we copy the value across to that input if it exists, else call API directly */
-  var legacyInp = document.getElementById('dvc-claim-' + orderId);
-  if (legacyInp) { legacyInp.value = code; sellerClaimFunds(orderId); }
-  else {
-    /* Direct API call */
-    fetch('/api/payment?action=dvc-release', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ orderId: orderId, code: code, sellerId: window.CU ? String(CU.id) : '' })
-    })
-    .then(function(r){ return r.json(); })
-    .then(function(d) {
-      if (d.ok) {
-        toast('✅ Delivery confirmed! Funds released to your wallet.', 'ok');
-        loadSellerOrders();
-      } else {
-        if (errEl) errEl.textContent = '❌ ' + (d.error || 'Invalid code');
-        toast('❌ ' + (d.error || 'Code mismatch'), 'fail');
-      }
-    })
-    .catch(function(){ if (errEl) errEl.textContent = '❌ Network error. Try again.'; });
-  }
-}
-window.soTab = soTab;
-window.loadSellerOrders = loadSellerOrders;
-window.sellerClaimFromSO = sellerClaimFromSO;
-
-/* ════════════════════════════════════════════════════════════════
-   PAYSTACK TRANSFER COPY HELPER
-   Shows a NeyoMarket-side banner with account number + amount
-   so users can tap-to-copy without hitting the iframe restriction
-════════════════════════════════════════════════════════════════ */
-function showTransferBanner(amount) {
-  var banner = document.getElementById('psk-transfer-banner');
-  if (!banner) return;
-  var amtEl  = document.getElementById('psk-amount');
-  var accEl  = document.getElementById('psk-acc-num');
-  var bkEl   = document.getElementById('psk-bank-name');
-  if (amtEl) amtEl.textContent = '₦' + Number(amount).toLocaleString();
-  /* Account details come from Paystack dynamically — we show a helper note */
-  if (accEl) accEl.textContent = 'See Paystack window ↑';
-  if (bkEl)  bkEl.textContent  = 'See Paystack window ↑';
-  banner.style.display = 'block';
-  /* After Paystack opens, poll for the account number from their DOM if possible */
-  setTimeout(function() { tryReadPaystackAccNum(); }, 1500);
-}
-
-function tryReadPaystackAccNum() {
-  /* Paystack renders account in an iframe — we cannot read cross-origin iframe content.
-     So we instead watch the clipboard for after-copy events and show a confirmation.
-     The banner itself already lets the buyer manually look and copy here. */
-  var accEl = document.getElementById('psk-acc-num');
-  var bkEl  = document.getElementById('psk-bank-name');
-  if (accEl && accEl.textContent.includes('See Paystack')) {
-    accEl.textContent = 'Open Paystack window → choose Transfer';
-    if (bkEl) bkEl.textContent = 'Account shown in Paystack popup';
-  }
-}
-
-function copyTransferDetail(elId, label) {
-  var el = document.getElementById(elId);
-  if (!el) return;
-  var val = el.textContent.trim();
-  if (!val || val.includes('See') || val.includes('Open') || val === '—') {
-    toast('ℹ️ ' + label + ' will appear in the Paystack popup — copy it from there', 'info');
-    return;
-  }
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(val).then(function(){
-      toast('✅ ' + label + ' copied: ' + val, 'ok');
-    }).catch(function(){ fallbackCopy(val, label); });
-  } else { fallbackCopy(val, label); }
-}
-
-function fallbackCopy(text, label) {
-  var ta = document.createElement('textarea');
-  ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
-  document.body.appendChild(ta); ta.select();
-  try { document.execCommand('copy'); toast('✅ ' + (label||'') + ' copied!', 'ok'); }
-  catch(e) { toast('Value: ' + text, 'info'); }
-  document.body.removeChild(ta);
-}
-window.copyTransferDetail = copyTransferDetail;
-window.showTransferBanner = showTransferBanner;
 
 /* ════════════════════════════════════════════════════════
    SELLER CLAIM FUNDS — validates DVC then releases escrow
@@ -10329,6 +10042,69 @@ function renderAffiliateAnalytics(d){
 
 window.loadAnalytics = loadAnalytics;
 window.anTab = anTab;
+
+/* ── ANNOUNCEMENTS ─────────────────────────────────────────── */
+function loadAnnouncements() {
+  var el = document.getElementById('ann-list');
+  if (!el) return;
+  el.innerHTML = '<div style="color:var(--muted);font-size:.8rem;text-align:center;padding:12px">Loading…</div>';
+  fetch('/api/reviews?type=announcements')
+    .then(function(r){ return r.json(); })
+    .then(function(d) {
+      var items = d.announcements || [];
+      if (!items.length) {
+        el.innerHTML = '<div style="color:var(--muted);font-size:.8rem;text-align:center;padding:10px">No announcements yet.</div>';
+        return;
+      }
+      el.innerHTML = items.map(function(a) {
+        var badge = a.badge_text
+          ? '<span style="display:inline-block;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#fff;font-size:.6rem;font-weight:800;padding:2px 9px;border-radius:50px;letter-spacing:.3px;margin-bottom:6px">'+a.badge_text+'</span><br>'
+          : '';
+        var dt = a.created_at ? new Date(a.created_at).toLocaleDateString('en-NG',{day:'numeric',month:'short',year:'numeric'}) : '';
+        return '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:13px;margin-bottom:10px">'
+          + badge
+          + '<div style="font-weight:700;font-size:.88rem;color:var(--text);margin-bottom:5px">'+a.title+'</div>'
+          + '<div style="font-size:.8rem;color:var(--muted);line-height:1.6">'+a.content+'</div>'
+          + (dt ? '<div style="font-size:.68rem;color:var(--muted2);margin-top:8px">'+dt+'</div>' : '')
+          + '</div>';
+      }).join('');
+    })
+    .catch(function() {
+      if (el) el.innerHTML = '<div style="color:var(--muted);font-size:.8rem;text-align:center;padding:10px">Could not load announcements.</div>';
+    });
+}
+
+function copyAffLinkDash() {
+  var base = 'https://neyo-market.vercel.app';
+  var code = '';
+  if (window.CU) {
+    code = window.CU.affCode || window.CU.aff_code || window.CU.referralCode || '';
+    if (!code && window.CU.id) code = String(window.CU.id);
+  }
+  var link = code ? (base + '/?ref=' + encodeURIComponent(code)) : base;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(link).then(function() {
+      toast('🔗 Referral link copied! Share on WhatsApp & earn commissions 💸', 'ok');
+    }).catch(function() { fallbackCopyAff(link); });
+  } else { fallbackCopyAff(link); }
+}
+
+function fallbackCopyAff(link) {
+  var ta = document.createElement('textarea');
+  ta.value = link; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); toast('🔗 Referral link copied!', 'ok'); }
+  catch(e) { toast('Link: ' + link, 'info'); }
+  document.body.removeChild(ta);
+}
+
+/* Auto-load announcements when Orders tab is opened */
+var _annLoaded = false;
+var _origSwitchDashTab = window.switchDashTab;
+window.switchDashTab = function(tab, el) {
+  if (typeof _origSwitchDashTab === 'function') _origSwitchDashTab(tab, el);
+  if (tab === 'orders' && !_annLoaded) { _annLoaded = true; loadAnnouncements(); }
+};
 window.anCurrentTab = anCurrentTab;
 
 /* Capture referral code from URL on page load */
