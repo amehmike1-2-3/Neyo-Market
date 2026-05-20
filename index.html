@@ -92,6 +92,7 @@
 <!-- ═══ PAYSTACK ═══ -->
 <script src="https://js.paystack.co/v1/inline.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css"/>
 
 <!-- ═══ EMAIL SERVICE: Gmail SMTP (backend only) — password reset & verification ═══ -->
@@ -1369,7 +1370,7 @@ footer{background:var(--text);color:#fff;border-top:1px solid rgba(255,255,255,.
 
 <div id="ham-overlay" onclick="closeHamMenu()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:800;backdrop-filter:blur(3px)"></div>
 
-<div id="ham-drawer" style="position:fixed;top:0;right:0;bottom:0;width:min(300px,88vw);background:var(--bg);z-index:900;transform:translateX(110%);transition:transform .28s cubic-bezier(.4,0,.2,1);box-shadow:-6px 0 32px rgba(0,0,0,.15);display:flex;flex-direction:column;overflow-y:auto">
+<div id="ham-drawer" data-categories-injected="1" style="position:fixed;top:0;right:0;bottom:0;width:min(300px,88vw);background:var(--bg);z-index:900;transform:translateX(110%);transition:transform .28s cubic-bezier(.4,0,.2,1);box-shadow:-6px 0 32px rgba(0,0,0,.15);display:flex;flex-direction:column;overflow-y:auto">
 
   <div style="display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border);min-height:60px;flex-shrink:0">
     <img src="https://neyomarket.com.ng/neyomarket-logo.webp" alt="" style="width:32px;height:32px;border-radius:6px;object-fit:contain">
@@ -1402,6 +1403,14 @@ footer{background:var(--text);color:#fff;border-top:1px solid rgba(255,255,255,.
     <button id="ham-analytics-admin"  onclick="hamGo('analytics')" style="display:none;align-items:center;gap:12px;padding:13px 14px;border-radius:10px;border:none;background:none;color:var(--gold);font-family:inherit;font-size:.88rem;font-weight:700;cursor:pointer;text-align:left;width:100%">📈 Platform Analytics</button>
     <button id="ham-analytics-seller" onclick="window.anCurrentTab='seller';hamGo('analytics')" style="display:none;align-items:center;gap:12px;padding:13px 14px;border-radius:10px;border:none;background:none;color:var(--gold);font-family:inherit;font-size:.88rem;font-weight:700;cursor:pointer;text-align:left;width:100%">📈 My Sales Stats</button>
     <button id="ham-analytics-aff"    onclick="hamGo('aff')"       style="display:none;align-items:center;gap:12px;padding:13px 14px;border-radius:10px;border:none;background:none;color:var(--gold);font-family:inherit;font-size:.88rem;font-weight:700;cursor:pointer;text-align:left;width:100%">💸 Affiliate Dashboard</button>
+  </div>
+
+  <div style="height:1px;background:var(--border);margin:4px 12px"></div>
+
+  <!-- Category Quick-Nav (populated by openHamMenu) -->
+  <div style="padding:0 8px 4px">
+    <div style="font-size:.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;padding:8px 14px 4px">Browse Categories</div>
+    <div id="ham-categories" style="display:flex;flex-direction:column;gap:1px"></div>
   </div>
 
   <div style="height:1px;background:var(--border);margin:4px 12px"></div>
@@ -1905,6 +1914,15 @@ footer{background:var(--text);color:#fff;border-top:1px solid rgba(255,255,255,.
         <div class="em" id="si-err"></div>
         <div class="tr2"><input type="checkbox" id="si-cb"/><label for="si-cb">I agree to the <a onclick="oM('m-terms')">Terms of Service</a></label></div>
         <button class="abtn" onclick="doSignIn()">Sign In Securely 🔐</button>
+        <div style="display:flex;align-items:center;gap:10px;margin:14px 0">
+          <div style="flex:1;height:1px;background:var(--border)"></div>
+          <span style="font-size:.75rem;color:var(--muted);white-space:nowrap">or continue with</span>
+          <div style="flex:1;height:1px;background:var(--border)"></div>
+        </div>
+        <button id="google-signin-btn" onclick="doGoogleSignIn()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:10px;background:var(--surface);border:1.5px solid var(--border);color:var(--text);padding:12px 16px;border-radius:8px;font-size:.88rem;font-weight:600;cursor:pointer;transition:.2s" onmouseover="this.style.borderColor='#4285f4'" onmouseout="this.style.borderColor='var(--border)'">
+          <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18L12.048 13.56C11.24 14.1 10.21 14.42 9 14.42c-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg>
+          Continue with Google
+        </button>
         <div class="asw">No account? <a onclick="go('signup')">Sign Up Free</a></div>
       </div>
 
@@ -1961,6 +1979,15 @@ footer{background:var(--text);color:#fff;border-top:1px solid rgba(255,255,255,.
       <div class="tr2"><input type="checkbox" id="su-cb"/><label for="su-cb">I agree to the <a onclick="oM('m-terms')">Terms of Service</a> and confirm I am 18+.</label></div>
       <div class="em" id="su-err"></div>
       <button class="abtn" onclick="doSignUp()">Create Account 🚀</button>
+      <div style="display:flex;align-items:center;gap:10px;margin:14px 0">
+        <div style="flex:1;height:1px;background:var(--border)"></div>
+        <span style="font-size:.75rem;color:var(--muted);white-space:nowrap">or</span>
+        <div style="flex:1;height:1px;background:var(--border)"></div>
+      </div>
+      <button onclick="doGoogleSignIn()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:10px;background:var(--surface);border:1.5px solid var(--border);color:var(--text);padding:12px 16px;border-radius:8px;font-size:.88rem;font-weight:600;cursor:pointer;transition:.2s" onmouseover="this.style.borderColor='#4285f4'" onmouseout="this.style.borderColor='var(--border)'">
+        <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18L12.048 13.56C11.24 14.1 10.21 14.42 9 14.42c-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg>
+        Sign Up with Google
+      </button>
       <div class="asw">Have account? <a onclick="go('signin')">Sign In</a></div>
     </div>
   </div>
@@ -4340,6 +4367,7 @@ function processPaystack(mode) {
             qty:      i.qty || 1,
             emoji:    i.emoji,
             sellerId: i.sellerId || (prod && prod.sellerId) || null,
+            variant:  selectedVariants[i.id] || i.variant || null,
             /* The actual downloadable file URL — NOT the product image */
             fileUrl:  (prod && (prod.fileUrl || prod.file_url)) || null,
             fileName: (prod && (prod.fileName || prod.file_name)) || null,
@@ -4685,7 +4713,10 @@ function renderOrders() {
           + '<span style="background:' + statusBg + ';color:' + statusColor + ';padding:3px 10px;border-radius:50px;font-size:.65rem;font-weight:700">' + statusLabel + '</span>'
           + '</div>'
           + (isPhys ? buildOrderTracker(o.status) : '')
-          + '<div style="font-size:.82rem;color:var(--text);margin-bottom:4px">' + o.items.map(function(i){ return i.emoji+' '+i.name.substring(0,28); }).join(', ') + '</div>'
+          + '<div style="font-size:.82rem;color:var(--text);margin-bottom:4px">' + o.items.map(function(i){
+              var vb = i.variant ? ' <span style="background:rgba(201,146,42,.12);color:var(--gold);border-radius:4px;padding:1px 6px;font-size:.7rem;font-weight:600">' + i.variant + '</span>' : '';
+              return i.emoji+' '+i.name.substring(0,28)+vb;
+            }).join(', ') + '</div>'
           + addrRow
           + '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-top:6px">'
           + '<span style="font-family:serif;font-size:1.1rem;font-weight:700;color:var(--gold)">' + currSymbol(o.currency) + o.total.toLocaleString() + '</span>'
@@ -5232,6 +5263,66 @@ function doSignUp() {
     });
 }
 window.doSignUp = doSignUp;
+
+/* ===== GOOGLE SIGN-IN =====================================================
+   Uses Google Identity Services popup flow.
+   Requires window.GOOGLE_CLIENT_ID (set via /api/config or inline script).
+   Calls /api/auth?action=google-login to verify credential + upsert user.
+=========================================================================== */
+function doGoogleSignIn() {
+  if (typeof google === 'undefined' || !google.accounts) {
+    toast('Google Sign-In is not available right now. Use email/password.', 'warn');
+    return;
+  }
+  var GOOGLE_CLIENT_ID = window.GOOGLE_CLIENT_ID || '';
+  if (!GOOGLE_CLIENT_ID) {
+    toast('Google Sign-In not configured yet. Use email/password login.', 'warn');
+    return;
+  }
+  var btn = document.getElementById('google-signin-btn');
+  var origHTML = btn ? btn.innerHTML : '';
+  if (btn) { btn.disabled = true; btn.textContent = 'Opening Google...'; }
+
+  google.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    callback: function(response) {
+      if (!response || !response.credential) {
+        toast('Google sign-in was cancelled.', 'warn');
+        if (btn) { btn.disabled = false; btn.innerHTML = origHTML; }
+        return;
+      }
+      fetch('/api/auth?action=google-login', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ credential: response.credential })
+      })
+      .then(function(r){ return r.json(); })
+      .then(function(data) {
+        if (btn) { btn.disabled = false; btn.innerHTML = origHTML; }
+        if (!data.user) throw new Error(data.error || 'Google login failed');
+        var u = data.user;
+        CU    = u;
+        var s = JSON.stringify(u);
+        localStorage.setItem('nm_current_user', s);
+        sessionStorage.setItem('nm_session', s);
+        usrs = loadUsers();
+        var ix = usrs.findIndex(function(x){ return x.email === u.email; });
+        if (ix > -1) usrs[ix] = u; else usrs.push(u);
+        sv('nm_users', usrs);
+        updNav();
+        toast('Welcome, ' + u.name.split(' ')[0] + '!', 'ok');
+        go(u.role === 'admin' ? 'admin' : 'home');
+        setTimeout(requestPushPermission, 5000);
+      })
+      .catch(function(e) {
+        if (btn) { btn.disabled = false; btn.innerHTML = origHTML; }
+        toast('Google login failed: ' + (e.message || 'Try again'), 'fail');
+      });
+    }
+  });
+  google.accounts.id.prompt();
+}
+window.doGoogleSignIn = doGoogleSignIn;
 
 function doSignOut() {
   CU = null;
@@ -6467,7 +6558,10 @@ function renderSellerPage() {
               + '<div style="font-size:.76rem;color:var(--muted);margin-top:2px">👤 ' + custName + ' · ' + o.date + '</div></div>'
               + statusBadge
               + '</div>'
-              + '<div style="font-size:.8rem;color:var(--muted);margin-bottom:6px">' + myItems.map(function(i){ return i.emoji + ' ' + i.name.substring(0,30); }).join(' · ') + '</div>'
+              + '<div style="font-size:.8rem;color:var(--muted);margin-bottom:6px">' + myItems.map(function(i){
+                  var vb = i.variant ? ' <span style="background:rgba(201,146,42,.12);color:var(--gold);border-radius:4px;padding:1px 5px;font-size:.68rem;font-weight:600">' + i.variant + '</span>' : '';
+                  return i.emoji + ' ' + i.name.substring(0,30) + vb;
+                }).join(' · ') + '</div>'
               + shipCard
               + digNote
               + '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">'
@@ -8209,6 +8303,29 @@ function openHamMenu() {
     if(el('ham-analytics-seller')) el('ham-analytics-seller').style.display = 'none';
     if(el('ham-analytics-aff'))    el('ham-analytics-aff').style.display    = 'none';
   }
+  /* Inject category quick-links into drawer */
+  var catNav = el('ham-categories');
+  if (catNav) {
+    var cats = [
+      { emoji: '⚡', label: 'Digital',    filter: 'digital'  },
+      { emoji: '🎓', label: 'Courses',    filter: 'course'   },
+      { emoji: '📦', label: 'Physical',   filter: 'physical' },
+      { emoji: '💻', label: 'Tech',       filter: 'tech'     },
+      { emoji: '👗', label: 'Fashion',    filter: 'fashion'  },
+      { emoji: '📚', label: 'Books',      filter: 'books'    },
+      { emoji: '🏠', label: 'Home',       filter: 'home'     },
+      { emoji: '💄', label: 'Beauty',     filter: 'beauty'   },
+      { emoji: '🎮', label: 'Gaming',     filter: 'gaming'   },
+      { emoji: '🔥', label: 'Flash Sale', filter: 'sale'     }
+    ];
+    catNav.innerHTML = cats.map(function(c) {
+      return '<a onclick="hamFilterCat(\'' + c.filter + '\')" style="display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:8px;cursor:pointer;color:var(--text);font-size:.84rem;font-weight:500;transition:.15s" onmouseover="this.style.background=\'var(--bg3)\'" onmouseout="this.style.background=\'transparent\'">'
+        + '<span style="font-size:1.1rem;width:24px;text-align:center">' + c.emoji + '</span>'
+        + '<span>' + c.label + '</span>'
+        + '</a>';
+    }).join('');
+  }
+
   var theme = document.documentElement.getAttribute('data-theme') || 'light';
   var icon  = el('ham-theme-icon');
   var label = el('ham-theme-label');
@@ -8232,6 +8349,32 @@ function hamGo(pageId) {
 window.openHamMenu  = openHamMenu;
 window.closeHamMenu = closeHamMenu;
 window.hamGo        = hamGo;
+
+function hamFilterCat(filter) {
+  closeHamMenu();
+  setTimeout(function() {
+    go('market');
+    setTimeout(function() {
+      if (filter === 'sale') {
+        var section = document.getElementById('hot-deals-section');
+        if (section) { section.scrollIntoView({ behavior: 'smooth' }); return; }
+      }
+      var activeProds = (window.prods || []).filter(function(p){ return p.status === 'active'; });
+      var filtered = activeProds.filter(function(p) {
+        return (p.type || '').toLowerCase() === filter ||
+               (p.cat  || '').toLowerCase().indexOf(filter) !== -1;
+      });
+      var toShow = filtered.length ? filtered : activeProds;
+      rGrid('mkt-grid', toShow);
+      if (filtered.length) {
+        toast('Showing ' + filtered.length + ' ' + filter + ' products', 'ok');
+      } else {
+        toast('No ' + filter + ' products found — showing all', 'warn');
+      }
+    }, 350);
+  }, 200);
+}
+window.hamFilterCat = hamFilterCat;
 
 
 /* Apply saved theme immediately on every page load */
