@@ -112,14 +112,55 @@ module.exports = async function handler(req, res) {
           rows = await sql`SELECT * FROM products ORDER BY created_at DESC`;
         }
       } else {
-        /* Public marketplace — active only, with seller tier */
-        rows = await sql`
-          SELECT p.*, u.membership_tier AS seller_tier
-          FROM products p
-          LEFT JOIN users u ON u.id::text = p.seller_id::text
-          WHERE p.status = 'active'
-          ORDER BY p.created_at DESC
-        `;
+        /* Public marketplace — active only, with seller tier + optional search/filter */
+        const searchQ    = req.query.q    ? '%' + String(req.query.q).trim().toLowerCase()    + '%' : null;
+        const catFilter  = req.query.cat  ? String(req.query.cat).trim().toLowerCase()               : null;
+        const typeFilter = req.query.type ? String(req.query.type).trim().toLowerCase()              : null;
+        const saleOnly   = req.query.sale === 'true';
+
+        if (searchQ) {
+          rows = await sql`
+            SELECT p.*, u.membership_tier AS seller_tier
+            FROM products p
+            LEFT JOIN users u ON u.id::text = p.seller_id::text
+            WHERE p.status = 'active'
+              AND (LOWER(p.name) LIKE ${searchQ} OR LOWER(p.description) LIKE ${searchQ} OR LOWER(p.seller) LIKE ${searchQ})
+            ORDER BY p.created_at DESC
+          `;
+        } else if (catFilter) {
+          rows = await sql`
+            SELECT p.*, u.membership_tier AS seller_tier
+            FROM products p
+            LEFT JOIN users u ON u.id::text = p.seller_id::text
+            WHERE p.status = 'active' AND LOWER(p.cat) = ${catFilter}
+            ORDER BY p.created_at DESC
+          `;
+        } else if (typeFilter) {
+          rows = await sql`
+            SELECT p.*, u.membership_tier AS seller_tier
+            FROM products p
+            LEFT JOIN users u ON u.id::text = p.seller_id::text
+            WHERE p.status = 'active' AND LOWER(p.type) = ${typeFilter}
+            ORDER BY p.created_at DESC
+          `;
+        } else if (saleOnly) {
+          rows = await sql`
+            SELECT p.*, u.membership_tier AS seller_tier
+            FROM products p
+            LEFT JOIN users u ON u.id::text = p.seller_id::text
+            WHERE p.status = 'active' AND p.is_on_sale = true
+              AND (p.sale_ends_at IS NULL OR p.sale_ends_at > NOW())
+            ORDER BY p.created_at DESC
+          `;
+        } else {
+          rows = await sql`
+            SELECT p.*, u.membership_tier AS seller_tier
+            FROM products p
+            LEFT JOIN users u ON u.id::text = p.seller_id::text
+            WHERE p.status = 'active'
+            ORDER BY p.created_at DESC
+          `;
+        }
       }
 
       return res.status(200).json({ products: rows.map(toProduct) });
@@ -222,6 +263,11 @@ module.exports = async function handler(req, res) {
       const newSellerBio      = (p.sellerBio      !== undefined || p.seller_bio !== undefined) ? String(p.sellerBio || p.seller_bio || '') : null;
       const newSaleEndsAt     = (p.saleEndsAt     !== undefined) ? (p.saleEndsAt || null)  : null;
       const newCondition      = (p.condition      !== undefined) ? (p.condition || null)   : null;
+      const newName           = (p.name           !== undefined && p.name !== null) ? String(p.name || '')        : null;
+      const newDescription    = (p.description    !== undefined && p.description !== null) ? String(p.description || '') : null;
+      const newPrice          = (p.price          !== undefined && p.price !== null) ? parseFloat(p.price)       : null;
+      const newCurrency       = (p.currency !== undefined && ['NGN','USD','GBP','EUR','CAD','GHS'].includes(p.currency)) ? p.currency : null;
+      const newVariants       = (p.variants !== undefined && Array.isArray(p.variants)) ? JSON.stringify(p.variants) : null;
 
       let newDiscountPrice = null;
       if (p.discountPrice !== undefined && p.discountPrice !== null)
@@ -247,7 +293,12 @@ module.exports = async function handler(req, res) {
           quantity        = COALESCE(${newQuantity},      quantity),
           location        = COALESCE(${newLocation},      location),
           seller_bio      = COALESCE(${newSellerBio},     seller_bio),
-          condition       = COALESCE(${newCondition},     condition)
+          condition       = COALESCE(${newCondition},     condition),
+          name            = COALESCE(${newName},           name),
+          description     = COALESCE(${newDescription},    description),
+          price           = COALESCE(${newPrice},          price),
+          currency        = COALESCE(${newCurrency},       currency),
+          variants        = COALESCE(${newVariants}::jsonb, variants)
         WHERE id = ${productId}
       `;
       return res.status(200).json({ ok: true });
