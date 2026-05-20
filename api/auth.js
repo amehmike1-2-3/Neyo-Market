@@ -1011,6 +1011,64 @@ module.exports = async function handler(req, res) {
       }
     }
 
+    /* ══════════════════════════════════════════════════
+       GOOGLE LOGIN — verify Google JWT, upsert user
+       POST ?action=google-login  { credential: <JWT> }
+       Uses Google's tokeninfo endpoint (no extra library).
+    ══════════════════════════════════════════════════ */
+    if (req.query.action === 'google-login' && req.method === 'POST') {
+      const { credential } = req.body || {};
+      if (!credential) return res.status(400).json({ ok: false, error: 'credential required.' });
+
+      try {
+        /* Verify with Google's tokeninfo endpoint */
+        const verifyRes = await fetch('https://oauth2.googleapis.com/tokeninfo?id_token=' + encodeURIComponent(credential));
+        const payload   = await verifyRes.json();
+
+        if (!payload || !payload.email || payload.error) {
+          return res.status(401).json({ ok: false, error: 'Invalid Google credential.' });
+        }
+
+        /* Optional: enforce your own client_id */
+        const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
+        if (GOOGLE_CLIENT_ID && payload.aud !== GOOGLE_CLIENT_ID) {
+          return res.status(401).json({ ok: false, error: 'Google client_id mismatch.' });
+        }
+
+        const gEmail = payload.email.toLowerCase().trim();
+        const gName  = payload.name || gEmail.split('@')[0];
+
+        /* Check if user already exists */
+        const existing = await sql`SELECT * FROM users WHERE email = ${gEmail} LIMIT 1`;
+
+        let user;
+        if (existing.length) {
+          user = existing[0];
+          /* Google already verified this email — mark it verified in our DB too */
+          if (!user.is_verified) {
+            await sql`UPDATE users SET is_verified = true WHERE email = ${gEmail}`;
+            user.is_verified = true;
+          }
+        } else {
+          /* New user — create from Google profile */
+          const newId      = 'g_' + Date.now();
+          const newAffCode = 'REF' + Math.random().toString(36).substr(2, 7).toUpperCase();
+          await sql`
+            INSERT INTO users (id, name, email, role, aff_code, is_verified, joined, created_at)
+            VALUES (${newId}, ${gName}, ${gEmail}, 'buyer', ${newAffCode}, true, NOW(), NOW())
+          `;
+          const newRows = await sql`SELECT * FROM users WHERE id = ${newId} LIMIT 1`;
+          user = newRows[0];
+        }
+
+        return res.status(200).json({ ok: true, user: toPublicUser(user) });
+
+      } catch (gErr) {
+        console.error('[auth/google-login]', gErr.message);
+        return res.status(500).json({ ok: false, error: 'Google verification failed: ' + gErr.message });
+      }
+    }
+
     return res.status(400).json({ error: 'Unknown action.' });
 
   } catch (err) {
