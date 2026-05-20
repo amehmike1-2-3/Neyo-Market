@@ -1061,7 +1061,7 @@ module.exports = async function handler(req, res) {
           user = newRows[0];
         }
 
-        return res.status(200).json({ ok: true, user: toPublicUser(user) });
+        return res.status(200).json({ ok: true, user: toPublicUser(user), isNew: !existing.length });
 
       } catch (gErr) {
         console.error('[auth/google-login]', gErr.message);
