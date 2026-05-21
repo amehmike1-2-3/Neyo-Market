@@ -1051,7 +1051,7 @@ module.exports = async function handler(req, res) {
           }
         } else {
           /* Create new user from Google profile */
-          const newId      = 'g_' + Date.now();
+          const newId      = Date.now();
           const newAffCode = 'REF' + Math.random().toString(36).substr(2, 7).toUpperCase();
           await sql`
             INSERT INTO users (id, name, email, role, aff_code, is_verified, joined, created_at)
