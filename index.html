@@ -10436,19 +10436,68 @@ function loadAdminAnnouncements() {
         return;
       }
       list.innerHTML = items.map(function(a) {
-        var date = a.created_at ? new Date(a.created_at).toLocaleDateString('en-NG', {day:'numeric',month:'short',year:'numeric'}) : '';
+        var date  = a.created_at ? new Date(a.created_at).toLocaleDateString('en-NG', {day:'numeric',month:'short',year:'numeric'}) : '';
         var badge = a.badge_text ? '<span style="background:var(--gold);color:#fff;font-size:.62rem;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:6px">'+a.badge_text+'</span>' : '';
-        return '<div style="background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--gold);border-radius:10px;padding:13px 15px;margin-bottom:10px">'+
-          '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'+
-            '<span style="font-weight:700;font-size:.88rem">'+a.title+badge+'</span>'+
-            '<span style="font-size:.7rem;color:var(--muted)">'+date+'</span>'+
-          '</div>'+
-          (a.content ? '<div style="font-size:.8rem;color:var(--muted);line-height:1.5">'+a.content+'</div>' : '')+
-        '</div>';
+        /* Auto-linkify URLs in content */
+        var contentHtml = '';
+        if (a.content) {
+          contentHtml = a.content.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:underline;word-break:break-all">$1</a>');
+        }
+        return '<div style="background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--gold);border-radius:10px;padding:13px 15px;margin-bottom:10px">'
+          /* ── Top row: title + action buttons ── */
+          + '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:4px">'
+            + '<div style="flex:1">'
+              + '<span style="font-weight:700;font-size:.88rem;line-height:1.35">'+a.title+badge+'</span>'
+              + '<div style="font-size:.68rem;color:var(--muted);margin-top:2px">'+date+'</div>'
+            + '</div>'
+            /* Action buttons */
+            + '<div style="display:flex;gap:6px;flex-shrink:0">'
+              /* Share button */
+              + '<button onclick="shareAnnouncement('+a.id+')" title="Share" style="background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:5px 9px;cursor:pointer;font-size:.8rem;color:var(--text)">🔗</button>'
+              /* Delete button */
+              + '<button onclick="deleteAnnouncement('+a.id+')" title="Delete" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:7px;padding:5px 9px;cursor:pointer;font-size:.8rem;color:#ef4444">🗑️</button>'
+            + '</div>'
+          + '</div>'
+          /* ── Content with auto-linked URLs ── */
+          + (contentHtml ? '<div style="font-size:.8rem;color:var(--muted);line-height:1.6;margin-top:6px">'+contentHtml+'</div>' : '')
+        + '</div>';
       }).join('');
     })
     .catch(function(){ });
 }
+
+function deleteAnnouncement(id) {
+  if (!confirm('Delete this announcement?')) return;
+  fetch('/api/reviews?type=announcements&id=' + id, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ adminId: CU && CU.id })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(data) {
+    if (!data.ok) throw new Error(data.error || 'Failed');
+    toast('Announcement deleted', 'ok');
+    loadAdminAnnouncements();
+    loadAnnouncements();
+  })
+  .catch(function(e){ toast('Error: ' + e.message, 'fail'); });
+}
+
+function shareAnnouncement(id) {
+  var url = window.location.origin + '/?ann=' + id;
+  var shareText = 'Check this out on NeyoMarket';
+  if (navigator.share) {
+    navigator.share({ title: shareText, text: shareText, url: url }).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(url).then(function(){
+      toast('Link copied to clipboard!', 'ok');
+    }).catch(function(){
+      prompt('Copy this link:', url);
+    });
+  }
+}
+window.deleteAnnouncement = deleteAnnouncement;
+window.shareAnnouncement  = shareAnnouncement;
 
 function postAnnouncement() {
   var title   = (document.getElementById('ann-title')   || {}).value || '';
