@@ -2460,11 +2460,11 @@ footer{background:var(--text);color:#fff;border-top:1px solid rgba(255,255,255,.
         <div class="settings-icon-card" style="margin-bottom:16px">
           <div class="sic-icon" style="background:var(--orange-bg)">🔒</div>
           <div class="sic-body">
-            <div class="sic-title">Update Your Password</div>
-            <div class="sic-desc">Got a temporary password? Set your own secure password here.</div>
+            <div class="sic-title" id="pw-section-title">Update Your Password</div>
+            <div class="sic-desc" id="pw-section-desc">Got a temporary password? Set your own secure password here.</div>
           </div>
         </div>
-        <div class="fg">
+        <div class="fg" id="cp-current-wrap">
           <label>Current Password <span style="color:var(--red)">*</span></label>
           <div style="position:relative">
             <input class="fi" type="password" id="cp-current" placeholder="Your current or temp password" autocomplete="current-password" style="padding-right:42px"/>
@@ -3976,6 +3976,15 @@ function opn(id) {
     + '<div style="height:16px"></div>';
   
   oM('m-pd');
+  /* Always scroll modal to top so image is visible first */
+  setTimeout(function() {
+    var mb = document.querySelector('#m-pd .mb');
+    if (mb) mb.scrollTop = 0;
+    var mo = document.querySelector('#m-pd .mo');
+    if (mo) mo.scrollTop = 0;
+    var ov = document.getElementById('m-pd');
+    if (ov) ov.scrollTop = 0;
+  }, 30);
   loadReviews(p.id);
   
   /* Store carousel state */
@@ -5666,7 +5675,7 @@ function refreshProf() {
 
 function switchDashTab(name, btn) {
   if (name === 'settings') {
-    setTimeout(function(){ loadWithdrawBalance(); loadWithdrawalHistory(); renderTierGrid(); renderPromoteProducts(); }, 300);
+    setTimeout(function(){ loadWithdrawBalance(); loadWithdrawalHistory(); renderTierGrid(); renderPromoteProducts(); updatePasswordSectionUI(); }, 300);
   }
   if (name === 'seller') {
     setTimeout(function(){ loadWalletBalance(); }, 400);
@@ -7318,31 +7327,37 @@ function changePassword() {
   var nw   = newEl  ? newEl.value  : '';
   var conf = conEl  ? conEl.value  : '';
 
+  /* Detect Google user — they have no password set, skip current password check */
+  var isGoogleUser = CU && (String(CU.id).indexOf('g_') === 0 || !CU.password);
+
   /* validations */
-  if (!cur)  { if (errEl) errEl.textContent = 'Please enter your current password.'; return; }
+  if (!isGoogleUser && !cur) { if (errEl) errEl.textContent = 'Please enter your current password.'; return; }
   if (!nw)   { if (errEl) errEl.textContent = 'Please enter a new password.'; return; }
   if (nw.length < 8) { if (errEl) errEl.textContent = 'New password must be at least 8 characters.'; return; }
   if (nw !== conf)   { if (errEl) errEl.textContent = 'Passwords do not match. Please try again.'; return; }
-  if (nw === cur)    { if (errEl) errEl.textContent = 'New password must be different from your current password.'; return; }
+  if (!isGoogleUser && nw === cur) { if (errEl) errEl.textContent = 'New password must be different from your current password.'; return; }
 
-  /* verify current password against stored value */
-  usrs = loadUsers();
-  var storedUser = usrs.find(function (u) { return u.email.trim().toLowerCase() === CU.email.trim().toLowerCase(); });
-
-  if (!storedUser || storedUser.password !== cur) {
-    if (errEl) errEl.textContent = 'Current password is incorrect. Check it and try again.';
-    return;
+  /* For non-Google users: verify current password locally first */
+  if (!isGoogleUser) {
+    usrs = loadUsers();
+    var storedUser = usrs.find(function (u) { return u.email.trim().toLowerCase() === CU.email.trim().toLowerCase(); });
+    if (!storedUser || storedUser.password !== cur) {
+      if (errEl) errEl.textContent = 'Current password is incorrect. Check it and try again.';
+      return;
+    }
+    storedUser.password = nw;
+    CU.password = nw;
+    var idx = usrs.findIndex(function (u) { return u.email.trim().toLowerCase() === CU.email.trim().toLowerCase(); });
+    if (idx > -1) { usrs[idx] = storedUser; sv('nm_users', usrs); }
   }
 
-  /* save new password */
-  storedUser.password = nw;
-  CU.password = nw;
-
-  var idx = usrs.findIndex(function (u) { return u.email.trim().toLowerCase() === CU.email.trim().toLowerCase(); });
-  if (idx > -1) { usrs[idx] = storedUser; sv('nm_users', usrs); }
-
-  /* Sync new password to API */
-  apiCall('/auth?action=change-password', 'POST', { userId: CU.id, email: CU.email, newPassword: nw }).catch(function(){});
+  /* Sync new password to API — backend skips current password check if not provided */
+  apiCall('/auth?action=change-password', 'POST', {
+    userId: CU.id,
+    email: CU.email,
+    currentPassword: isGoogleUser ? null : cur,
+    newPassword: nw
+  }).catch(function(){});
 
   /* update session */
   var uStr = JSON.stringify(CU);
@@ -7360,6 +7375,21 @@ function changePassword() {
   toast('Password updated successfully! 🔒', 'ok');
 }
 window.changePassword = changePassword;
+
+/* Show/hide current password field based on whether user signed in via Google */
+function updatePasswordSectionUI() {
+  if (!CU) return;
+  var isGoogleUser = String(CU.id).indexOf('g_') === 0 || !CU.password;
+  var wrap  = document.getElementById('cp-current-wrap');
+  var title = document.getElementById('pw-section-title');
+  var desc  = document.getElementById('pw-section-desc');
+  if (wrap)  wrap.style.display  = isGoogleUser ? 'none' : '';
+  if (title) title.textContent   = isGoogleUser ? 'Set Your Password' : 'Update Your Password';
+  if (desc)  desc.textContent    = isGoogleUser
+    ? 'You signed up with Google. Set a password so you can also sign in with email.'
+    : 'Got a temporary password? Set your own secure password here.';
+}
+window.updatePasswordSectionUI = updatePasswordSectionUI;
 
 function cpyAff() {
   var v = document.getElementById('aff-l'); if (!v) return;
