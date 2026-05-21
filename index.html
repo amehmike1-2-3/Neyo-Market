@@ -3460,8 +3460,15 @@ function mkCard(p) {
     + '<button class="wishlist-btn' + (isWished ? ' wishlisted' : '') + '" onclick="event.stopPropagation();toggleWishlist(' + p.id + ',this)" title="' + (isWished ? 'Remove from wishlist' : 'Add to wishlist') + '">' + (isWished ? '❤️' : '🤍') + '</button>'
     + (outOfStock ? '<span class="sale-badge" style="background:#6b7280">OUT OF STOCK</span>' : saleActive ? '<span class="sale-badge">SALE</span>' : (p.badge && p.badge !== 'Pending Review' ? '<span class="pb1">' + p.badge + '</span>' : ''))
     + '<span class="pb2 ' + tc + '">' + tl + '</span>'
-    + '<span class="el">\uD83D\uDEE1 Escrow</span></div>'
-    + '<div class="pcb"><h4>' + p.name + verBadge + trustBadge + featuredBadge + promoBadge + tierBadge + '</h4>'
+    + '<span class="el">\uD83D\uDEE1 Escrow</span>'
+    + (verBadge || trustBadge
+        ? '<div style="position:absolute;bottom:34px;left:6px;display:flex;flex-direction:column;gap:3px;z-index:3">'
+          + (p.sellerVerified ? '<span style="display:inline-flex;align-items:center;gap:3px;background:rgba(29,78,216,.9);color:#fff;padding:3px 8px;border-radius:5px;font-size:.58rem;font-weight:700;letter-spacing:.3px;box-shadow:0 1px 6px rgba(0,0,0,.3)">&#10003; VERIFIED</span>' : '')
+          + (p.badgeVerified  ? '<span style="display:inline-flex;align-items:center;gap:3px;background:rgba(180,83,9,.9);color:#fff;padding:3px 8px;border-radius:5px;font-size:.58rem;font-weight:700;letter-spacing:.3px;box-shadow:0 1px 6px rgba(0,0,0,.3)">&#10003; TRUSTED</span>' : '')
+          + '</div>'
+        : '')
+    + '</div>'
+    + '<div class="pcb"><h4>' + p.name + featuredBadge + promoBadge + tierBadge + '</h4>'
     + '<div class="pcs">by ' + p.seller + (location ? ' \u00b7 \uD83D\uDCCD' + location : '') + (p.reviews > 0 ? ' \u00b7 \u2B50' + p.rating : '') + '</div>'
     + (lowStock ? '<div style="font-size:.7rem;color:var(--orange);font-weight:700;margin-bottom:3px">\u26a1 Only ' + qty + ' left!</div>' : '')
     + (saleActive && saving > 0 ? '<div class="savings-tag">🔥 Save ' + currSymbol(p.currency) + saving.toLocaleString() + ' (' + savePct + '% OFF)</div>' : '')
