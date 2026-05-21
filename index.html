@@ -2736,7 +2736,7 @@ footer{background:var(--text);color:#fff;border-top:1px solid rgba(255,255,255,.
 <div class="ov" id="m-pd">
   <div class="mo" style="background:var(--bg2);color:var(--text);max-width:520px;padding:0;">
     <div class="mh" style="background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10;">
-      <h3 id="pd-title" style="color:#111827;">Product</h3>
+      <h3 id="pd-title" style="color:var(--text);">Product</h3>
       <button class="mx" onclick="cM('m-pd')" style="color:var(--muted);">✕</button>
     </div>
     <div class="mb" id="pd-body" style="background:var(--bg2);"></div>
@@ -3976,15 +3976,20 @@ function opn(id) {
     + '<div style="height:16px"></div>';
   
   oM('m-pd');
-  /* Always scroll modal to top so image is visible first */
+  /* Auto-scroll to show the image smoothly after modal opens */
   setTimeout(function() {
-    var mb = document.querySelector('#m-pd .mb');
-    if (mb) mb.scrollTop = 0;
-    var mo = document.querySelector('#m-pd .mo');
-    if (mo) mo.scrollTop = 0;
-    var ov = document.getElementById('m-pd');
-    if (ov) ov.scrollTop = 0;
-  }, 30);
+    var pdBody = document.getElementById('pd-body');
+    if (!pdBody) return;
+    pdBody.scrollTop = 0;
+    /* Smooth scroll down just enough to show image, then back up */
+    var imgWrap = pdBody.querySelector('.img-carousel-wrap');
+    var imgH = imgWrap ? imgWrap.offsetHeight : 220;
+    pdBody.style.scrollBehavior = 'smooth';
+    pdBody.scrollTop = imgH + 20;
+    setTimeout(function() {
+      pdBody.scrollTop = 0;
+    }, 600);
+  }, 100);
   loadReviews(p.id);
   
   /* Store carousel state */
