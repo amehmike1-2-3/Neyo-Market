@@ -28,20 +28,31 @@ module.exports = async function handler(req, res) {
 
     /* ── POST /api/reviews?type=announcements  (admin only) ── */
     if (req.method === 'POST' && req.query.type === 'announcements') {
-      const { title, content, badge_text, adminId } = req.body || {};
-      if (!title || !content)
-        return res.status(400).json({ error: 'title and content are required.' });
+      const body = req.body || {};
+      const title      = body.title     || '';
+      const content    = body.content   || '';
+      /* Accept both badgeText (frontend) and badge_text (legacy) */
+      const badge_text = body.badgeText || body.badge_text || null;
+      const adminId    = body.adminId   || '';
 
-      /* Basic admin guard — check caller is the master admin */
-      const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@neyomarket.com';
-      const adminRows = await sql`SELECT id, role FROM users WHERE id = ${String(adminId || '')} LIMIT 1`;
-      const caller = adminRows[0];
-      if (!caller || (caller.role !== 'admin' && String(caller.id) !== 'master_admin_001'))
-        return res.status(403).json({ error: 'Admin only.' });
+      if (!title.trim())
+        return res.status(400).json({ ok: false, error: 'Title is required.' });
+
+      /* Admin guard — check by role, works for both numeric and string IDs */
+      let caller = null;
+      try {
+        const adminRows = await sql`SELECT id, role FROM users WHERE id::text = ${String(adminId)} LIMIT 1`;
+        caller = adminRows[0];
+      } catch(e) { /* id cast failed */ }
+
+      /* Also allow master_admin_001 hardcoded fallback */
+      const isMaster = String(adminId) === 'master_admin_001';
+      if (!isMaster && (!caller || caller.role !== 'admin'))
+        return res.status(403).json({ ok: false, error: 'Admin only.' });
 
       await sql`
         INSERT INTO announcements (title, content, badge_text, created_at)
-        VALUES (${title}, ${content}, ${badge_text || null}, NOW())
+        VALUES (${title.trim()}, ${content.trim() || null}, ${badge_text}, NOW())
       `;
       return res.status(201).json({ ok: true });
     }
