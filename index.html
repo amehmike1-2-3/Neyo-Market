@@ -852,6 +852,9 @@ textarea.fi{resize:vertical;min-height:88px}
 .ms{background:var(--bg2);border-radius:16px 16px 0 0;width:100%;max-width:560px;
     max-height:94vh;display:flex;flex-direction:column;overflow:hidden;
     box-shadow:0 -4px 24px rgba(0,0,0,.18)}
+.mo{background:var(--bg2);border-radius:16px 16px 0 0;width:100%;max-width:560px;
+    max-height:94vh;display:flex;flex-direction:column;overflow:hidden;
+    box-shadow:0 -4px 24px rgba(0,0,0,.18);position:relative;}
 .mh{background:var(--bg2);padding:12px 16px;border-bottom:1px solid #f1f5f9;
     display:flex;justify-content:space-between;align-items:center;background:var(--bg2);
     flex-shrink:0;z-index:10}
@@ -860,7 +863,7 @@ textarea.fi{resize:vertical;min-height:88px}
 .mx{color:var(--muted);font-size:1.3rem;cursor:pointer;background:none;border:none;
     padding:4px 10px;flex-shrink:0}
 /* mb: scrollable body — image is FIRST child so it appears at top immediately on open */
-.mb{padding:0;overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;scroll-behavior:auto}
+.mb{padding:0;overflow-y:auto;overflow-x:hidden;flex:1;min-height:0;-webkit-overflow-scrolling:touch;scroll-behavior:smooth;}
 /* Product image — fills full width, white bg, never cropped, flex-shrink:0 so it never collapses */
 .pdmi{width:100%;height:220px;object-fit:contain;background:var(--bg2);
       display:block;border-bottom:1px solid #f1f5f9;flex-shrink:0}
