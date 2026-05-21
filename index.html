@@ -2634,6 +2634,7 @@ footer{background:var(--text);color:#fff;border-top:1px solid rgba(255,255,255,.
       <button class="asb" onclick="aTab('awallet',this)">🏦 Admin Wallet</button>
       <button class="asb" onclick="aTab('dis',this)">⚖️ Disputes & Refunds</button>
       <div class="asl">System</div>
+      <button class="asb" onclick="aTab('ann',this)">📣 Announcements</button>
       <button class="asb" onclick="aTab('set',this)">⚙️ Settings</button>
       <div style="margin-top:14px;padding:0 3px">
         <button onclick="doSignOut()" style="width:100%;background:rgba(255,58,92,.08);color:var(--red);border:1px solid rgba(255,58,92,.18);padding:8px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer">Sign Out</button>
@@ -7490,6 +7491,9 @@ function aTab(tab, btn) {
     });
   }
 
+  /* Announcements tab — handle separately */
+  if (tab === 'ann') { renderAdminAnnouncements(); return; }
+
   var c = document.getElementById('adm-c');
   if (!c) return;
   c.innerHTML = '<div style="padding:30px;color:var(--muted);text-align:center;font-size:.88rem">⏳ Loading ' + tab + '…</div>';
@@ -10292,23 +10296,71 @@ function renderAdminAnalytics(d){
 
 function renderSellerAnalytics(d){
   var body=document.getElementById('an-body'); if(!body) return;
+
+  /* Computed metrics */
+  var completedOrds = d.completedOrders || 0;
+  var convRate = d.totalOrders > 0 ? Math.round((completedOrds / d.totalOrders) * 100) : 0;
+  var avgOrder = completedOrds > 0 ? Math.round(d.totalRevenue / completedOrds) : 0;
+  var daily = d.dailyOrders || [];
+  var bestDay = daily.reduce(function(best, r) {
+    return parseFloat(r.revenue||0) > parseFloat(best.revenue||0) ? r : best;
+  }, {day:'—', revenue:0});
+
   body.innerHTML =
+    /* ── KPI Grid ── */
     '<div class="an-grid">'+
-      anCard('📦','My Products',d.totalProducts,'Active')+
-      anCard('🛒','Orders',d.totalOrders,'All orders')+
+      anCard('📦','Products',d.totalProducts,'Listed')+
+      anCard('🛒','Total Orders',d.totalOrders,'All time')+
+      anCard('✅','Completed',completedOrds,'Fulfilled')+
       anCard('⏳','Pending',d.pendingOrders,'Awaiting')+
-      anCard('💰','Revenue',fmt(d.totalRevenue),'90% of completed')+
-      anCard('💸','Aff. Earned',fmt(d.affEarned),'Paid')+
-      anCard('⏳','Aff. Pending',fmt(d.affPending),'Pending')+
-      anCard('👥','Referrals',d.affReferrals,'Via link')+
+      anCard('💰','Revenue',fmt(d.totalRevenue),'Your 90% share')+
+      anCard('📊','Avg Order',fmt(avgOrder),'Per completed order')+
+      anCard('🎯','Conv. Rate',convRate+'%','Completed vs total')+
+      anCard('🏆','Best Day',bestDay.day,''+fmt(bestDay.revenue))+
+      anCard('💸','Aff. Earned',fmt(d.affEarned),'Paid out')+
+      anCard('👥','Referrals',d.affReferrals,'Via your link')+
     '</div>'+
-    '<div class="an-chart-box"><div class="an-chart-title">📈 My Revenue — Last 30 Days</div><div class="an-chart-wrap"><canvas id="an-rev"></canvas></div></div>'+
-    '<div class="an-chart-box"><div class="an-chart-title">🛒 My Orders — Last 30 Days</div><div class="an-chart-wrap"><canvas id="an-ord"></canvas></div></div>'+
-    '<div class="an-chart-box"><div class="an-chart-title">🏆 Top Products</div>'+topTable(d.topProducts)+'</div>';
+
+    /* ── Revenue chart ── */
+    '<div class="an-chart-box">'+
+      '<div class="an-chart-title" style="display:flex;align-items:center;justify-content:space-between">'+
+        '<span>📈 Revenue — Last 30 Days</span>'+
+        '<span style="font-size:.75rem;color:var(--gold);font-weight:700">Total: '+fmt(d.totalRevenue)+'</span>'+
+      '</div>'+
+      '<div class="an-chart-wrap"><canvas id="an-rev"></canvas></div>'+
+    '</div>'+
+
+    /* ── Orders chart ── */
+    '<div class="an-chart-box">'+
+      '<div class="an-chart-title" style="display:flex;align-items:center;justify-content:space-between">'+
+        '<span>🛒 Orders — Last 30 Days</span>'+
+        '<span style="font-size:.75rem;color:#388bfd;font-weight:700">'+d.totalOrders+' total</span>'+
+      '</div>'+
+      '<div class="an-chart-wrap"><canvas id="an-ord"></canvas></div>'+
+    '</div>'+
+
+    /* ── Order status donut ── */
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'+
+      '<div class="an-chart-box">'+
+        '<div class="an-chart-title">📊 Orders by Status</div>'+
+        '<div class="an-chart-wrap" style="height:180px"><canvas id="an-sta"></canvas></div>'+
+      '</div>'+
+      '<div class="an-chart-box" style="display:flex;flex-direction:column;gap:8px;justify-content:center">'+
+        '<div style="font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Quick Stats</div>'+
+        '<div style="font-size:.82rem;color:var(--text)">💰 Revenue this month<br><strong style="color:var(--gold);font-size:1rem">'+fmt(d.monthRevenue||0)+'</strong></div>'+
+        '<div style="font-size:.82rem;color:var(--text)">🛒 Orders this month<br><strong style="color:#388bfd;font-size:1rem">'+(d.monthOrders||0)+'</strong></div>'+
+        '<div style="font-size:.82rem;color:var(--text)">⭐ Avg Rating<br><strong style="color:var(--gold);font-size:1rem">'+(d.avgRating||'—')+'</strong></div>'+
+      '</div>'+
+    '</div>'+
+
+    /* ── Top products table ── */
+    '<div class="an-chart-box"><div class="an-chart-title">🏆 Top Products by Revenue</div>'+topTable(d.topProducts)+'</div>';
+
   setTimeout(function(){
-    var daily=d.dailyOrders||[];
     anCharts.rev=anLine('an-rev',daily.map(function(r){return r.day;}),daily.map(function(r){return parseFloat(r.revenue||0);}), 'Revenue','#c9922a');
     anCharts.ord=anBar('an-ord',daily.map(function(r){return r.day;}),daily.map(function(r){return parseInt(r.orders||0);}), 'Orders','#388bfd');
+    var st=d.ordersByStatus||d.ordByStatus||[];
+    if(st.length) anCharts.sta=anDonut('an-sta',st.map(function(s){return s.status;}),st.map(function(s){return parseInt(s.count);}));
   },100);
 }
 
@@ -10336,6 +10388,97 @@ function renderAffiliateAnalytics(d){
     if(st.length>0) anCharts.sta=anDonut('an-sta',st.map(function(s){return s.status;}),st.map(function(s){return parseInt(s.count);}));
   },100);
 }
+
+/* ═══ ADMIN ANNOUNCEMENTS TAB ══════════════════════════════════════ */
+function renderAdminAnnouncements() {
+  var c = document.getElementById('adm-c');
+  if (!c) return;
+  c.innerHTML =
+    '<div style="max-width:600px">'+
+    '<h3 style="font-family:serif;font-size:1.1rem;margin-bottom:16px">📣 Post Announcement</h3>'+
+    '<div style="display:flex;flex-direction:column;gap:10px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:20px">'+
+      '<div>'+
+        '<label style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Title *</label>'+
+        '<input id="ann-title" type="text" placeholder="e.g. New Feature: Google Sign-In" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:.9rem;background:var(--bg3);color:var(--text);box-sizing:border-box">'+
+      '</div>'+
+      '<div>'+
+        '<label style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Message</label>'+
+        '<textarea id="ann-content" rows="3" placeholder="Details about this announcement..." style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:.88rem;background:var(--bg3);color:var(--text);resize:vertical;box-sizing:border-box"></textarea>'+
+      '</div>'+
+      '<div>'+
+        '<label style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Badge Text (optional)</label>'+
+        '<input id="ann-badge" type="text" placeholder="e.g. NEW · HOT · UPDATE" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:.9rem;background:var(--bg3);color:var(--text);box-sizing:border-box">'+
+      '</div>'+
+      '<button onclick="postAnnouncement()" style="background:var(--gold);color:#fff;border:none;padding:12px;border-radius:8px;font-weight:700;font-size:.9rem;cursor:pointer;width:100%">📣 Post Announcement</button>'+
+    '</div>'+
+    '<h3 style="font-family:serif;font-size:1rem;margin-bottom:12px">Recent Announcements</h3>'+
+    '<div id="ann-list"><div style="color:var(--muted);font-size:.84rem">Loading...</div></div>'+
+    '</div>';
+  loadAdminAnnouncements();
+}
+
+function loadAdminAnnouncements() {
+  fetch('/api/reviews?type=announcements')
+    .then(function(r){ return r.json(); })
+    .then(function(data) {
+      var list = document.getElementById('ann-list');
+      if (!list) return;
+      var items = data.announcements || [];
+      if (!items.length) {
+        list.innerHTML = '<div style="color:var(--muted);font-size:.84rem;padding:12px 0">No announcements yet.</div>';
+        return;
+      }
+      list.innerHTML = items.map(function(a) {
+        var date = a.created_at ? new Date(a.created_at).toLocaleDateString('en-NG', {day:'numeric',month:'short',year:'numeric'}) : '';
+        var badge = a.badge_text ? '<span style="background:var(--gold);color:#fff;font-size:.62rem;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:6px">'+a.badge_text+'</span>' : '';
+        return '<div style="background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--gold);border-radius:10px;padding:13px 15px;margin-bottom:10px">'+
+          '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'+
+            '<span style="font-weight:700;font-size:.88rem">'+a.title+badge+'</span>'+
+            '<span style="font-size:.7rem;color:var(--muted)">'+date+'</span>'+
+          '</div>'+
+          (a.content ? '<div style="font-size:.8rem;color:var(--muted);line-height:1.5">'+a.content+'</div>' : '')+
+        '</div>';
+      }).join('');
+    })
+    .catch(function(){ });
+}
+
+function postAnnouncement() {
+  var title   = (document.getElementById('ann-title')   || {}).value || '';
+  var content = (document.getElementById('ann-content') || {}).value || '';
+  var badge   = (document.getElementById('ann-badge')   || {}).value || '';
+  if (!title.trim()) { toast('Title is required', 'warn'); return; }
+  if (!CU || CU.role !== 'admin') { toast('Admin only', 'fail'); return; }
+
+  var btn = document.querySelector('#adm-c button[onclick="postAnnouncement()"]');
+  if (btn) { btn.disabled = true; btn.textContent = 'Posting...'; }
+
+  fetch('/api/reviews?type=announcements', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title: title.trim(), content: content.trim(), badgeText: badge.trim(), adminId: CU.id })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(data) {
+    if (btn) { btn.disabled = false; btn.textContent = '📣 Post Announcement'; }
+    if (!data.ok) throw new Error(data.error || 'Failed');
+    toast('Announcement posted!', 'ok');
+    /* Clear form */
+    document.getElementById('ann-title').value   = '';
+    document.getElementById('ann-content').value = '';
+    document.getElementById('ann-badge').value   = '';
+    /* Reload list + refresh home page announcements */
+    loadAdminAnnouncements();
+    loadAnnouncements();
+  })
+  .catch(function(e) {
+    if (btn) { btn.disabled = false; btn.textContent = '📣 Post Announcement'; }
+    toast('Error: ' + e.message, 'fail');
+  });
+}
+window.postAnnouncement = postAnnouncement;
+window.renderAdminAnnouncements = renderAdminAnnouncements;
+window.loadAdminAnnouncements = loadAdminAnnouncements;
 
 window.loadAnalytics = loadAnalytics;
 window.anTab = anTab;
