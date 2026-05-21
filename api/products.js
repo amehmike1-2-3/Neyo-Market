@@ -38,8 +38,8 @@ function toProduct(r) {
     isOnSale:       r.is_on_sale       || false,
     saleEndsAt:     r.sale_ends_at     || null,
     shippingFee:    r.shipping_fee     ? parseFloat(r.shipping_fee) : 0,
-    sellerVerified: r.seller_verified  || false,
-    badgeVerified:  r.badge_verified   || false,
+    sellerVerified: (r.seller_verified !== undefined && r.seller_verified !== null) ? Boolean(r.seller_verified) : false,
+    badgeVerified:  (r.badge_verified  !== undefined && r.badge_verified  !== null) ? Boolean(r.badge_verified)  : false,
     commission:     parseFloat(r.commission || 0),
     description:    r.description      || '',
     seller:         r.seller           || '',
@@ -120,7 +120,7 @@ module.exports = async function handler(req, res) {
 
         if (searchQ) {
           rows = await sql`
-            SELECT p.*, u.membership_tier AS seller_tier
+            SELECT p.*, u.membership_tier AS seller_tier, u.is_verified AS seller_verified, u.badge_verified AS badge_verified
             FROM products p
             LEFT JOIN users u ON u.id::text = p.seller_id::text
             WHERE p.status = 'active'
@@ -129,7 +129,7 @@ module.exports = async function handler(req, res) {
           `;
         } else if (catFilter) {
           rows = await sql`
-            SELECT p.*, u.membership_tier AS seller_tier
+            SELECT p.*, u.membership_tier AS seller_tier, u.is_verified AS seller_verified, u.badge_verified AS badge_verified
             FROM products p
             LEFT JOIN users u ON u.id::text = p.seller_id::text
             WHERE p.status = 'active' AND LOWER(p.cat) = ${catFilter}
@@ -137,7 +137,7 @@ module.exports = async function handler(req, res) {
           `;
         } else if (typeFilter) {
           rows = await sql`
-            SELECT p.*, u.membership_tier AS seller_tier
+            SELECT p.*, u.membership_tier AS seller_tier, u.is_verified AS seller_verified, u.badge_verified AS badge_verified
             FROM products p
             LEFT JOIN users u ON u.id::text = p.seller_id::text
             WHERE p.status = 'active' AND LOWER(p.type) = ${typeFilter}
@@ -145,7 +145,7 @@ module.exports = async function handler(req, res) {
           `;
         } else if (saleOnly) {
           rows = await sql`
-            SELECT p.*, u.membership_tier AS seller_tier
+            SELECT p.*, u.membership_tier AS seller_tier, u.is_verified AS seller_verified, u.badge_verified AS badge_verified
             FROM products p
             LEFT JOIN users u ON u.id::text = p.seller_id::text
             WHERE p.status = 'active' AND p.is_on_sale = true
@@ -154,7 +154,7 @@ module.exports = async function handler(req, res) {
           `;
         } else {
           rows = await sql`
-            SELECT p.*, u.membership_tier AS seller_tier
+            SELECT p.*, u.membership_tier AS seller_tier, u.is_verified AS seller_verified, u.badge_verified AS badge_verified
             FROM products p
             LEFT JOIN users u ON u.id::text = p.seller_id::text
             WHERE p.status = 'active'
