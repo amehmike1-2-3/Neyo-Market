@@ -924,36 +924,64 @@ textarea.fi{resize:vertical;min-height:88px}
 /* ══════════════════════════════════════
    CHAT
 ══════════════════════════════════════ */
-.cfab{position:fixed;bottom:calc(var(--bnav) + 14px);right:14px;z-index:995;
-      width:50px;height:50px;border-radius:50%;background:var(--gold);border:none;
-      display:flex;align-items:center;justify-content:center;font-size:1.25rem;
-      box-shadow:0 4px 14px rgba(201,146,42,.4);cursor:pointer;transition:var(--tr)}
+.cfab{position:fixed;bottom:calc(var(--bnav) + 16px);right:14px;z-index:995;
+      height:48px;padding:0 16px 0 12px;border-radius:24px;
+      background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);
+      border:1.5px solid rgba(201,146,42,.35);
+      display:flex;align-items:center;gap:8px;
+      box-shadow:0 4px 20px rgba(0,0,0,.35),0 0 0 0 rgba(201,146,42,.4);
+      cursor:pointer;transition:all .25s cubic-bezier(.4,0,.2,1);
+      animation:cfab-pulse 3s ease-in-out infinite;}
+.cfab:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(0,0,0,.4),0 0 20px rgba(201,146,42,.2);border-color:rgba(201,146,42,.6);}
+.cfab:active{transform:scale(.95)}
 @media(min-width:769px){.cfab{bottom:20px}}
-.cfab:active{transform:scale(.9)}
-.cp2{position:fixed;bottom:calc(var(--bnav) + 70px);right:8px;z-index:994;
-     width:calc(100vw - 16px);max-width:320px;background:var(--bg2);
-     border:1px solid var(--border);border-radius:12px;display:none;
-     flex-direction:column;box-shadow:var(--shadow-md);overflow:hidden;max-height:420px}
-@media(min-width:769px){.cp2{bottom:78px}}
+@keyframes cfab-pulse{0%,100%{box-shadow:0 4px 20px rgba(0,0,0,.35),0 0 0 0 rgba(201,146,42,.4);}50%{box-shadow:0 4px 20px rgba(0,0,0,.35),0 0 0 6px rgba(201,146,42,.0);}}
+.cfab-icon{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#c9922a,#f5c842);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.cfab-label{display:flex;flex-direction:column;gap:1px;}
+.cfab-label span:first-child{font-size:.72rem;font-weight:800;color:#fff;letter-spacing:.3px;line-height:1;white-space:nowrap;}
+.cfab-label span:last-child{font-size:.58rem;color:rgba(201,146,42,.9);font-weight:600;letter-spacing:.2px;line-height:1;white-space:nowrap;}
+/* ═══ NEYO AI — FULL PAGE MODAL ═══ */
+.cp2{position:fixed;inset:0;z-index:1100;background:var(--bg);
+     display:none;flex-direction:column;overflow:hidden;
+     animation:chatSlideUp .28s cubic-bezier(.4,0,.2,1);}
+@keyframes chatSlideUp{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
 .cp2.open{display:flex}
-.ch2{background:var(--bg3);padding:12px 14px;border-bottom:1px solid var(--border);
-     display:flex;align-items:center;gap:9px}
-.cav{width:28px;height:28px;border-radius:50%;background:var(--gold);
-     display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:700;color:#fff}
-.ci2 h4{font-size:.82rem;font-weight:600;color:var(--text)}
-.ci2 p{font-size:.66rem;color:var(--green)}
-.cx2{margin-left:auto;color:var(--muted);font-size:.9rem;cursor:pointer}
-.cms{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:7px;max-height:280px}
-.bub{max-width:86%;padding:9px 12px;border-radius:10px;font-size:.8rem;line-height:1.55}
-.bub.bot{background:var(--bg3);border:1px solid var(--border);border-bottom-left-radius:2px;align-self:flex-start;color:var(--text)}
-.bub.user{background:var(--gold);color:#fff;font-weight:500;border-bottom-right-radius:2px;align-self:flex-end}
-.cir{display:flex;gap:6px;padding:10px 12px;border-top:1px solid var(--border);background:var(--bg2)}
-.cin{flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text);
-     padding:9px 10px;border-radius:6px;font-size:.8rem;outline:none}
+/* Header */
+.ch2{background:linear-gradient(135deg,#1a1a2e 0%,#16213e 60%,#0f3460 100%);
+     padding:14px 16px;display:flex;align-items:center;gap:12px;
+     padding-top:calc(14px + env(safe-area-inset-top,0px));
+     border-bottom:1px solid rgba(201,146,42,.2);}
+.cav{width:40px;height:40px;border-radius:12px;
+     background:linear-gradient(135deg,#c9922a,#f5c842);
+     display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.ci2 h4{font-size:.95rem;font-weight:800;color:#fff;margin:0}
+.ci2 p{font-size:.7rem;color:rgba(201,146,42,.9);margin:0;font-weight:600}
+.cx2{margin-left:auto;color:rgba(255,255,255,.7);font-size:1.1rem;
+     cursor:pointer;background:rgba(255,255,255,.1);border:none;
+     width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;}
+.cx2:hover{background:rgba(255,255,255,.2);color:#fff}
+/* Messages */
+.cms{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;
+     gap:10px;-webkit-overflow-scrolling:touch;max-height:none;}
+.bub{max-width:82%;padding:11px 14px;border-radius:14px;font-size:.86rem;line-height:1.6}
+.bub.bot{background:var(--bg2);border:1px solid var(--border);
+         border-bottom-left-radius:3px;align-self:flex-start;color:var(--text);
+         box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.bub.user{background:linear-gradient(135deg,#c9922a,#a67318);color:#fff;
+          font-weight:500;border-bottom-right-radius:3px;align-self:flex-end;
+          box-shadow:0 2px 8px rgba(201,146,42,.3)}
+/* Input bar */
+.cir{display:flex;gap:8px;padding:12px 14px;
+     padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));
+     border-top:1px solid var(--border);background:var(--bg2);}
+.cin{flex:1;background:var(--bg3);border:1.5px solid var(--border);color:var(--text);
+     padding:11px 14px;border-radius:24px;font-size:.88rem;outline:none;
+     -webkit-appearance:none;}
 .cin:focus{border-color:var(--gold)}
-.csnd{background:var(--gold);color:#fff;border:none;width:34px;height:34px;
-      border-radius:6px;font-size:.88rem;display:flex;align-items:center;
-      justify-content:center;cursor:pointer;flex-shrink:0}
+.csnd{background:linear-gradient(135deg,#c9922a,#a67318);color:#fff;border:none;
+      width:42px;height:42px;border-radius:50%;font-size:1rem;display:flex;
+      align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;
+      box-shadow:0 2px 8px rgba(201,146,42,.35);}
 
 /* ══════════════════════════════════════
    FOOTER
@@ -1531,6 +1559,15 @@ footer{background:var(--text);color:#fff;border-top:1px solid rgba(255,255,255,.
     </div>
 
     <!-- TRENDING NEAR YOU -->
+    <!-- ═══ RECENTLY VIEWED ═══ -->
+    <div id="home-recently-viewed" style="margin-bottom:22px;display:none">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <span style="font-size:1.1rem">👁️</span>
+        <h2 style="margin:0;font-size:1rem;font-weight:700">Recently Viewed</h2>
+      </div>
+      <div id="home-rv-grid" style="display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch"></div>
+    </div>
+
     <!-- ═══ ANNOUNCEMENTS / NEWS BANNER ═══ -->
     <div id="announcements-section" style="margin-bottom:22px;display:none">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
@@ -1828,7 +1865,14 @@ footer{background:var(--text);color:#fff;border-top:1px solid rgba(255,255,255,.
         <input class="fi" type="number" id="s-shipping-fee" placeholder="e.g. 500 (0 for free shipping)" min="0" value="0"/>
         <p class="hint">Charged in addition to product price. Enter 0 for free shipping.</p>
       </div>
-      <div class="fg"><label>Description <span class="rq">*</span></label><textarea class="fi" id="s-desc" rows="4" placeholder="What's included? Who is this for? Why buy it?" oninput="validateSell()"></textarea></div>
+      <div class="fg">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <label style="margin-bottom:0">Description <span class="rq">*</span></label>
+          <button type="button" id="ai-desc-btn" onclick="aiGenerateDesc()" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;padding:5px 12px;border-radius:6px;font-size:.72rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap">✨ Generate with AI</button>
+        </div>
+        <textarea class="fi" id="s-desc" rows="4" placeholder="What's included? Who is this for? Why buy it?" oninput="validateSell()"></textarea>
+        <div id="ai-desc-status" style="font-size:.72rem;color:var(--muted);margin-top:4px;display:none"></div>
+      </div>
 
       <!-- Quantity, Location, Seller Bio -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
@@ -2794,17 +2838,39 @@ footer{background:var(--text);color:#fff;border-top:1px solid rgba(255,255,255,.
 <!-- ═══════════════════════════════════════
      NEYO AI CHATBOT
 ═══════════════════════════════════════ -->
-<button class="cfab" onclick="tChat()" title="Neyo AI Assistant">🤖</button>
-<div class="cp2" id="chat-p">
-  <div class="ch2">
-    <div class="cav">N</div>
-    <div class="ci2"><h4>Neyo AI</h4><p>● Online · Here to help</p></div>
-    <button class="cx2" onclick="tChat()">✕</button>
+<button class="cfab" onclick="tChat()" title="Neyo AI Assistant">
+  <div class="cfab-icon">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+      <path d="M12 2L13.09 8.26L19 6L14.74 10.91L21 12L14.74 13.09L19 18L13.09 15.74L12 22L10.91 15.74L5 18L9.26 13.09L3 12L9.26 10.91L5 6L10.91 8.26L12 2Z" fill="#fff" stroke="#fff" stroke-width="1" stroke-linejoin="round"/>
+    </svg>
   </div>
+  <div class="cfab-label">
+    <span>Neyo AI</span>
+    <span>Ask anything</span>
+  </div>
+</button>
+<div class="cp2" id="chat-p">
+  <!-- Header -->
+  <div class="ch2">
+    <div class="cav">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+        <path d="M12 2L13.09 8.26L19 6L14.74 10.91L21 12L14.74 13.09L19 18L13.09 15.74L12 22L10.91 15.74L5 18L9.26 13.09L3 12L9.26 10.91L5 6L10.91 8.26L12 2Z" fill="#fff" stroke="#fff" stroke-width="0.5" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="ci2">
+      <h4>Neyo AI</h4>
+      <p>● Online · Ask me anything</p>
+    </div>
+    <button class="cx2" onclick="tChat()" title="Close">✕</button>
+  </div>
+  <!-- Messages -->
   <div class="cms" id="chat-ms"></div>
+  <!-- Input -->
   <div class="cir">
     <input class="cin" id="chat-in" placeholder="Ask anything…" onkeydown="if(event.key==='Enter')sendMsg()"/>
-    <button class="csnd" onclick="sendMsg()">➤</button>
+    <button class="csnd" onclick="sendMsg()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M22 2L11 13" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/><path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/></svg>
+    </button>
   </div>
 </div>
 
@@ -2917,6 +2983,8 @@ function loadAll() {
 
   /* Load announcements for home page */
   loadAnnouncements();
+  /* Load recently viewed */
+  renderHomeRecentlyViewed();
 
   /* Fetch live orders from Neon — always from DB, never from localStorage */
   if (CU) {
@@ -3382,6 +3450,67 @@ function submitProduct() {
 }
 window.submitProduct = submitProduct;
 
+/* ═══ AI PRODUCT DESCRIPTION GENERATOR ═══════════════════════════════════
+   Reads current form values, calls Claude API, auto-fills s-desc textarea.
+═══════════════════════════════════════════════════════════════════════════ */
+async function aiGenerateDesc() {
+  var name     = (document.getElementById('s-name')     || {}).value || '';
+  var cat      = (document.getElementById('s-cat')      || {}).value || '';
+  var type     = (document.getElementById('s-type')     || {}).value || '';
+  var price    = (document.getElementById('s-price')    || {}).value || '';
+  var currency = (document.getElementById('s-currency') || {}).value || 'NGN';
+  var variants = (document.getElementById('s-variants') || {}).value || '';
+
+  if (!name.trim()) { toast('Enter a product name first', 'warn'); return; }
+
+  var btn    = document.getElementById('ai-desc-btn');
+  var status = document.getElementById('ai-desc-status');
+  var orig   = btn ? btn.innerHTML : '';
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Generating...'; }
+  if (status) { status.style.display = 'block'; status.textContent = 'Writing your description...'; }
+
+  var sym = currency === 'NGN' ? '₦' : currency === 'USD' ? '$' : currency === 'GBP' ? '£' : currency;
+  var prompt = 'Write a persuasive, SEO-friendly product description for a Nigerian marketplace listing.'
+    + ' Product: "' + name + '".'
+    + (cat    ? ' Category: ' + cat + '.'    : '')
+    + (type   ? ' Type: ' + type + '.'       : '')
+    + (price  ? ' Price: ' + sym + price + '.' : '')
+    + (variants ? ' Available options: ' + variants + '.' : '')
+    + ' Write 3-4 sentences. Be specific, highlight benefits, include a call to action.'
+    + ' Do NOT use markdown, asterisks, or headers. Plain text only.';
+
+  try {
+    /* Call /api/chat (Groq backend) — no API key exposed in browser */
+    var resp = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: [{ role: 'user', content: prompt }],
+        contextData: {}
+      })
+    });
+    var data = await resp.json();
+    if (!resp.ok) throw new Error(data.error || 'AI request failed');
+    var desc = data.reply || '';
+    if (!desc) throw new Error('No response from AI');
+
+    var ta = document.getElementById('s-desc');
+    if (ta) {
+      ta.value = desc.trim();
+      ta.dispatchEvent(new Event('input'));
+    }
+    if (status) { status.textContent = '✅ Description generated! Feel free to edit it.'; }
+    toast('AI description ready!', 'ok');
+  } catch(e) {
+    if (status) { status.textContent = 'AI unavailable — please type your description.'; }
+    toast('AI error: ' + e.message, 'fail');
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = orig; }
+    setTimeout(function(){ if(status) status.style.display='none'; }, 4000);
+  }
+}
+window.aiGenerateDesc = aiGenerateDesc;
+
 function resetSell() {
   uploadedImages = []; dReady = false; digitalFileData = null;
   ['s-name','s-type','s-cat','s-price','s-currency','s-comm','s-desc','s-email','s-discount-price','s-sale-ends','s-shipping-fee'].forEach(function (id) { sval(id, ''); });
@@ -3757,6 +3886,142 @@ function loadAnnouncements() {
 }
 window.loadAnnouncements = loadAnnouncements;
 
+/* ═══ RELATED PRODUCTS ═════════════════════════════════════════════════════
+   Shows products from same category. Injected below reviews in product modal.
+═══════════════════════════════════════════════════════════════════════════ */
+function renderRelatedProducts(p) {
+  var body = document.getElementById('pd-body');
+  if (!body) return;
+  var all  = getActive();
+  var cat  = (p.cat  || '').toLowerCase();
+  var type = (p.type || '').toLowerCase();
+
+  var related = all.filter(function(x) {
+    if (Number(x.id) === Number(p.id)) return false;
+    return (x.cat  || '').toLowerCase() === cat  ||
+           (x.type || '').toLowerCase() === type;
+  }).slice(0, 6);
+
+  if (!related.length) return;
+
+  var sec = document.createElement('div');
+  sec.id  = 'pd-related';
+  sec.style.cssText = 'padding:14px;border-top:1px solid var(--border)';
+  sec.innerHTML = '<div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px">You May Also Like</div>'
+    + '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">'
+    + related.map(function(r) {
+        var imgs = r.imgs || r.images || [];
+        if (typeof imgs === 'string') try { imgs = JSON.parse(imgs); } catch(e){ imgs=[]; }
+        var img  = imgs && imgs.length ? imgs[0] : '';
+        var sym  = r.currency === 'USD' ? '$' : r.currency === 'GBP' ? '£' : '₦';
+        return '<div data-opn="'+r.id+'" style="cursor:pointer;border-radius:8px;overflow:hidden;border:1px solid var(--border);background:var(--bg3)">'
+          + (img ? '<img src="'+img+'" style="width:100%;aspect-ratio:1/1;object-fit:cover" loading="lazy">'
+                 : '<div style="width:100%;aspect-ratio:1/1;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:1.4rem">'+r.emoji+'</div>')
+          + '<div style="padding:5px 6px">'
+          + '<div style="font-size:.68rem;font-weight:600;color:var(--text);line-height:1.2;margin-bottom:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">'+r.name+'</div>'
+          + '<div style="font-size:.72rem;font-weight:700;color:var(--gold)">'+sym+parseFloat(r.price).toLocaleString()+'</div>'
+          + '</div></div>';
+      }).join('')
+    + '</div>';
+
+  /* Remove old related section then append */
+  var old = document.getElementById('pd-related');
+  if (old) old.remove();
+  body.appendChild(sec);
+}
+window.renderRelatedProducts = renderRelatedProducts;
+
+/* ═══ RECENTLY VIEWED ══════════════════════════════════════════════════════
+   Shows last 6 viewed products (excluding current). Below related section.
+═══════════════════════════════════════════════════════════════════════════ */
+function renderRecentlyViewed(currentId) {
+  var body = document.getElementById('pd-body');
+  if (!body) return;
+
+  var rv = [];
+  try { rv = JSON.parse(localStorage.getItem('nm_rv') || '[]'); } catch(e){}
+  rv = rv.filter(function(id){ return Number(id) !== Number(currentId); }).slice(0, 6);
+  if (!rv.length) return;
+
+  var all     = getActive();
+  var viewed  = rv.map(function(id){ return all.find(function(p){ return Number(p.id)===Number(id); }); })
+                  .filter(Boolean);
+  if (!viewed.length) return;
+
+  var sec = document.createElement('div');
+  sec.id  = 'pd-recently';
+  sec.style.cssText = 'padding:14px;border-top:1px solid var(--border)';
+  sec.innerHTML = '<div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px">Recently Viewed</div>'
+    + '<div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch">'
+    + viewed.map(function(r) {
+        var imgs = r.imgs || r.images || [];
+        if (typeof imgs === 'string') try { imgs = JSON.parse(imgs); } catch(e){ imgs=[]; }
+        var img  = imgs && imgs.length ? imgs[0] : '';
+        var sym  = r.currency === 'USD' ? '$' : r.currency === 'GBP' ? '£' : '₦';
+        return '<div data-opn="'+r.id+'" style="cursor:pointer;flex-shrink:0;width:80px">'
+          + (img ? '<img src="'+img+'" style="width:80px;height:80px;object-fit:cover;border-radius:8px;border:1px solid var(--border)">'
+                 : '<div style="width:80px;height:80px;background:var(--bg3);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.5rem">'+r.emoji+'</div>')
+          + '<div style="font-size:.65rem;color:var(--text);margin-top:3px;line-height:1.2;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">'+r.name+'</div>'
+          + '<div style="font-size:.68rem;font-weight:700;color:var(--gold)">'+sym+parseFloat(r.price).toLocaleString()+'</div>'
+          + '</div>';
+      }).join('')
+    + '</div>';
+
+  var old = document.getElementById('pd-recently');
+  if (old) old.remove();
+  body.appendChild(sec);
+}
+window.renderRecentlyViewed = renderRecentlyViewed;
+
+/* Event delegation for related/recently viewed product clicks */
+document.addEventListener('click', function(e) {
+  var el = e.target.closest('[data-opn]');
+  if (!el) return;
+  var pid = el.getAttribute('data-opn');
+  if (!pid) return;
+  /* Close current modal if open, then open product */
+  var mPd = document.getElementById('m-pd');
+  if (mPd && mPd.classList.contains('open')) {
+    cM('m-pd');
+    setTimeout(function(){ opn(parseInt(pid)); }, 150);
+  } else {
+    opn(parseInt(pid));
+  }
+});
+
+/* ═══ RECENTLY VIEWED SECTION on Home Page ═════════════════════════════════
+   Shows a horizontal scroll row of recently viewed products on the home page.
+═══════════════════════════════════════════════════════════════════════════ */
+function renderHomeRecentlyViewed() {
+  var sec = document.getElementById('home-recently-viewed');
+  if (!sec) return;
+  var rv = [];
+  try { rv = JSON.parse(localStorage.getItem('nm_rv') || '[]'); } catch(e){}
+  if (!rv.length) { sec.style.display = 'none'; return; }
+
+  var all    = getActive();
+  var viewed = rv.map(function(id){ return all.find(function(p){ return Number(p.id)===Number(id); }); })
+                 .filter(Boolean).slice(0, 8);
+  if (!viewed.length) { sec.style.display = 'none'; return; }
+
+  sec.style.display = 'block';
+  var grid = document.getElementById('home-rv-grid');
+  if (!grid) return;
+  grid.innerHTML = viewed.map(function(r) {
+    var imgs = r.imgs || r.images || [];
+    if (typeof imgs === 'string') try { imgs = JSON.parse(imgs); } catch(e){ imgs=[]; }
+    var img = imgs && imgs.length ? imgs[0] : '';
+    var sym = r.currency === 'USD' ? '$' : r.currency === 'GBP' ? '£' : '₦';
+    return '<div data-opn="\'+r.id+\'" style="cursor:pointer;flex-shrink:0;width:100px">'
+      + (img ? '<img src="'+img+'" style="width:100px;height:100px;object-fit:cover;border-radius:10px;border:1px solid var(--border)">'
+             : '<div style="width:100px;height:100px;background:var(--bg3);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.8rem">'+r.emoji+'</div>')
+      + '<div style="font-size:.7rem;color:var(--text);margin-top:4px;line-height:1.2;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-weight:600">'+r.name+'</div>'
+      + '<div style="font-size:.72rem;font-weight:700;color:var(--gold)">'+sym+parseFloat(r.price).toLocaleString()+'</div>'
+      + '</div>';
+  }).join('');
+}
+window.renderHomeRecentlyViewed = renderHomeRecentlyViewed;
+
 function fMkt(el, cat) {
   document.querySelectorAll('#mkt-cats .cp').forEach(function (c) { c.classList.remove('on'); });
   el.classList.add('on');
@@ -3986,6 +4251,14 @@ function opn(id) {
     + '</div>'
     + '<div style="height:16px"></div>';
   
+  /* Store recently viewed */
+  try {
+    var rv = JSON.parse(localStorage.getItem('nm_rv') || '[]');
+    rv = rv.filter(function(x){ return x !== p.id; });
+    rv.unshift(p.id);
+    localStorage.setItem('nm_rv', JSON.stringify(rv.slice(0, 12)));
+  } catch(e){}
+
   oM('m-pd');
   /* Auto-scroll to show the image smoothly after modal opens */
   setTimeout(function() {
@@ -4002,6 +4275,8 @@ function opn(id) {
     }, 600);
   }, 100);
   loadReviews(p.id);
+  renderRelatedProducts(p);
+  renderRecentlyViewed(p.id);
   
   /* Store carousel state */
   window.carouselState = window.carouselState || {};
@@ -4598,7 +4873,19 @@ function processPaystack(mode) {
 
         cM('m-cart'); cM('m-pd');
         oM('m-rec');
-        toast('✅ Payment confirmed! Order ' + trackId, 'ok');
+        toast('\u2705 Payment confirmed! Order ' + trackId, 'ok');
+        /* Notify vendor via WhatsApp */
+        try {
+          var _orderWA = { id: trackId, items: cart, total: grandTotal, currency: selCurrency || 'NGN' };
+          var _sellerProd = (window.prods || []).find(function(p){ return cart.length && String(p.sellerId||p.seller_id) === String(cart[0].sellerId||cart[0].seller_id); });
+          var _sellerPhone = _sellerProd && _sellerProd.sellerPhone;
+          if (!_sellerPhone) {
+            /* try to get from usrs */
+            var _sellerUser = (usrs || []).find(function(u){ return cart.length && String(u.id) === String(cart[0].sellerId||cart[0].seller_id); });
+            _sellerPhone = _sellerUser && _sellerUser.phone;
+          }
+          if (_sellerPhone) notifyVendorWA(_orderWA, _sellerPhone);
+        } catch(waE){ console.log('[WA notify]', waE.message); }
         sendLocalNotification('Order Confirmed! ✅', 'Your order ' + trackId + ' is being processed. Escrow active.', 'https://neyomarket.com.ng/neyomarket-logo.webp');
         /* Award loyalty points for purchase */
         if (typeof awardLoyaltyPoints === 'function') awardLoyaltyPoints(10, 'Purchase: ' + trackId);
@@ -9162,6 +9449,35 @@ function promoteProductModal() {
 window.promoteProductModal = promoteProductModal;
 
 /* ═══ TOAST ═══ */
+/* ═══ WHATSAPP VENDOR NOTIFICATION ══════════════════════════════════════
+   Called after order is successfully created. Silently opens WA link.
+   Vendor receives a notification message on their WhatsApp.
+═══════════════════════════════════════════════════════════════════════════ */
+function notifyVendorWA(order, sellerPhone) {
+  if (!sellerPhone) return;
+  var phone = String(sellerPhone).replace(/[^0-9]/g, '');
+  if (!phone) return;
+  var sym   = order.currency === 'USD' ? '$' : order.currency === 'GBP' ? '£' : '₦';
+  var items = (order.items || []).map(function(i){ return i.name; }).join(', ');
+  var msg   = encodeURIComponent(
+    '🛒 *New Order on NeyoMarket!*\n\n'
+    + 'Order: *' + order.id + '*\n'
+    + 'Items: ' + items + '\n'
+    + 'Amount: *' + sym + parseFloat(order.total).toLocaleString() + '*\n'
+    + 'Status: ✅ Paid & Held in Escrow\n\n'
+    + 'Login to NeyoMarket to process: https://neyomarket.com.ng'
+  );
+  /* Open in background iframe so buyer page is not disrupted */
+  var a = document.createElement('a');
+  a.href = 'https://wa.me/' + phone + '?text=' + msg;
+  a.target = '_blank'; a.rel = 'noopener';
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function(){ a.remove(); }, 3000);
+}
+window.notifyVendorWA = notifyVendorWA;
+
 function toast(msg, type) {
   var t = document.getElementById('toast'); if (!t) return;
   t.textContent = msg; t.className = 'toast ' + (type || ''); t.classList.add('show');
