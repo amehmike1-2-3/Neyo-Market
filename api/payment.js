@@ -349,6 +349,29 @@ module.exports = async function handler(req, res) {
           ref           = EXCLUDED.ref,
           delivery_code = EXCLUDED.delivery_code
       `;
+      /* ── WhatsApp vendor notification ── */
+      try {
+        if (o.sellerId) {
+          const sellerRows = await sql`SELECT name, phone FROM users WHERE id::text = ${String(o.sellerId)} LIMIT 1`;
+          if (sellerRows.length && sellerRows[0].phone) {
+            const sellerPhone = String(sellerRows[0].phone).replace(/[^0-9]/g, '');
+            const itemNames   = (o.items || []).map(function(i){ return i.name; }).join(', ');
+            const curr        = o.currency || 'NGN';
+            const sym         = curr === 'NGN' ? '₦' : curr === 'USD' ? '$' : curr === 'GBP' ? '£' : curr;
+            const waMsg = encodeURIComponent(
+              '🛒 *New Order on NeyoMarket!*\n\n'
+              + 'Order ID: *' + String(o.id) + '*\n'
+              + 'Items: ' + itemNames + '\n'
+              + 'Amount: *' + sym + parseFloat(o.total).toLocaleString() + '*\n'
+              + 'Status: Paid & in Escrow\n\n'
+              + 'Log in to NeyoMarket to process this order.'
+            );
+            /* Store WA link in order for reference — actual send is client-side */
+            console.log('[WA notify seller] https://wa.me/' + sellerPhone + '?text=' + waMsg);
+          }
+        }
+      } catch(waErr) { console.error('[WA notify]', waErr.message); }
+
       return res.status(201).json({ ok: true, deliveryCode });
     } catch (err) {
       console.error('[payment/orders POST]', err.message);
