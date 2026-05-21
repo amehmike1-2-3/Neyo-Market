@@ -1036,24 +1036,26 @@ module.exports = async function handler(req, res) {
         const payload = JSON.parse(Buffer.from(padded, 'base64').toString('utf8'));
 
         if (!payload || !payload.email) {
-          return res.status(401).json({ ok: false, error: 'Invalid Google credential — no email.' });
+          return res.status(401).json({ ok: false, error: 'Google did not return an email. Make sure your Google account has a verified email.' });
         }
 
-        /* Check token not expired */
+        /* Check token not expired — allow 5 min clock skew */
         const now = Math.floor(Date.now() / 1000);
-        if (payload.exp && payload.exp < now) {
-          return res.status(401).json({ ok: false, error: 'Google credential has expired. Please try again.' });
+        if (payload.exp && payload.exp < (now - 300)) {
+          return res.status(401).json({ ok: false, error: 'Google session expired. Please try again.' });
         }
 
-        /* Check audience matches our client_id */
+        /* Check audience — aud can be a string or array */
         const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '850245958205-fh4fdhcs1epra5u1v0nfouetcada8rd2.apps.googleusercontent.com';
-        if (payload.aud !== GOOGLE_CLIENT_ID) {
-          return res.status(401).json({ ok: false, error: 'Google client_id mismatch.' });
+        const audList = Array.isArray(payload.aud) ? payload.aud : [payload.aud];
+        if (!audList.includes(GOOGLE_CLIENT_ID)) {
+          console.error('[google-login] aud mismatch:', payload.aud, 'expected:', GOOGLE_CLIENT_ID);
+          return res.status(401).json({ ok: false, error: 'Google account not authorized for this app.' });
         }
 
         /* Check issuer is Google */
         if (!['accounts.google.com', 'https://accounts.google.com'].includes(payload.iss)) {
-          return res.status(401).json({ ok: false, error: 'Invalid Google token issuer.' });
+          return res.status(401).json({ ok: false, error: 'Invalid Google token. Please try again.' });
         }
 
         const gEmail = payload.email.toLowerCase().trim();
