@@ -5,7 +5,7 @@ const sql = neon(process.env.DATABASE_URL);
 
 function cors(res) {
   res.setHeader('Access-Control-Allow-Origin',  '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 }
 
@@ -55,6 +55,26 @@ module.exports = async function handler(req, res) {
         VALUES (${title.trim()}, ${content.trim() || null}, ${badge_text}, NOW())
       `;
       return res.status(201).json({ ok: true });
+    }
+
+    /* ── DELETE /api/reviews?type=announcements&id=X  (admin only) ── */
+    if (req.method === 'DELETE' && req.query.type === 'announcements') {
+      const annId   = parseInt(req.query.id);
+      const adminId = (req.body || {}).adminId || '';
+      if (!annId) return res.status(400).json({ ok: false, error: 'id required.' });
+
+      /* Admin guard */
+      let caller = null;
+      try {
+        const rows = await sql`SELECT role FROM users WHERE id::text = ${String(adminId)} LIMIT 1`;
+        caller = rows[0];
+      } catch(e) {}
+      const isMaster = String(adminId) === 'master_admin_001';
+      if (!isMaster && (!caller || caller.role !== 'admin'))
+        return res.status(403).json({ ok: false, error: 'Admin only.' });
+
+      await sql`DELETE FROM announcements WHERE id = ${annId}`;
+      return res.status(200).json({ ok: true });
     }
 
     /* ── GET /api/reviews?productId=xxx ── */
