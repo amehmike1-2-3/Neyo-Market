@@ -1054,8 +1054,8 @@ module.exports = async function handler(req, res) {
           const newId      = Date.now();
           const newAffCode = 'REF' + Math.random().toString(36).substr(2, 7).toUpperCase();
           await sql`
-            INSERT INTO users (id, name, email, role, aff_code, is_verified, joined, created_at)
-            VALUES (${newId}, ${gName}, ${gEmail}, 'buyer', ${newAffCode}, true, NOW(), NOW())
+            INSERT INTO users (id, name, email, password_hash, role, aff_code, is_verified, joined, created_at)
+            VALUES (${newId}, ${gName}, ${gEmail}, '', 'buyer', ${newAffCode}, true, NOW(), NOW())
           `;
           const newRows = await sql`SELECT * FROM users WHERE id = ${newId} LIMIT 1`;
           user = newRows[0];
