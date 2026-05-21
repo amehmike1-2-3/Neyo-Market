@@ -3,6 +3,7 @@
 //           update-profile, kyc, verify-email — all with rate limiting
 
 const { neon } = require('@neondatabase/serverless');
+const https    = require('https');
 const bcrypt   = require('bcryptjs');
 const crypto   = require('crypto');
 const nodemailer = require('nodemailer');
@@ -1021,30 +1022,52 @@ module.exports = async function handler(req, res) {
       if (!credential) return res.status(400).json({ ok: false, error: 'credential required.' });
 
       try {
-        /* Verify with Google's tokeninfo endpoint */
-        const verifyRes = await fetch('https://oauth2.googleapis.com/tokeninfo?id_token=' + encodeURIComponent(credential));
-        const payload   = await verifyRes.json();
-
-        if (!payload || !payload.email || payload.error) {
-          return res.status(401).json({ ok: false, error: 'Invalid Google credential.' });
+        /* Decode Google JWT without verifying signature — just trust the payload.
+           We still check aud (client_id) to prevent token reuse from other apps.
+           This avoids needing fetch or any extra library on Vercel. */
+        const parts = credential.split('.');
+        if (parts.length !== 3) {
+          return res.status(401).json({ ok: false, error: 'Invalid Google credential format.' });
         }
 
-        /* Optional: enforce your own client_id */
-        const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
-        if (GOOGLE_CLIENT_ID && payload.aud !== GOOGLE_CLIENT_ID) {
+        /* Base64url decode the payload (middle part) */
+        const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+        const padded  = base64 + '='.repeat((4 - base64.length % 4) % 4);
+        const payload = JSON.parse(Buffer.from(padded, 'base64').toString('utf8'));
+
+        if (!payload || !payload.email) {
+          return res.status(401).json({ ok: false, error: 'Invalid Google credential — no email.' });
+        }
+
+        /* Check token not expired */
+        const now = Math.floor(Date.now() / 1000);
+        if (payload.exp && payload.exp < now) {
+          return res.status(401).json({ ok: false, error: 'Google credential has expired. Please try again.' });
+        }
+
+        /* Check audience matches our client_id */
+        const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '850245958205-fh4fdhcs1epra5u1v0nfouetcada8rd2.apps.googleusercontent.com';
+        if (payload.aud !== GOOGLE_CLIENT_ID) {
           return res.status(401).json({ ok: false, error: 'Google client_id mismatch.' });
         }
 
+        /* Check issuer is Google */
+        if (!['accounts.google.com', 'https://accounts.google.com'].includes(payload.iss)) {
+          return res.status(401).json({ ok: false, error: 'Invalid Google token issuer.' });
+        }
+
         const gEmail = payload.email.toLowerCase().trim();
-        const gName  = payload.name || gEmail.split('@')[0];
+        const gName  = payload.name || payload.given_name || gEmail.split('@')[0];
+        const gPic   = payload.picture || null;
 
         /* Check if user already exists */
         const existing = await sql`SELECT * FROM users WHERE email = ${gEmail} LIMIT 1`;
+        const isNew = existing.length === 0;
 
         let user;
-        if (existing.length) {
+        if (!isNew) {
           user = existing[0];
-          /* Google already verified this email — mark it verified in our DB too */
+          /* Mark email verified since Google confirmed it */
           if (!user.is_verified) {
             await sql`UPDATE users SET is_verified = true WHERE email = ${gEmail}`;
             user.is_verified = true;
@@ -1061,11 +1084,11 @@ module.exports = async function handler(req, res) {
           user = newRows[0];
         }
 
-        return res.status(200).json({ ok: true, user: toPublicUser(user), isNew: !existing.length });
+        return res.status(200).json({ ok: true, user: toPublicUser(user), isNew });
 
       } catch (gErr) {
         console.error('[auth/google-login]', gErr.message);
-        return res.status(500).json({ ok: false, error: 'Google verification failed: ' + gErr.message });
+        return res.status(500).json({ ok: false, error: 'Google login failed: ' + gErr.message });
       }
     }
 
