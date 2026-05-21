@@ -10822,7 +10822,11 @@ function postAnnouncement() {
   if (!title.trim()) { toast('Title is required', 'warn'); return; }
   if (!CU || CU.role !== 'admin') { toast('Admin only', 'fail'); return; }
 
-  var btn = document.querySelector('#adm-c button[onclick="postAnnouncement()"]');
+  /* Find button by text content — more reliable than attribute selector */
+  var btn = null;
+  document.querySelectorAll('#adm-c button').forEach(function(b) {
+    if (b.textContent.indexOf('Post') !== -1 || b.textContent.indexOf('Posting') !== -1) btn = b;
+  });
   if (btn) { btn.disabled = true; btn.textContent = 'Posting...'; }
 
   fetch('/api/reviews?type=announcements', {
@@ -10832,19 +10836,22 @@ function postAnnouncement() {
   })
   .then(function(r){ return r.json(); })
   .then(function(data) {
-    if (btn) { btn.disabled = false; btn.textContent = '📣 Post Announcement'; }
+    if (btn) { btn.disabled = false; btn.innerHTML = '📣 Post Announcement'; }
     if (!data.ok) throw new Error(data.error || 'Failed');
-    toast('Announcement posted!', 'ok');
+    toast('Announcement posted! ✅', 'ok');
     /* Clear form */
-    document.getElementById('ann-title').value   = '';
-    document.getElementById('ann-content').value = '';
-    document.getElementById('ann-badge').value   = '';
+    var tEl = document.getElementById('ann-title');
+    var cEl = document.getElementById('ann-content');
+    var bEl = document.getElementById('ann-badge');
+    if (tEl) tEl.value = '';
+    if (cEl) cEl.value = '';
+    if (bEl) bEl.value = '';
     /* Reload list + refresh home page announcements */
     loadAdminAnnouncements();
     loadAnnouncements();
   })
   .catch(function(e) {
-    if (btn) { btn.disabled = false; btn.textContent = '📣 Post Announcement'; }
+    if (btn) { btn.disabled = false; btn.innerHTML = '📣 Post Announcement'; }
     toast('Error: ' + e.message, 'fail');
   });
 }
