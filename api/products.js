@@ -69,16 +69,18 @@ function _utPresign(fileInfo) {
       callbackUrl: 'https://neyomarket.com.ng/api/products?action=upload-complete',
     });
 
+    const rawToken = (process.env.UPLOADTHING_TOKEN || '').trim();
     const options = {
       hostname: 'api.uploadthing.com',
       path:     '/v7/prepareUpload',
       method:   'POST',
       headers:  {
-        'Content-Type':    'application/json',
-        'Content-Length':  Buffer.byteLength(body),
-        'Authorization':   'Bearer ' + decoded.apiKey,
+        'Content-Type':          'application/json',
+        'Content-Length':        Buffer.byteLength(body),
+        'x-uploadthing-api-key': decoded.apiKey,
+        'x-uploadthing-token':   rawToken,
         'x-uploadthing-version': '7.4.4',
-        'x-uploadthing-be-adapter': 'custom',
+        'x-uploadthing-be-adapter': 'express',
       }
     };
 
