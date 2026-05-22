@@ -10,40 +10,73 @@
 'use strict';
 
 const { neon } = require('@neondatabase/serverless');
-/* ═══ UPLOADTHING PRESIGN HANDLER — merged into products.js ══════════════
+/* ═══ UPLOADTHING v7 TOKEN-BASED PRESIGN HANDLER ═════════════════════════
    Handles POST /api/products?action=upload
-   Calls UploadThing REST API to get a presigned upload URL.
-   Returns { url, fields, fileUrl } to frontend — no SDK router needed.
-   Compatible with Vercel Node.js (req, res) => void signature.
+   Uses UPLOADTHING_TOKEN env var (base64 JWT containing apiKey + appId).
+   Returns presigned upload data to frontend — plain Node.js, no SDK.
 ═══════════════════════════════════════════════════════════════════════════ */
 const https = require('https');
 
+/* Decode the UPLOADTHING_TOKEN to extract apiKey and appId */
+function _decodeUTToken() {
+  try {
+    const token = process.env.UPLOADTHING_TOKEN || '';
+    if (!token) throw new Error('UPLOADTHING_TOKEN not set');
+    const decoded = JSON.parse(Buffer.from(token, 'base64').toString('utf8'));
+    if (!decoded.apiKey) throw new Error('apiKey missing from token');
+    return decoded; /* { apiKey, appId, regions } */
+  } catch(e) {
+    throw new Error('Invalid UPLOADTHING_TOKEN: ' + e.message);
+  }
+}
+
+/* Call UploadThing v7 API to get presigned upload URLs */
 function _utPresign(fileInfo) {
-  /* fileInfo: { name, size, type } */
   return new Promise(function(resolve, reject) {
+    let decoded;
+    try { decoded = _decodeUTToken(); }
+    catch(e) { return reject(e); }
+
+    /* v7 endpoint + Token auth */
     const body = JSON.stringify({
-      files: [{ name: fileInfo.name, size: fileInfo.size, type: fileInfo.type }],
+      files: [{
+        name:         fileInfo.name,
+        size:         fileInfo.size,
+        type:         fileInfo.type  || 'application/octet-stream',
+        lastModified: fileInfo.lastModified || Date.now(),
+      }],
+      routeConfig: {
+        blob: { maxFileSize: '512MiB', maxFileCount: 1 }
+      },
+      metadata:   {},
+      callbackUrl: 'https://neyomarket.com.ng/api/products?action=upload-complete',
     });
+
     const options = {
       hostname: 'api.uploadthing.com',
-      path:     '/v6/uploadFiles',
+      path:     '/v7/prepareUpload',
       method:   'POST',
       headers:  {
-        'Content-Type':  'application/json',
-        'Content-Length': Buffer.byteLength(body),
-        'x-uploadthing-api-key': process.env.UPLOADTHING_SECRET || '',
-        'x-uploadthing-app-id': process.env.UPLOADTHING_APP_ID || '', // 🌟 ONLY ADDED THIS LINE
+        'Content-Type':    'application/json',
+        'Content-Length':  Buffer.byteLength(body),
+        'Authorization':   'Bearer ' + decoded.apiKey,
+        'x-uploadthing-version': '7.4.4',
+        'x-uploadthing-be-adapter': 'custom',
       }
     };
-    const req = https.request(options, function(res) {
+
+    const req = https.request(options, function(resp) {
       let data = '';
-      res.on('data', function(chunk){ data += chunk; });
-      res.on('end', function() {
+      resp.on('data', function(chunk){ data += chunk; });
+      resp.on('end', function() {
         try {
           const parsed = JSON.parse(data);
+          console.log('[UploadThing v7 response]', JSON.stringify(parsed).substring(0, 200));
           if (parsed.error) return reject(new Error(parsed.error));
           resolve(parsed);
-        } catch(e) { reject(new Error('Invalid UploadThing response')); }
+        } catch(e) {
+          reject(new Error('Invalid UploadThing response: ' + data.substring(0, 100)));
+        }
       });
     });
     req.on('error', reject);
@@ -63,28 +96,40 @@ async function _handleUpload(req, res) {
         return res.status(403).json({ ok: false, error: 'Sellers only.' });
       }
     }
-  } catch(e) { /* allow through — backend will validate on product submit */ }
+  } catch(e) { /* allow — product submit will validate seller */ }
 
-  const body = req.body || {};
-  const files = body.files || [];
+  const body    = req.body || {};
+  const files   = body.files || [];
   if (!files.length) return res.status(400).json({ ok: false, error: 'No file info provided.' });
 
   const fileInfo = files[0];
-  /* Size limits */
   const isVideo  = (fileInfo.type || '').startsWith('video/');
   const maxBytes = isVideo ? 512 * 1024 * 1024 : 256 * 1024 * 1024;
-  if (fileInfo.size > maxBytes) {
+  if ((fileInfo.size || 0) > maxBytes) {
     return res.status(400).json({ ok: false, error: 'File too large. Max ' + (isVideo ? '512MB' : '256MB') });
   }
 
   try {
     const result = await _utPresign(fileInfo);
-    /* result.data is array of presign objects */
-    const presign = Array.isArray(result.data) ? result.data[0] : result.data;
-    return res.status(200).json(presign || result);
+
+    /* Normalise response — UploadThing v7 returns array under .data
+       Frontend expects: [{ url, fields, fileUrl }]  */
+    let presignArr = [];
+    if (Array.isArray(result))        presignArr = result;
+    else if (Array.isArray(result.data)) presignArr = result.data;
+    else if (result.url)              presignArr = [result];
+
+    if (!presignArr.length || !presignArr[0].url) {
+      console.error('[UploadThing] Unexpected response shape:', JSON.stringify(result).substring(0,200));
+      return res.status(500).json({ ok: false, error: 'UploadThing returned no upload URL. Check UPLOADTHING_TOKEN.' });
+    }
+
+    /* Return array so frontend can do presignData[0].url */
+    return res.status(200).json(presignArr);
+
   } catch(err) {
     console.error('[UploadThing presign error]', err.message);
-    return res.status(500).json({ ok: false, error: 'Upload failed: ' + err.message });
+    return res.status(500).json({ ok: false, error: 'Upload init failed: ' + err.message });
   }
 }
 const sql = neon(process.env.DATABASE_URL);
