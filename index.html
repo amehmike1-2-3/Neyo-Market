@@ -1969,13 +1969,19 @@ footer{background:var(--text);color:#fff;border-top:1px solid rgba(255,255,255,.
       </div>
 
       <div class="fg" id="dfile-wrap" style="display:none">
-        <label>Product File <span class="rq">*</span> <span style="font-size:.7rem;font-weight:400;text-transform:none;letter-spacing:0">(PDF, ZIP or MP4)</span></label>
+        <label>Product File <span class="rq">*</span> <span style="font-size:.7rem;font-weight:400;text-transform:none;letter-spacing:0">(PDF, ZIP or MP4 · Max 256MB)</span></label>
         <div class="fz" id="fz" onclick="triggerFile()">
           <div class="fzi">📁</div>
           <div class="fn" id="dfile-name">Tap to Choose File</div>
-          <p>PDF · ZIP · MP4 · Max 200MB</p>
+          <p>PDF · ZIP · MP4 · Max 256MB · Stored securely in cloud</p>
         </div>
         <input type="file" id="dfile-inp" accept=".pdf,.zip,.mp4,video/mp4,application/pdf,application/zip" style="display:none" onchange="onFilePick(event)"/>
+        <div id="dfile-progress" style="display:none;margin-top:8px">
+          <div style="background:var(--bg3);border-radius:20px;height:6px;overflow:hidden">
+            <div id="dfile-progress-bar" style="height:100%;background:var(--gold);border-radius:20px;width:0%;transition:width .3s"></div>
+          </div>
+          <div id="dfile-progress-text" style="font-size:.72rem;color:var(--muted);margin-top:4px;text-align:center"></div>
+        </div>
       </div>
 
       <div class="fg"><label>Payout Email <span class="rq">*</span></label><input class="fi" type="email" id="s-email" placeholder="seller@email.com" oninput="validateSell()"/></div>
@@ -3290,35 +3296,30 @@ function cntImgs() { var c = 0; uploadedImages.forEach(function (x) { if (x) c++
 function triggerFile() { var i = document.getElementById('dfile-inp'); i.value = ''; i.click(); }
 window.triggerFile = triggerFile;
 
-/* Store the digital file data globally so submitProduct can save it */
-var digitalFileData = null; /* { dataUrl, name, ext, size } */
+/* Store digital file ref — NO base64. Upload to UploadThing on submit. */
+var digitalFileData = null; /* { file, name, ext, size } — raw File object */
 
 function onFilePick(e) {
   var f = e.target.files[0]; if (!f) return;
-
-  /* Warn if file is very large (base64 bloats by ~33%) */
   var sizeMB = f.size / (1024 * 1024);
-  if (sizeMB > 15) {
-    toast('⚠️ File is ' + sizeMB.toFixed(1) + 'MB. For files over 15MB, use Google Drive and paste a link in the description.', 'warn');
+
+  /* Strict size check — UploadThing allows 256MB */
+  if (sizeMB > 256) {
+    toast('File too large. Maximum size is 256MB.', 'fail');
+    dReady = false;
+    validateSell();
+    return;
   }
 
   var ext = f.name.lastIndexOf('.') > -1 ? f.name.substring(f.name.lastIndexOf('.')) : '';
-  document.getElementById('dfile-name').textContent = '⏳ Reading file…';
 
-  var reader = new FileReader();
-  reader.onload = function (ev) {
-    digitalFileData = { dataUrl: ev.target.result, name: f.name, ext: ext, size: f.size };
-    dReady = true;
-    document.getElementById('dfile-name').textContent = '✅ ' + f.name + ' (' + sizeMB.toFixed(2) + ' MB)';
-    document.getElementById('fz').classList.add('has');
-    validateSell();
-  };
-  reader.onerror = function () {
-    toast('Could not read the file. Please try again.', 'fail');
-    dReady = false;
-    validateSell();
-  };
-  reader.readAsDataURL(f);
+  /* Store raw File object — no FileReader, no base64 */
+  digitalFileData = { file: f, name: f.name, ext: ext, size: f.size };
+  dReady = true;
+
+  document.getElementById('dfile-name').textContent = '✅ ' + f.name + ' (' + sizeMB.toFixed(2) + ' MB)';
+  document.getElementById('fz').classList.add('has');
+  validateSell();
 }
 window.onFilePick = onFilePick;
 
@@ -3491,7 +3492,7 @@ function submitProduct() {
   };
 
   var pType = payload.type;
-  var needsFileUpload = (pType === 'digital' || pType === 'course') && digitalFileData && digitalFileData.dataUrl;
+  var needsFileUpload = (pType === 'digital' || pType === 'course') && digitalFileData && digitalFileData.file;
 
   function doSubmitPayload(finalPayload) {
     var payloadStr;
@@ -3539,48 +3540,128 @@ function submitProduct() {
   if (needsFileUpload) {
     if (btn) { btn.disabled = true; btn.textContent = 'Saving product...'; }
 
-    /* ── THE FIX ──────────────────────────────────────────────────────
-       ImgBB is an IMAGE host. When you upload a PDF to ImgBB it renders
-       a 1-page JPG preview and returns an image URL — NOT the original
-       file. So result.data.url was saving a JPG link as fileUrl, which
-       is why buyers only got a preview image.
-
-       The correct solution: store the file as a base64 data URL directly.
-       FileReader already captured the COMPLETE original file in
-       digitalFileData.dataUrl as "data:application/pdf;base64,JVBERi0x..."
-       This IS the full PDF — lossless, complete, every page.
-
-       The download anchor (<a href="data:..." download="file.pdf">) works
-       perfectly with base64 data URLs: browser saves the exact original file.
-
-       Product IMAGES (imgs array) continue to use ImgBB — no change there.
-       fileUrl STRICTLY holds the product file — they never mix.
+    /* ── UPLOAD TO UPLOADTHING ─────────────────────────────────────────
+       File goes directly to UploadThing cloud storage.
+       ONLY the returned URL string is saved in Neon — no base64, no bloat.
     ─────────────────────────────────────────────────────────────────── */
 
-    /* Validate we have real file data */
-    if (!digitalFileData.dataUrl || digitalFileData.dataUrl.length < 100) {
+    if (!digitalFileData.file) {
       if (btn) { btn.disabled = false; btn.textContent = 'Submit for Review'; }
-      toast('File data is empty. Please re-select your file.', 'fail');
+      toast('No file selected. Please choose a file.', 'fail');
       return;
     }
 
-    var fileSizeMB = (digitalFileData.size || 0) / (1024 * 1024);
-    if (fileSizeMB > 10) {
-      toast('Large file (' + fileSizeMB.toFixed(1) + 'MB) — saving may take a moment.', 'warn');
-    }
+    /* Show progress */
+    if (btn) btn.textContent = '⬆️ Uploading file…';
+    var progWrap = document.getElementById('dfile-progress');
+    var progBar  = document.getElementById('dfile-progress-bar');
+    var progText = document.getElementById('dfile-progress-text');
+    if (progWrap) progWrap.style.display = 'block';
+    if (progText) progText.textContent   = 'Uploading to secure cloud…';
 
-    /* Assign directly — the dataUrl IS the file, correctly typed */
-    payload.fileUrl  = digitalFileData.dataUrl;  /* "data:application/pdf;base64,JVBERi0x..." */
-    payload.fileName = digitalFileData.name;      /* "STA111.pdf" */
-    payload.fileExt  = digitalFileData.ext;       /* ".pdf" */
-
-    doSubmitPayload(payload);
+    uploadToUploadThing(digitalFileData.file, function(progress) {
+      if (progBar)  progBar.style.width    = progress + '%';
+      if (progText) progText.textContent   = 'Uploading… ' + progress + '%';
+    })
+    .then(function(result) {
+      if (progWrap) progWrap.style.display = 'none';
+      /* Save ONLY the URL string to Neon — zero base64 */
+      payload.fileUrl  = result.url;              /* "https://utfs.io/f/..." */
+      payload.fileName = digitalFileData.name;
+      payload.fileExt  = digitalFileData.ext;
+      payload.fileSize = digitalFileData.size;
+      doSubmitPayload(payload);
+    })
+    .catch(function(err) {
+      if (progWrap) progWrap.style.display = 'none';
+      if (btn) { btn.disabled = false; btn.textContent = 'Submit for Review'; }
+      toast('Upload failed: ' + err.message + '. Try again.', 'fail');
+    });
 
   } else {
     doSubmitPayload(payload);
   }
 }
 window.submitProduct = submitProduct;
+
+/* ═══ UPLOADTHING UPLOAD HELPER ════════════════════════════════════════════
+   Uploads a file directly to UploadThing using their presigned URL flow.
+   Returns a Promise that resolves with { url, name, size }.
+   No SDK needed — pure fetch.
+═══════════════════════════════════════════════════════════════════════════ */
+async function uploadToUploadThing(file, onProgress) {
+  /* Step 1: Get presigned upload URL from our backend router */
+  var authToken = '';
+  try {
+    if (CU) authToken = btoa(JSON.stringify({ id: CU.id, name: CU.name, role: CU.role }));
+  } catch(e){}
+
+  var routeSlug = file.type.startsWith('video/') ? 'courseVideoUploader' : 'digitalProductUploader';
+
+  /* Request presigned URL */
+  var presignRes = await fetch('/api/products?action=upload', {
+    method:  'POST',
+    headers: {
+      'Content-Type':  'application/json',
+      'Authorization': 'Bearer ' + authToken
+    },
+    body: JSON.stringify({
+      files: [{ name: file.name, size: file.size, type: file.type }],
+      routeConfig: routeSlug
+    })
+  });
+
+  if (!presignRes.ok) {
+    var err = await presignRes.json().catch(function(){ return {}; });
+    throw new Error(err.message || err.error || 'Could not get upload URL');
+  }
+
+  var presignData = await presignRes.json();
+  /* UploadThing returns array of { url, fields, fileUrl } */
+  var uploadInfo  = Array.isArray(presignData) ? presignData[0] : presignData;
+
+  if (!uploadInfo || !uploadInfo.url) {
+    throw new Error('Invalid upload URL from server');
+  }
+
+  /* Step 2: Upload file directly to UploadThing S3 using presigned URL */
+  var formData = new FormData();
+  /* Append all presigned fields first */
+  if (uploadInfo.fields) {
+    Object.keys(uploadInfo.fields).forEach(function(key) {
+      formData.append(key, uploadInfo.fields[key]);
+    });
+  }
+  formData.append('file', file);
+
+  /* Use XHR for progress tracking */
+  var fileUrl = await new Promise(function(resolve, reject) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', uploadInfo.url, true);
+
+    xhr.upload.onprogress = function(e) {
+      if (e.lengthComputable && onProgress) {
+        onProgress(Math.round((e.loaded / e.total) * 100));
+      }
+    };
+
+    xhr.onload = function() {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        /* Return the final file URL */
+        resolve(uploadInfo.fileUrl || uploadInfo.ufsUrl || uploadInfo.appUrl || '');
+      } else {
+        reject(new Error('Upload failed with status ' + xhr.status));
+      }
+    };
+
+    xhr.onerror = function() { reject(new Error('Upload network error')); };
+    xhr.send(formData);
+  });
+
+  if (!fileUrl) throw new Error('No file URL returned from UploadThing');
+  return { url: fileUrl, name: file.name, size: file.size };
+}
+window.uploadToUploadThing = uploadToUploadThing;
 
 /* ═══ AI PRODUCT DESCRIPTION GENERATOR ═══════════════════════════════════
    Reads current form values, calls Claude API, auto-fills s-desc textarea.
