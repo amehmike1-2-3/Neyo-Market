@@ -72,14 +72,21 @@ async function _handleUpload(req, res) {
   } catch(e) {}
 
   const body     = req.body || {};
-  const fileInfo = (body.files && body.files[0]) || body;
+  console.log('[UT] Received body:', JSON.stringify(body).substring(0, 200));
 
-  const fileName = fileInfo.name || fileInfo.fileName || 'file';
-  const fileSize = fileInfo.size || fileInfo.fileSize || 0;
-  const fileType = fileInfo.type || fileInfo.fileType || 'application/octet-stream';
+  const fileInfo = (body.files && body.files[0]) || body;
+  console.log('[UT] fileInfo:', JSON.stringify(fileInfo));
+
+  /* Accept both naming conventions from frontend */
+  const fileName = fileInfo.fileName || fileInfo.name || '';
+  const fileSize = fileInfo.fileSize || fileInfo.size || 0;
+  const fileType = fileInfo.fileType || fileInfo.type || 'application/octet-stream';
+  const lastMod  = fileInfo.lastModified || Date.now();
+
+  console.log('[UT] Parsed:', { fileName, fileSize, fileType });
 
   if (!fileName || !fileSize) {
-    return res.status(400).json({ ok: false, error: 'fileName and fileSize are required.' });
+    return res.status(400).json({ ok: false, error: 'fileName and fileSize required. Got: ' + JSON.stringify({ fileName, fileSize }) });
   }
 
   const isVideo  = fileType.startsWith('video/');
@@ -88,11 +95,16 @@ async function _handleUpload(req, res) {
     return res.status(400).json({ ok: false, error: 'File too large. Max ' + (isVideo ? '512MB' : '256MB') });
   }
 
-  /* Try multiple UploadThing endpoint formats until one works */
+  /* v7 is the correct endpoint — only try that */
   const endpoints = [
-    { path: '/v6/uploadFiles', body: JSON.stringify({ files: [{ name: fileName, size: fileSize, type: fileType }] }) },
-    { path: '/v7/prepareUpload', body: JSON.stringify({ files: [{ fileName, fileSize, fileType }], routeConfig: { blob: { maxFileSize: '512MiB', maxFileCount: 1 } }, metadata: {} }) },
-    { path: '/api/prepareUpload', body: JSON.stringify({ files: [{ fileName, fileSize, fileType }] }) },
+    {
+      path: '/v7/prepareUpload',
+      body: JSON.stringify({
+        files: [{ fileName, fileSize, fileType, lastModified: lastMod }],
+        routeConfig: { blob: { maxFileSize: '512MiB', maxFileCount: 1 } },
+        metadata: {},
+      })
+    },
   ];
 
   const rawToken = (process.env.UPLOADTHING_TOKEN || '').trim();
