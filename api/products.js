@@ -22,18 +22,16 @@ function _utPresign(fileInfo) {
   /* fileInfo: { name, size, type } */
   return new Promise(async function(resolve, reject) {
     try {
-      // 1. Initialize the official API client using your Vercel keys
       const utapi = new UTApi({
         apiKey: process.env.UPLOADTHING_SECRET,
         appId: process.env.UPLOADTHING_APP_ID,
       });
 
-      // 2. Use the correct v7 function to generate your upload URLs
-      const response = await utapi.getPresignedUrls({
+      // 🌟 Correct v7 method name is generatePresignedUrls
+      const response = await utapi.generatePresignedUrls({
         files: [{ name: fileInfo.name, size: fileInfo.size, type: fileInfo.type }]
       });
 
-      // 3. Pass the data back directly to your frontend
       resolve(response);
     } catch (error) {
       console.error("UploadThing SDK builder error:", error);
