@@ -16,7 +16,7 @@ const { neon } = require('@neondatabase/serverless');
    Returns { url, fields, fileUrl } to frontend — no SDK router needed.
    Compatible with Vercel Node.js (req, res) => void signature.
 ═══════════════════════════════════════════════════════════════════════════ */
-const https = require('https'); // 🌟 Added this line back to define https!
+const https = require('https');
 
 function _utPresign(fileInfo) {
   /* fileInfo: { name, size, type } */
