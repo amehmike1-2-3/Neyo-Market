@@ -18,7 +18,7 @@ const { neon } = require('@neondatabase/serverless');
 ═══════════════════════════════════════════════════════════════════════════ */
 const https = require('https');
 
-const { UTFiles } = require("@uploadthing/drop-in");
+const { UTFiles } = require("uploadthing");
 
 function _utPresign(fileInfo) {
   /* fileInfo: { name, size, type } */
