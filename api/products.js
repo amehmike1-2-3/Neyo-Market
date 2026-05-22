@@ -122,17 +122,19 @@ async function _handleUpload(req, res) {
   if (!files.length) return res.status(400).json({ ok: false, error: 'No file info provided.' });
 
   const fileInfo = files[0];
-  const isVideo  = (fileInfo.type || '').startsWith('video/');
+  const fileType = fileInfo.fileType || fileInfo.type || '';
+  const fileSize = fileInfo.fileSize || fileInfo.size || 0;
+
+  const isVideo  = fileType.startsWith('video/');
   const maxBytes = isVideo ? 512 * 1024 * 1024 : 256 * 1024 * 1024;
-  if ((fileInfo.size || 0) > maxBytes) {
+  if (fileSize > maxBytes) {
     return res.status(400).json({ ok: false, error: 'File too large. Max ' + (isVideo ? '512MB' : '256MB') });
   }
 
   try {
     const result = await _utPresign(fileInfo);
 
-    /* Normalise response — UploadThing v7 returns array under .data
-       Frontend expects: [{ url, fields, fileUrl }]  */
+    /* Normalise response — UploadThing v7 returns array under .data */
     let presignArr = [];
     if (Array.isArray(result))        presignArr = result;
     else if (Array.isArray(result.data)) presignArr = result.data;
@@ -143,7 +145,6 @@ async function _handleUpload(req, res) {
       return res.status(500).json({ ok: false, error: 'UploadThing returned no upload URL. Check UPLOADTHING_TOKEN.' });
     }
 
-    /* Return array so frontend can do presignData[0].url */
     return res.status(200).json(presignArr);
 
   } catch(err) {
