@@ -5,18 +5,13 @@
 // ✅ FIX 4: Condition field now included in PATCH UPDATE
 // ✅ FIX 5: Every route and catch returns res.json() — never HTML
 // ✅ FIX 6: New/Used filter added to product sorting
+// ✅ FIX 7: Fixed flexible fallback parsing for front-end name/description mismatches
 // All ID lookups: Number() for product IDs, String() for user IDs
 
 'use strict';
 
 const { neon } = require('@neondatabase/serverless');
 /* UploadThing migration pending — using direct file URL for now */
-
-/* ═══ UPLOADTHING DIRECT UPLOAD HANDLER ══════════════════════════════════
-   Instead of presigning, we receive the file as multipart form data
-   and forward it directly to UploadThing using their simple upload API.
-   This avoids all the presign complexity.
-═══════════════════════════════════════════════════════════════════════════ */
 
 const sql = neon(process.env.DATABASE_URL);
 
@@ -105,15 +100,12 @@ module.exports = async function handler(req, res) {
       let rows;
 
       if (sellerId) {
-        /* FIX 3: strict WHERE seller_id = authenticated seller's ID (String type)
-           Never return other sellers' products — even if the query string is tampered */
         rows = await sql`
           SELECT * FROM products
           WHERE seller_id = ${String(sellerId)}
           ORDER BY created_at DESC
         `;
       } else if (admin === 'true') {
-        /* Admin: all products, optionally filtered by status */
         if (status && status !== 'all') {
           rows = await sql`
             SELECT * FROM products WHERE status = ${String(status)} ORDER BY created_at DESC
@@ -122,7 +114,6 @@ module.exports = async function handler(req, res) {
           rows = await sql`SELECT * FROM products ORDER BY created_at DESC`;
         }
       } else {
-        /* Public marketplace — active only, with seller tier + optional search/filter */
         const searchQ    = req.query.q    ? '%' + String(req.query.q).trim().toLowerCase()    + '%' : null;
         const catFilter  = req.query.cat  ? String(req.query.cat).trim().toLowerCase()               : null;
         const typeFilter = req.query.type ? String(req.query.type).trim().toLowerCase()              : null;
@@ -178,18 +169,18 @@ module.exports = async function handler(req, res) {
 
     /* ════════════════════════════════════════════════
        POST — create product
-       FIX 2: Reject digital products without a file_url
     ════════════════════════════════════════════════ */
     if (req.method === 'POST') {
       const p = req.body || {};
 
-      if (!p.name || !p.price)
-        return jsonErr(res, 400, 'Product name and price are required.');
+      // 🛠️ SMART LOOKUP: Checks for "name" or "productName" / "product_name" seamlessly
+      const productName = p.name || p.productName || p.product_name;
+      const productPrice = p.price || p.productPrice || p.product_price;
+      const productDesc = p.description || p.productDescription || p.product_desc || '';
 
-      /* FIX 2: Hard-block digital/course uploads with no file_url ─────
-         The frontend uploads the file to ImgBB/S3 and passes back the
-         URL before calling this endpoint. If it's missing, the upload
-         failed — we must NOT create a broken product record in Neon. */
+      if (!productName || !productPrice)
+        return jsonErr(res, 400, 'Product name and price are required fields.');
+
       const productType = p.type || 'digital';
       if ((productType === 'digital' || productType === 'course') && !p.fileUrl) {
         return jsonErr(res, 400,
@@ -210,15 +201,11 @@ module.exports = async function handler(req, res) {
       const escrow         = (p.escrow !== false);
       const fileExt        = p.fileExt  || null;
       const fileName       = p.fileName || null;
-      /* fileUrl accepted in any format */
       const fileUrl        = p.fileUrl  || null;
       const fileSize       = p.fileSize || null;
       const imgs           = JSON.stringify(p.imgs || []);
       const dateStr        = new Date().toLocaleDateString();
       const productCat     = p.cat         || 'other';
-      const productDesc    = p.description || '';
-      const productSeller  = p.seller      || '';
-      const sellerEmail    = p.sellerEmail || '';
       const productEmoji   = p.emoji       || '📦';
       const productBadge   = p.badge       || '';
       const productCondition = p.condition || null;
@@ -235,10 +222,10 @@ module.exports = async function handler(req, res) {
           file_ext, file_name, file_url, file_size, is_verified, disputed,
           quantity, location, seller_bio, created_at, condition, currency, variants, lessons
         ) VALUES (
-          ${id}, ${p.name}, ${productType}, ${productCat}, ${parseFloat(p.price)},
+          ${id}, ${productName}, ${productType}, ${productCat}, ${parseFloat(productPrice)},
           ${discountPrice}, ${isOnSale}, ${saleEndsAt}, ${shippingFee},
-          ${commission}, ${productDesc}, ${productSeller}, ${sellerId},
-          ${sellerEmail}, ${sellerWhatsapp},
+          ${commission}, ${productDesc}, ${p.seller || ''}, ${sellerId},
+          ${p.sellerEmail || ''}, ${sellerWhatsapp},
           ${0}, ${0},
           ${productEmoji}, ${imgs}, ${'pending'}, ${productBadge}, ${dateStr}, ${escrow},
           ${fileExt}, ${fileName}, ${fileUrl}, ${fileSize}, ${false}, ${false},
@@ -255,8 +242,6 @@ module.exports = async function handler(req, res) {
 
     /* ════════════════════════════════════════════════
        PATCH — update product fields
-       All conditionals pre-computed (Neon ternary rule)
-       FIX 4: condition field now included in UPDATE
     ════════════════════════════════════════════════ */
     if (req.method === 'PATCH') {
       const p = req.body || {};
@@ -322,17 +307,15 @@ module.exports = async function handler(req, res) {
     }
 
     /* ════════════════════════════════════════════════
-       DELETE — owner or admin only
-       FIX: server enforces ownership check correctly
+       DELETE
     ════════════════════════════════════════════════ */
     if (req.method === 'DELETE') {
       const rawId      = req.query.id || (req.body && req.body.id);
-      const requesterId = req.body && req.body.requesterId;   /* caller must pass their userId */
+      const requesterId = req.body && req.body.requesterId;
       if (!rawId) return jsonErr(res, 400, 'Product id is required.');
 
       const productId = Number(rawId);
 
-      /* If requesterId provided, enforce ownership — never delete someone else's product */
       if (requesterId) {
         const owns = await sql`
           SELECT id FROM products
@@ -350,25 +333,21 @@ module.exports = async function handler(req, res) {
 
     /* ════════════════════════════════════════════════
        POST ?action=promote
-       Mark product as featured (is_featured = true)
     ════════════════════════════════════════════════ */
     if (req.query.action === 'promote' && req.method === 'POST') {
       const { productId, duration, amount, paystackRef } = req.body || {};
       if (!productId || !paystackRef) return jsonErr(res, 400, 'productId and paystackRef required');
 
       try {
-        /* Calculate expiration date based on duration */
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + (duration || 7));
 
-        /* Update product to featured */
         await sql`
           UPDATE products 
           SET is_featured = true, featured_expires = ${expiresAt.toISOString()}
           WHERE id = ${Number(productId)}
         `;
 
-        /* Log promotion transaction */
         await sql`
           INSERT INTO promotions (product_id, duration_days, amount, paystack_ref, expires_at, created_at)
           VALUES (${Number(productId)}, ${Number(duration || 7)}, ${Number(amount)}, ${String(paystackRef)}, ${expiresAt.toISOString()}, NOW())
@@ -384,7 +363,6 @@ module.exports = async function handler(req, res) {
     return jsonErr(res, 405, 'Method not allowed.');
 
   } catch (err) {
-    /* Always JSON, never HTML — stops 'Unexpected token T' errors */
     console.error('[products.js] ERROR:', err.message);
     return jsonErr(res, 500, 'Internal server error.', err.message);
   }
