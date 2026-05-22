@@ -57,15 +57,15 @@ function _utPresign(fileInfo) {
     /* v7 endpoint + Token auth */
     const body = JSON.stringify({
       files: [{
-        name:         fileInfo.name,
-        size:         fileInfo.size,
-        type:         fileInfo.type  || 'application/octet-stream',
+        fileName:     fileInfo.name,
+        fileSize:     fileInfo.size,
+        fileType:     fileInfo.type || 'application/octet-stream',
         lastModified: fileInfo.lastModified || Date.now(),
       }],
       routeConfig: {
         blob: { maxFileSize: '512MiB', maxFileCount: 1 }
       },
-      metadata:   {},
+      metadata:    {},
       callbackUrl: 'https://neyomarket.com.ng/api/products?action=upload-complete',
     });
 
