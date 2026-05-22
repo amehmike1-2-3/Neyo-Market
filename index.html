@@ -3296,19 +3296,34 @@ function cntImgs() { var c = 0; uploadedImages.forEach(function (x) { if (x) c++
 function triggerFile() { var i = document.getElementById('dfile-inp'); i.value = ''; i.click(); }
 window.triggerFile = triggerFile;
 
-/* Digital file — store raw File object, upload to UploadThing on submit */
-var digitalFileData = null; /* { file, name, ext, size } */
+/* Digital file data — base64 for instant delivery */
+var digitalFileData = null; /* { dataUrl, name, ext, size } */
 
 function onFilePick(e) {
   var f = e.target.files[0]; if (!f) return;
   var sizeMB = f.size / (1024 * 1024);
-  if (sizeMB > 256) { toast('File too large. Max 256MB.', 'fail'); return; }
+
+  if (sizeMB > 15) {
+    toast('⚠️ File is ' + sizeMB.toFixed(1) + 'MB. For files over 15MB, use Google Drive and paste a link in the description.', 'warn');
+  }
+
   var ext = f.name.lastIndexOf('.') > -1 ? f.name.substring(f.name.lastIndexOf('.')) : '';
-  digitalFileData = { file: f, name: f.name, ext: ext, size: f.size };
-  dReady = true;
-  document.getElementById('dfile-name').textContent = '✅ ' + f.name + ' (' + sizeMB.toFixed(2) + ' MB)';
-  document.getElementById('fz').classList.add('has');
-  validateSell();
+  document.getElementById('dfile-name').textContent = '⏳ Reading file…';
+
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    digitalFileData = { dataUrl: ev.target.result, name: f.name, ext: ext, size: f.size };
+    dReady = true;
+    document.getElementById('dfile-name').textContent = '✅ ' + f.name + ' (' + sizeMB.toFixed(2) + ' MB)';
+    document.getElementById('fz').classList.add('has');
+    validateSell();
+  };
+  reader.onerror = function() {
+    toast('Could not read the file. Please try again.', 'fail');
+    dReady = false;
+    validateSell();
+  };
+  reader.readAsDataURL(f);
 }
 window.onFilePick = onFilePick;
 
@@ -3481,7 +3496,7 @@ function submitProduct() {
   };
 
   var pType = payload.type;
-  var needsFileUpload = (pType === 'digital' || pType === 'course') && digitalFileData && digitalFileData.file;
+  var needsFileUpload = (pType === 'digital' || pType === 'course') && digitalFileData && digitalFileData.dataUrl;
 
   function doSubmitPayload(finalPayload) {
     var payloadStr;
@@ -3529,36 +3544,18 @@ function submitProduct() {
   if (needsFileUpload) {
     if (btn) { btn.disabled = true; btn.textContent = 'Saving product...'; }
 
-    /* ── UPLOAD TO UPLOADTHING ────────────────────────────────────── */
-    if (!digitalFileData || !digitalFileData.file) {
+    /* ── BASE64 INSTANT DELIVERY ───────────────────────────────────── */
+    if (!digitalFileData || !digitalFileData.dataUrl || digitalFileData.dataUrl.length < 100) {
       if (btn) { btn.disabled = false; btn.textContent = 'Submit for Review'; }
-      toast('No file selected. Please choose a file.', 'fail');
+      toast('File data is empty. Please re-select your file.', 'fail');
       return;
     }
-    if (btn) btn.textContent = '⬆️ Uploading file…';
-    var progWrap = document.getElementById('dfile-progress');
-    var progBar  = document.getElementById('dfile-progress-bar');
-    var progText = document.getElementById('dfile-progress-text');
-    if (progWrap) progWrap.style.display = 'block';
-    if (progText) progText.textContent   = 'Uploading to secure cloud…';
 
-    uploadToUploadThing(digitalFileData.file, function(progress) {
-      if (progBar)  progBar.style.width  = progress + '%';
-      if (progText) progText.textContent = 'Uploading… ' + progress + '%';
-    })
-    .then(function(result) {
-      if (progWrap) progWrap.style.display = 'none';
-      payload.fileUrl  = result.url;
-      payload.fileName = digitalFileData.name;
-      payload.fileExt  = digitalFileData.ext;
-      payload.fileSize = digitalFileData.size;
-      doSubmitPayload(payload);
-    })
-    .catch(function(err) {
-      if (progWrap) progWrap.style.display = 'none';
-      if (btn) { btn.disabled = false; btn.textContent = 'Submit for Review'; }
-      toast('Upload failed: ' + err.message, 'fail');
-    });
+    payload.fileUrl  = digitalFileData.dataUrl;
+    payload.fileName = digitalFileData.name;
+    payload.fileExt  = digitalFileData.ext;
+
+    doSubmitPayload(payload);
 
   } else {
     doSubmitPayload(payload);
