@@ -16,22 +16,24 @@ const { neon } = require('@neondatabase/serverless');
    Returns { url, fields, fileUrl } to frontend — no SDK router needed.
    Compatible with Vercel Node.js (req, res) => void signature.
 ═══════════════════════════════════════════════════════════════════════════ */
-const { createUploadthingUrlBuilder } = require("uploadthing/server");
+const { UTApi } = require("uploadthing/server");
 
 function _utPresign(fileInfo) {
   /* fileInfo: { name, size, type } */
   return new Promise(async function(resolve, reject) {
     try {
-      const urlBuilder = createUploadthingUrlBuilder({
+      // 1. Initialize the official API client using your Vercel keys
+      const utapi = new UTApi({
         apiKey: process.env.UPLOADTHING_SECRET,
         appId: process.env.UPLOADTHING_APP_ID,
       });
 
-      // The official SDK builds the exact array layout your frontend needs
-      const response = await urlBuilder([
-        { name: fileInfo.name, size: fileInfo.size, type: fileInfo.type }
-      ]);
+      // 2. Use the correct v7 function to generate your upload URLs
+      const response = await utapi.getPresignedUrls({
+        files: [{ name: fileInfo.name, size: fileInfo.size, type: fileInfo.type }]
+      });
 
+      // 3. Pass the data back directly to your frontend
       resolve(response);
     } catch (error) {
       console.error("UploadThing SDK builder error:", error);
