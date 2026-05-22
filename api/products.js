@@ -19,14 +19,31 @@ const https = require('https');
 
 /* Decode the UPLOADTHING_TOKEN to extract apiKey and appId */
 function _decodeUTToken() {
+  /* Try UPLOADTHING_TOKEN first (base64 JWT), then fallback to raw UPLOADTHING_SECRET */
+  const rawToken  = (process.env.UPLOADTHING_TOKEN  || '').trim();
+  const rawSecret = (process.env.UPLOADTHING_SECRET || '').trim();
+
+  /* If raw secret key provided directly (starts with sk_live_) — use it as-is */
+  if (rawSecret && rawSecret.startsWith('sk_')) {
+    console.log('[UploadThing] Using UPLOADTHING_SECRET directly');
+    return { apiKey: rawSecret, appId: process.env.UPLOADTHING_APP_ID || '' };
+  }
+
+  /* Decode base64 JWT token */
+  if (!rawToken) {
+    throw new Error('Neither UPLOADTHING_TOKEN nor UPLOADTHING_SECRET is set in Vercel env vars');
+  }
+
   try {
-    const token = process.env.UPLOADTHING_TOKEN || '';
-    if (!token) throw new Error('UPLOADTHING_TOKEN not set');
-    const decoded = JSON.parse(Buffer.from(token, 'base64').toString('utf8'));
-    if (!decoded.apiKey) throw new Error('apiKey missing from token');
-    return decoded; /* { apiKey, appId, regions } */
+    /* Fix base64 padding — Vercel sometimes strips trailing = */
+    const padded  = rawToken.replace(/-/g, '+').replace(/_/g, '/');
+    const padFixed = padded + '='.repeat((4 - padded.length % 4) % 4);
+    const decoded  = JSON.parse(Buffer.from(padFixed, 'base64').toString('utf8'));
+    if (!decoded.apiKey) throw new Error('apiKey field missing from decoded token');
+    console.log('[UploadThing] Token decoded OK, appId:', decoded.appId);
+    return decoded;
   } catch(e) {
-    throw new Error('Invalid UPLOADTHING_TOKEN: ' + e.message);
+    throw new Error('UPLOADTHING_TOKEN decode failed: ' + e.message + '. Raw length: ' + rawToken.length);
   }
 }
 
