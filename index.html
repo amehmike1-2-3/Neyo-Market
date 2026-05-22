@@ -3617,11 +3617,19 @@ async function uploadToUploadThing(file, onProgress) {
   }
 
   var presignData = await presignRes.json();
-  /* UploadThing returns array of { url, fields, fileUrl } */
-  var uploadInfo  = Array.isArray(presignData) ? presignData[0] : presignData;
+  /* UploadThing v7 returns array of { url, fields, fileUrl/ufsUrl } */
+  var uploadInfo = null;
+  if (Array.isArray(presignData) && presignData.length) {
+    uploadInfo = presignData[0];
+  } else if (presignData && presignData.url) {
+    uploadInfo = presignData;
+  } else if (presignData && presignData.data) {
+    uploadInfo = Array.isArray(presignData.data) ? presignData.data[0] : presignData.data;
+  }
 
   if (!uploadInfo || !uploadInfo.url) {
-    throw new Error('Invalid upload URL from server');
+    console.error('[UploadThing] Bad presign response:', JSON.stringify(presignData).substring(0,200));
+    throw new Error('No upload URL returned. Check UploadThing token in Vercel.');
   }
 
   /* Step 2: Upload file directly to UploadThing S3 using presigned URL */
@@ -3647,8 +3655,15 @@ async function uploadToUploadThing(file, onProgress) {
 
     xhr.onload = function() {
       if (xhr.status >= 200 && xhr.status < 300) {
-        /* Return the final file URL */
-        resolve(uploadInfo.fileUrl || uploadInfo.ufsUrl || uploadInfo.appUrl || '');
+        /* UploadThing v7 final URL — try all known field names */
+        var finalUrl = uploadInfo.ufsUrl
+          || uploadInfo.fileUrl
+          || uploadInfo.appUrl
+          || uploadInfo.url
+          || (uploadInfo.fields && uploadInfo.fields.key
+              ? 'https://uploadthing.com/f/' + uploadInfo.fields.key
+              : '');
+        resolve(finalUrl);
       } else {
         reject(new Error('Upload failed with status ' + xhr.status));
       }
