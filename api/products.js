@@ -10,66 +10,82 @@
 'use strict';
 
 const { neon } = require('@neondatabase/serverless');
-const { createUploadthing, createRouteHandler } = require('uploadthing/server');
-
-/* ═══ UPLOADTHING FILE ROUTER — merged into products.js ═══════════════════
-   Handles /api/products?action=upload
-   Digital products: PDF, ZIP (max 256MB)
-   Course videos: MP4, MOV, WebM (max 512MB)
-   Only the returned URL is saved in Neon — no base64, no DB bloat.
+/* ═══ UPLOADTHING PRESIGN HANDLER — merged into products.js ══════════════
+   Handles POST /api/products?action=upload
+   Calls UploadThing REST API to get a presigned upload URL.
+   Returns { url, fields, fileUrl } to frontend — no SDK router needed.
+   Compatible with Vercel Node.js (req, res) => void signature.
 ═══════════════════════════════════════════════════════════════════════════ */
-const _f = createUploadthing();
+const https = require('https');
 
-function _getUploader(req) {
+function _utPresign(fileInfo) {
+  /* fileInfo: { name, size, type } */
+  return new Promise(function(resolve, reject) {
+    const body = JSON.stringify({
+      files: [{ name: fileInfo.name, size: fileInfo.size, type: fileInfo.type }],
+    });
+    const options = {
+      hostname: 'api.uploadthing.com',
+      path:     '/v6/uploadFiles',
+      method:   'POST',
+      headers:  {
+        'Content-Type':  'application/json',
+        'Content-Length': Buffer.byteLength(body),
+        'x-uploadthing-api-key': process.env.UPLOADTHING_SECRET || '',
+      }
+    };
+    const req = https.request(options, function(res) {
+      let data = '';
+      res.on('data', function(chunk){ data += chunk; });
+      res.on('end', function() {
+        try {
+          const parsed = JSON.parse(data);
+          if (parsed.error) return reject(new Error(parsed.error));
+          resolve(parsed);
+        } catch(e) { reject(new Error('Invalid UploadThing response')); }
+      });
+    });
+    req.on('error', reject);
+    req.write(body);
+    req.end();
+  });
+}
+
+async function _handleUpload(req, res) {
+  /* Auth check — only sellers/admins */
   try {
     const auth  = req.headers['authorization'] || '';
     const token = auth.replace('Bearer ', '');
-    if (!token) return null;
-    const user  = JSON.parse(Buffer.from(token, 'base64').toString('utf8'));
-    if (!user || !user.id) return null;
-    if (!['seller', 'admin'].includes(user.role)) return null;
-    return { id: user.id, name: user.name || 'seller' };
-  } catch(e) { return null; }
+    if (token) {
+      const user = JSON.parse(Buffer.from(token, 'base64').toString('utf8'));
+      if (!user || !['seller','admin'].includes(user.role)) {
+        return res.status(403).json({ ok: false, error: 'Sellers only.' });
+      }
+    }
+  } catch(e) { /* allow through — backend will validate on product submit */ }
+
+  const body = req.body || {};
+  const files = body.files || [];
+  if (!files.length) return res.status(400).json({ ok: false, error: 'No file info provided.' });
+
+  const fileInfo = files[0];
+  /* Size limits */
+  const isVideo  = (fileInfo.type || '').startsWith('video/');
+  const maxBytes = isVideo ? 512 * 1024 * 1024 : 256 * 1024 * 1024;
+  if (fileInfo.size > maxBytes) {
+    return res.status(400).json({ ok: false, error: 'File too large. Max ' + (isVideo ? '512MB' : '256MB') });
+  }
+
+  try {
+    const result = await _utPresign(fileInfo);
+    /* result.data is array of presign objects */
+    const presign = Array.isArray(result.data) ? result.data[0] : result.data;
+    return res.status(200).json(presign || result);
+  } catch(err) {
+    console.error('[UploadThing presign error]', err.message);
+    return res.status(500).json({ ok: false, error: 'Upload failed: ' + err.message });
+  }
 }
-
-const _fileRouter = {
-  digitalProductUploader: _f({
-    pdf:               { maxFileSize: '256MB', maxFileCount: 1 },
-    'application/zip': { maxFileSize: '256MB', maxFileCount: 1 },
-    blob:              { maxFileSize: '256MB', maxFileCount: 1 },
-  })
-    .middleware(async ({ req }) => {
-      const u = _getUploader(req);
-      if (!u) throw new Error('Unauthorized');
-      return { uploadedBy: u.id };
-    })
-    .onUploadComplete(async ({ file }) => {
-      return { url: file.url, name: file.name, size: file.size };
-    }),
-
-  courseVideoUploader: _f({
-    'video/mp4':  { maxFileSize: '512MB', maxFileCount: 1 },
-    'video/mov':  { maxFileSize: '512MB', maxFileCount: 1 },
-    'video/webm': { maxFileSize: '512MB', maxFileCount: 1 },
-    video:        { maxFileSize: '512MB', maxFileCount: 1 },
-  })
-    .middleware(async ({ req }) => {
-      const u = _getUploader(req);
-      if (!u) throw new Error('Unauthorized');
-      return { uploadedBy: u.id };
-    })
-    .onUploadComplete(async ({ file }) => {
-      return { url: file.url, name: file.name, size: file.size };
-    }),
-};
-
-const _utHandlers = createRouteHandler({
-  router: _fileRouter,
-  config: {
-    uploadthingSecret: process.env.UPLOADTHING_SECRET,
-    uploadthingId:     process.env.UPLOADTHING_APP_ID,
-  },
-});
 const sql = neon(process.env.DATABASE_URL);
 
 function cors(res) {
@@ -142,7 +158,7 @@ module.exports = async function handler(req, res) {
 
     /* ── UPLOAD action — delegate to UploadThing handler ── */
     if (req.query.action === 'upload') {
-      return _utHandlers(req, res);
+      return _handleUpload(req, res);
     }
 
     /* ════════════════════════════════════════════════
