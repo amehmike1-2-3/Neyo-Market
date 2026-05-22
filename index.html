@@ -1604,6 +1604,56 @@ footer{background:var(--text);color:#fff;border-top:1px solid rgba(255,255,255,.
     </div>
   </div>
 
+  <!-- ═══ COURSE HOW IT WORKS ═══ -->
+  <div class="sec" style="padding-top:0">
+    <div class="shd">
+      <h2>🎬 Buy &amp; Sell <span class="gld">Courses</span> Instantly</h2>
+      <p>Video courses with instant access after payment</p>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:20px">
+
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center">
+        <div style="font-size:1.8rem;margin-bottom:8px">🎥</div>
+        <div style="font-size:.8rem;font-weight:700;color:var(--text);margin-bottom:4px">Upload to YouTube</div>
+        <div style="font-size:.72rem;color:var(--muted);line-height:1.5">Upload your video lessons to YouTube, Vimeo, or Google Drive. Keep them unlisted.</div>
+      </div>
+
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center">
+        <div style="font-size:1.8rem;margin-bottom:8px">🔗</div>
+        <div style="font-size:.8rem;font-weight:700;color:var(--text);margin-bottom:4px">Paste Video Links</div>
+        <div style="font-size:.72rem;color:var(--muted);line-height:1.5">List your course on NeyoMarket. Add each lesson title and paste the video URL.</div>
+      </div>
+
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center">
+        <div style="font-size:1.8rem;margin-bottom:8px">🆓</div>
+        <div style="font-size:.8rem;font-weight:700;color:var(--text);margin-bottom:4px">Free Preview</div>
+        <div style="font-size:.72rem;color:var(--muted);line-height:1.5">Toggle free preview on any lesson so buyers can watch before buying.</div>
+      </div>
+
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center">
+        <div style="font-size:1.8rem;margin-bottom:8px">💳</div>
+        <div style="font-size:.8rem;font-weight:700;color:var(--text);margin-bottom:4px">Buyer Pays</div>
+        <div style="font-size:.72rem;color:var(--muted);line-height:1.5">Buyer pays via Paystack or Wallet. Payment held in escrow until course is confirmed.</div>
+      </div>
+
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center">
+        <div style="font-size:1.8rem;margin-bottom:8px">▶</div>
+        <div style="font-size:.8rem;font-weight:700;color:var(--text);margin-bottom:4px">Instant Access</div>
+        <div style="font-size:.72rem;color:var(--muted);line-height:1.5">Buyer gets instant access to all lessons. Tap "View Course" in My Orders to start watching.</div>
+      </div>
+
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center">
+        <div style="font-size:1.8rem;margin-bottom:8px">💰</div>
+        <div style="font-size:.8rem;font-weight:700;color:var(--text);margin-bottom:4px">Seller Earns</div>
+        <div style="font-size:.72rem;color:var(--muted);line-height:1.5">90% goes to the seller. Withdraw to your bank anytime from the Seller Dashboard.</div>
+      </div>
+
+    </div>
+    <div style="text-align:center">
+      <button class="bg" style="padding:11px 24px" onclick="go('sell')">🎬 Start Selling Courses →</button>
+    </div>
+  </div>
+
   <div class="sec" style="padding-top:0">
     <div class="shd"><h2>How We <span class="gld">Protect</span> You</h2><p>Built-in anti-scam at every step</p></div>
     <div class="rg">
@@ -1771,7 +1821,13 @@ footer{background:var(--text);color:#fff;border-top:1px solid rgba(255,255,255,.
       <p class="sub">All fields required. Upload at least 2 images. Products reviewed before going live.</p>
 
       <div class="fg">
-        <label>Product Images <span class="rq">*</span> <span style="font-size:.7rem;font-weight:400;text-transform:none;letter-spacing:0">(min 2, max 5)</span></label>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <label style="margin-bottom:0">Product Images <span class="rq">*</span></label>
+          <span id="img-label-hint" style="font-size:.68rem;color:var(--muted)">(min 2, max 5)</span>
+        </div>
+        <div id="img-type-hint" style="display:none;background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.2);border-radius:8px;padding:8px 12px;margin-bottom:8px;font-size:.75rem;color:var(--text);line-height:1.5">
+          🎬 <strong>Course:</strong> First image = cover thumbnail shown in marketplace. Make it eye-catching — use a clear title, relevant image, or course banner. Min <strong>1 image</strong> required.
+        </div>
         <div class="irow" id="irow">
           <div class="isl" id="sl-0" onclick="triggerImg(0)"><span class="sp">＋</span></div>
           <div class="isl" id="sl-1" onclick="triggerImg(1)"><span class="sp">＋</span></div>
@@ -1780,7 +1836,7 @@ footer{background:var(--text);color:#fff;border-top:1px solid rgba(255,255,255,.
           <div class="isl" id="sl-4" onclick="triggerImg(4)"><span class="sp">＋</span></div>
         </div>
         <input type="file" id="img-inp" accept="image/*" style="display:none" onchange="onImgPick(event)"/>
-        <p class="hint">Tap a slot to pick from your gallery. Clear photos = more sales.</p>
+        <p class="hint" id="img-hint-text">Tap a slot to pick from your gallery. Clear photos = more sales.</p>
       </div>
 
       <div class="fg"><label>Product Name <span class="rq">*</span></label><input class="fi" type="text" id="s-name" placeholder="e.g. Complete Web Dev Bootcamp 2025" oninput="validateSell()"/></div>
@@ -1900,6 +1956,16 @@ footer{background:var(--text);color:#fff;border-top:1px solid rgba(255,255,255,.
       <div class="fg" style="margin-top:10px">
         <label>Seller Bio <span style="font-size:.7rem;font-weight:400;text-transform:none">(optional — shown to buyers)</span></label>
         <textarea class="fi" id="s-bio" rows="3" placeholder="Tell buyers about yourself — your expertise, experience, what you sell..."></textarea>
+      </div>
+
+      <!-- ═══ COURSE LESSONS (shown when type=course) ═══ -->
+      <div id="lessons-wrap" style="display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <label style="margin-bottom:0">🎬 Course Lessons</label>
+          <button type="button" onclick="addLesson()" style="background:var(--gold);color:#fff;border:none;padding:5px 12px;border-radius:6px;font-size:.75rem;font-weight:700;cursor:pointer">+ Add Lesson</button>
+        </div>
+        <div id="lessons-list" style="display:flex;flex-direction:column;gap:10px"></div>
+        <p style="font-size:.72rem;color:var(--muted);margin-top:6px">Add video lessons in order. Toggle free preview to let buyers watch before purchase.</p>
       </div>
 
       <div class="fg" id="dfile-wrap" style="display:none">
@@ -3257,13 +3323,76 @@ function onFilePick(e) {
 window.onFilePick = onFilePick;
 
 function onType() {
-  var t = document.getElementById('s-type').value;
+  var t         = document.getElementById('s-type').value;
+  var isCourse  = t === 'course';
+  var isDigital = t === 'digital';
   var shippingWrap = document.getElementById('s-shipping-wrap');
   if (shippingWrap) shippingWrap.style.display = (t === 'physical') ? 'block' : 'none';
-  document.getElementById('dfile-wrap').style.display = (t === 'digital' || t === 'course') ? 'block' : 'none';
-  if (t !== 'digital' && t !== 'course') dReady = false;
+  document.getElementById('dfile-wrap').style.display   = (isDigital || isCourse) ? 'block' : 'none';
+  var lw = document.getElementById('lessons-wrap');
+  if (lw) lw.style.display = isCourse ? 'block' : 'none';
+  /* Show course thumbnail hint */
+  var imgHint = document.getElementById('img-type-hint');
+  var imgLabel = document.getElementById('img-label-hint');
+  var imgHintText = document.getElementById('img-hint-text');
+  if (imgHint)     imgHint.style.display    = isCourse ? 'block' : 'none';
+  if (imgLabel)    imgLabel.textContent      = isCourse ? '(min 1, max 5)' : '(min 2, max 5)';
+  if (imgHintText) imgHintText.textContent   = isCourse ? 'First slot = course cover thumbnail. Make it stand out!' : 'Tap a slot to pick from your gallery. Clear photos = more sales.';
+  if (!isDigital && !isCourse) dReady = false;
 }
 window.onType = onType;
+
+/* ═══ COURSE LESSON BUILDER ════════════════════════════════════════════════
+   Manages a dynamic list of lessons in the sell form.
+   Each lesson: { title, videoUrl, order, freePreview }
+   Stored as lessons[] on the product record.
+═══════════════════════════════════════════════════════════════════════════ */
+var lessonCount = 0;
+
+function addLesson() {
+  lessonCount++;
+  var n   = lessonCount;
+  var div = document.createElement('div');
+  div.id  = 'lesson-' + n;
+  div.style.cssText = 'background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;position:relative';
+  div.innerHTML =
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">'
+    + '<span style="font-size:.78rem;font-weight:700;color:var(--gold)">Lesson ' + n + '</span>'
+    + '<button type="button" onclick="removeLesson(' + n + ')" style="background:rgba(239,68,68,.1);color:#ef4444;border:1px solid rgba(239,68,68,.3);border-radius:6px;padding:3px 8px;font-size:.72rem;cursor:pointer">Remove</button>'
+    + '</div>'
+    + '<div style="display:flex;flex-direction:column;gap:8px">'
+    + '<input type="text" id="ls-title-'+n+'" placeholder="Lesson title e.g. Introduction to Trading" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:.84rem;background:var(--bg2);color:var(--text);box-sizing:border-box">'
+    + '<input type="url" id="ls-video-'+n+'" placeholder="Video URL (YouTube, Vimeo, Google Drive...)" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:.84rem;background:var(--bg2);color:var(--text);box-sizing:border-box">'
+    + '<label style="display:flex;align-items:center;gap:8px;font-size:.78rem;color:var(--text);cursor:pointer">'
+    + '<input type="checkbox" id="ls-free-'+n+'"> Free Preview (visible before purchase)'
+    + '</label>'
+    + '</div>';
+  document.getElementById('lessons-list').appendChild(div);
+}
+window.addLesson = addLesson;
+
+function removeLesson(n) {
+  var el = document.getElementById('lesson-' + n);
+  if (el) el.remove();
+}
+window.removeLesson = removeLesson;
+
+function getLessons() {
+  var lessons = [];
+  var items = document.getElementById('lessons-list').children;
+  for (var i = 0; i < items.length; i++) {
+    var el    = items[i];
+    var idNum = el.id.replace('lesson-', '');
+    var title = (document.getElementById('ls-title-' + idNum) || {}).value || '';
+    var video = (document.getElementById('ls-video-' + idNum) || {}).value || '';
+    var free  = (document.getElementById('ls-free-'  + idNum) || {}).checked || false;
+    if (title.trim() || video.trim()) {
+      lessons.push({ title: title.trim(), videoUrl: video.trim(), order: i + 1, freePreview: free });
+    }
+  }
+  return lessons;
+}
+window.getLessons = getLessons;
 
 /* ═══ 2a. validateSell ═══ */
 function validateSell() {
@@ -3309,7 +3438,9 @@ function submitProduct() {
     }
   }
   var imgN = cntImgs();
-  if (imgN < 2) { toast('Please upload at least 2 product images.', 'fail'); return; }
+  var sType = (document.getElementById('s-type') || {}).value || '';
+  var minImgs = (sType === 'course') ? 1 : 2;
+  if (imgN < minImgs) { toast('Please upload at least ' + minImgs + ' image' + (minImgs > 1 ? 's' : '') + '.', 'fail'); return; }
   var btn = document.getElementById('sell-btn');
   if (btn && btn.disabled) return;
 
@@ -3354,6 +3485,7 @@ function submitProduct() {
     fileExt:        digitalFileData ? digitalFileData.ext  : null,
     fileName:       digitalFileData ? digitalFileData.name : null,
     fileUrl:        null,   /* filled below if digital upload succeeds */
+    lessons:        (document.getElementById('s-type') && document.getElementById('s-type').value === 'course') ? getLessons() : [],
     condition:      gv('s-condition') || null,  /* NEW: capture condition (new/used) */
     variants:       getVariants()               /* NEW: product variants */
   };
@@ -3931,6 +4063,150 @@ function renderRelatedProducts(p) {
 }
 window.renderRelatedProducts = renderRelatedProducts;
 
+/* ═══ COURSE PLAYER ════════════════════════════════════════════════════════
+   Renders a lesson playlist + video player in the product detail modal.
+   Free preview lessons are always visible.
+   Paid lessons unlock only after purchase (order found in buyer history).
+═══════════════════════════════════════════════════════════════════════════ */
+function renderCoursePlayer(p) {
+  var body = document.getElementById('pd-body');
+  if (!body) return;
+
+  /* Parse lessons */
+  var lessons = p.lessons || [];
+  if (typeof lessons === 'string') { try { lessons = JSON.parse(lessons); } catch(e){ lessons = []; } }
+  if (!lessons.length) return;
+
+  /* Check if buyer has purchased this course */
+  var hasPurchased = false;
+  try {
+    var myOrders = window.ordersCache || [];
+    hasPurchased = myOrders.some(function(o) {
+      var isPaid = ['paid','escrow_held','completed'].includes(o.status);
+      return isPaid && (o.items || []).some(function(i){ return Number(i.id) === Number(p.id); });
+    });
+    /* Also check CU is the seller */
+    if (CU && (String(CU.id) === String(p.sellerId || p.seller_id))) hasPurchased = true;
+  } catch(e){}
+
+  /* Build player section */
+  var sec = document.createElement('div');
+  sec.id  = 'pd-course-player';
+  sec.style.cssText = 'border-top:1px solid var(--border)';
+
+  /* Header */
+  var header = '<div style="padding:14px 16px 0">'
+    + '<div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px">🎬 Course Content · ' + lessons.length + ' Lessons</div>';
+
+  /* Video player area */
+  var player = '<div id="course-vid-wrap" style="background:#000;position:relative;width:100%;aspect-ratio:16/9;display:none">'
+    + '<iframe id="course-vid" src="" frameborder="0" allowfullscreen allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" style="width:100%;height:100%"></iframe>'
+    + '</div>';
+
+  /* Lesson list */
+  var list = '<div style="display:flex;flex-direction:column;gap:2px;padding:0 0 14px">';
+  lessons.forEach(function(ls, idx) {
+    var isUnlocked = ls.freePreview || hasPurchased;
+    var badge = ls.freePreview
+      ? '<span style="background:rgba(34,197,94,.15);color:#16a34a;font-size:.58rem;font-weight:700;padding:2px 6px;border-radius:4px;margin-left:6px">FREE</span>'
+      : (!hasPurchased ? '<span style="background:rgba(201,146,42,.1);color:var(--gold);font-size:.58rem;font-weight:700;padding:2px 6px;border-radius:4px;margin-left:6px">PREMIUM</span>' : '');
+
+    var lockIcon = isUnlocked ? '▶' : '🔒';
+    var style = isUnlocked
+      ? 'cursor:pointer;display:flex;align-items:center;gap:10px;padding:10px 16px;border-radius:8px;margin:0 8px;transition:.15s;background:transparent'
+      : 'cursor:default;display:flex;align-items:center;gap:10px;padding:10px 16px;border-radius:8px;margin:0 8px;opacity:.6';
+
+    var dataVid = isUnlocked && ls.videoUrl ? ' data-vid="' + ls.videoUrl.replace(/"/g,'&quot;') + '" data-idx="' + idx + '"' : '';
+    var onclick = isUnlocked && ls.videoUrl ? ' id="lesson-clickable-' + idx + '"' : ''
+
+        list += '<div id="lesson-row-' + idx + '"' + onclick + dataVid + ' style="' + style + '">'
+      + '<div style="width:28px;height:28px;border-radius:50%;background:' + (isUnlocked ? 'var(--gold)' : 'var(--bg3)') + ';display:flex;align-items:center;justify-content:center;font-size:.7rem;flex-shrink:0;color:' + (isUnlocked ? '#fff' : 'var(--muted)') + '">' + lockIcon + '</div>'
+      + '<div style="flex:1;min-width:0">'
+      + '<div style="font-size:.84rem;font-weight:600;color:var(--text)">' + (ls.title || 'Lesson ' + (idx+1)) + badge + '</div>'
+      + '</div>'
+      + '</div>';
+  });
+  list += '</div>';
+
+  /* If not purchased — show unlock CTA */
+  var cta = !hasPurchased
+    ? '<div style="margin:0 16px 16px;background:linear-gradient(135deg,rgba(201,146,42,.1),rgba(201,146,42,.05));border:1px solid rgba(201,146,42,.25);border-radius:10px;padding:14px;text-align:center">'
+      + '<div style="font-size:.85rem;font-weight:700;color:var(--text);margin-bottom:4px">🔓 Unlock Full Course</div>'
+      + '<div style="font-size:.75rem;color:var(--muted);margin-bottom:10px">Purchase to access all ' + lessons.length + ' lessons instantly</div>'
+      + '<button onclick="courseBuyNow()" style="background:var(--gold);color:#fff;border:none;padding:9px 20px;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer">Buy Now &amp; Get Instant Access</button>'
+      + '</div>'
+    : '';
+
+  sec.innerHTML = header + player + list + cta + '</div>';
+
+  /* Remove old player if exists */
+  var old = document.getElementById('pd-course-player');
+  if (old) old.remove();
+  body.appendChild(sec);
+}
+window.renderCoursePlayer = renderCoursePlayer;
+
+function playCourseLesson(rawUrl, idx) {
+  /* Convert video URLs to embeddable format */
+  var embedUrl = rawUrl;
+
+  /* YouTube */
+  var ytMatch = rawUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
+  if (ytMatch) embedUrl = 'https://www.youtube.com/embed/' + ytMatch[1] + '?autoplay=1&rel=0';
+
+  /* Vimeo */
+  var vmMatch = rawUrl.match(/vimeo\.com\/(\d+)/);
+  if (vmMatch) embedUrl = 'https://player.vimeo.com/video/' + vmMatch[1] + '?autoplay=1';
+
+  /* Google Drive */
+  var gdMatch = rawUrl.match(/drive\.google\.com\/file\/d\/([^\/]+)/);
+  if (gdMatch) embedUrl = 'https://drive.google.com/file/d/' + gdMatch[1] + '/preview';
+
+  /* Show player */
+  var wrap = document.getElementById('course-vid-wrap');
+  var vid  = document.getElementById('course-vid');
+  if (wrap && vid) {
+    vid.src = embedUrl;
+    wrap.style.display = 'block';
+    wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  /* Highlight active lesson */
+  document.querySelectorAll('[id^="lesson-row-"]').forEach(function(r){ r.style.background = 'transparent'; });
+  var active = document.getElementById('lesson-row-' + idx);
+  if (active) active.style.background = 'rgba(201,146,42,.1)';
+}
+window.playCourseLesson = playCourseLesson;
+
+function courseBuyNow() {
+  /* Close course player, trigger Add to Cart */
+  cM('m-pd');
+  setTimeout(function(){
+    var btn = document.querySelector('.addbtn');
+    if (btn) btn.click();
+  }, 150);
+}
+window.courseBuyNow = courseBuyNow;
+
+/* ═══ VIEW COURSE ══════════════════════════════════════════════════════════
+   Called from the "▶ View Course" button in My Orders.
+   Opens the product detail page with the course player already unlocked.
+═══════════════════════════════════════════════════════════════════════════ */
+function viewCourse(productId) {
+  if (!productId) return;
+  var prod = (window.prods || []).find(function(p){ return String(p.id) === String(productId); });
+  if (prod) {
+    /* Navigate to market page first so product modal can open */
+    go('market');
+    setTimeout(function(){ opn(prod.id); }, 300);
+  } else {
+    /* Prods not loaded yet — go to market and let user find it */
+    go('market');
+    toast('Find your course in the marketplace to start watching', 'ok');
+  }
+}
+window.viewCourse = viewCourse;
+
 /* ═══ RECENTLY VIEWED ══════════════════════════════════════════════════════
    Shows last 6 viewed products (excluding current). Below related section.
 ═══════════════════════════════════════════════════════════════════════════ */
@@ -3972,6 +4248,15 @@ function renderRecentlyViewed(currentId) {
   body.appendChild(sec);
 }
 window.renderRecentlyViewed = renderRecentlyViewed;
+
+/* Event delegation for course lesson clicks */
+document.addEventListener('click', function(e) {
+  var el = e.target.closest('[data-vid]');
+  if (!el) return;
+  var url = el.getAttribute('data-vid');
+  var idx = parseInt(el.getAttribute('data-idx') || '0');
+  if (url) playCourseLesson(url, idx);
+});
 
 /* Event delegation for related/recently viewed product clicks */
 document.addEventListener('click', function(e) {
@@ -4277,6 +4562,10 @@ function opn(id) {
   loadReviews(p.id);
   renderRelatedProducts(p);
   renderRecentlyViewed(p.id);
+  /* Render course player if this is a course product */
+  if (p.type === 'course' || p.cat === 'course' || p.cat === 'courses') {
+    renderCoursePlayer(p);
+  }
   
   /* Store carousel state */
   window.carouselState = window.carouselState || {};
@@ -4966,6 +5255,7 @@ window.processPaystack = processPaystack;
 function renderOrders() {
   var list = document.getElementById('ord-list'); if (!list) return;
   if (!CU) { list.innerHTML = ''; return; }
+  /* Cache orders for course player unlock check */
 
   list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:.82rem">⏳ Loading orders…</div>';
 
@@ -4975,6 +5265,7 @@ function renderOrders() {
     .then(function(data) {
       var myOrders = data.orders || [];
       ords = myOrders;
+      window.ordersCache = myOrders; /* cache for course player unlock */
 
       if (!myOrders.length) {
         list.innerHTML = '<div style="text-align:center;padding:28px 0">'
@@ -4986,8 +5277,9 @@ function renderOrders() {
       }
 
       list.innerHTML = myOrders.map(function (o) {
-        var allDig = o.items.every(function(i){ return i.type==='digital'||i.type==='course'; });
-        var isPhys = o.items.some(function(i){ return i.type==='physical'; });
+        var allDig    = o.items.every(function(i){ return i.type==='digital'||i.type==='course'; });
+        var isCourse  = o.items.some(function(i){ return i.type==='course'; });
+        var isPhys    = o.items.some(function(i){ return i.type==='physical'; });
         var isPaid = o.status === 'paid'
                  || o.status === 'success'
                  || o.status === 'escrow_held'
@@ -4996,7 +5288,17 @@ function renderOrders() {
 
         /* Action button — tied to DB status, survives refresh */
         var actionBtn = '';
-        if (allDig && (isPaid || isDone)) {
+
+        /* ── COURSE: View Course button ── */
+        if (isCourse && (isPaid || isDone)) {
+          var courseId = o.items[0] && o.items[0].id;
+          actionBtn = '<button onclick="viewCourse(\'' + courseId + '\')" '
+            + 'style="width:100%;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;'
+            + 'padding:14px;border-radius:8px;font-weight:700;font-size:.9rem;cursor:pointer;'
+            + 'margin-top:8px;display:flex;align-items:center;justify-content:center;gap:8px">'
+            + '▶ View Course</button>';
+
+        } else if (allDig && (isPaid || isDone)) {
           /* Resolve file URL at render time — look in items first, then order top-level */
           var rawFileUrl = '';
           /* Priority 1: file URL stored on each item (set at checkout + webhook) */
