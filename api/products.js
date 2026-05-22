@@ -21,6 +21,7 @@ const https = require('https');
 function _utPresign(fileInfo) {
   /* fileInfo: { name, size, type } */
   return new Promise(function(resolve, reject) {
+    // Ensure the payload exactly matches what the v6 backend expects
     const body = JSON.stringify({
       files: [{ name: fileInfo.name, size: fileInfo.size, type: fileInfo.type }]
     });
@@ -45,22 +46,29 @@ function _utPresign(fileInfo) {
       let data = '';
       res.on('data', function(chunk) { data += chunk; });
       res.on('end', function() {
+        console.log('UploadThing Status Code:', res.statusCode);
         try {
           const parsed = JSON.parse(data);
-          if (parsed.error) return reject(new Error(parsed.error));
+          if (res.statusCode !== 200 || parsed.error) {
+            console.error('UploadThing Error Body:', parsed);
+            return reject(new Error(parsed.error || 'UploadThing rejected request'));
+          }
           resolve(parsed);
         } catch (e) {
-          reject(new Error('Invalid UploadThing response'));
+          reject(new Error('Invalid JSON response from UploadThing'));
         }
       });
     });
 
-    req.on('error', reject);
+    req.on('error', function(err) {
+      console.error('Network request error:', err);
+      reject(err);
+    });
+    
     req.write(body);
     req.end();
   });
 }
-
 
 async function _handleUpload(req, res) {
   /* Auth check — only sellers/admins */
