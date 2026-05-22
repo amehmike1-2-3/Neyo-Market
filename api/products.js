@@ -16,27 +16,39 @@ const { neon } = require('@neondatabase/serverless');
    Returns { url, fields, fileUrl } to frontend — no SDK router needed.
    Compatible with Vercel Node.js (req, res) => void signature.
 ═══════════════════════════════════════════════════════════════════════════ */
-const { UTApi } = require("uploadthing/server");
+const https = require('https');
 
 function _utPresign(fileInfo) {
   /* fileInfo: { name, size, type } */
-  return new Promise(async function(resolve, reject) {
-    try {
-      const utapi = new UTApi({
-        apiKey: process.env.UPLOADTHING_SECRET,
-        appId: process.env.UPLOADTHING_APP_ID,
+  return new Promise(function(resolve, reject) {
+    const body = JSON.stringify({
+      files: [{ name: fileInfo.name, size: fileInfo.size, type: fileInfo.type }],
+    });
+    const options = {
+      hostname: 'api.uploadthing.com',
+      path:     '/v6/uploadFiles',
+      method:   'POST',
+      headers:  {
+        'Content-Type':  'application/json',
+        'Content-Length': Buffer.byteLength(body),
+        'x-uploadthing-api-key': process.env.UPLOADTHING_SECRET || '',
+        'x-uploadthing-app-id': process.env.UPLOADTHING_APP_ID || '', // 🌟 ONLY ADDED THIS LINE
+      }
+    };
+    const req = https.request(options, function(res) {
+      let data = '';
+      res.on('data', function(chunk){ data += chunk; });
+      res.on('end', function() {
+        try {
+          const parsed = JSON.parse(data);
+          if (parsed.error) return reject(new Error(parsed.error));
+          resolve(parsed);
+        } catch(e) { reject(new Error('Invalid UploadThing response')); }
       });
-
-      // 🌟 Correct v7 method name is generatePresignedUrls
-      const response = await utapi.generatePresignedUrls({
-        files: [{ name: fileInfo.name, size: fileInfo.size, type: fileInfo.type }]
-      });
-
-      resolve(response);
-    } catch (error) {
-      console.error("UploadThing SDK builder error:", error);
-      reject(error);
-    }
+    });
+    req.on('error', reject);
+    req.write(body);
+    req.end();
   });
 }
 
