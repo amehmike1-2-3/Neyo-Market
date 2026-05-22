@@ -25,29 +25,19 @@ function _utPresign(fileInfo) {
       files: [{ name: fileInfo.name, size: fileInfo.size, type: fileInfo.type }]
     });
 
-    const token = process.env.UPLOADTHING_TOKEN || '';
-    let apiKey = '';
+    const apiKey = process.env.UPLOADTHING_SECRET || '';
+    const appId = process.env.UPLOADTHING_APP_ID || '';
 
-    try {
-      if (token) {
-        const decoded = JSON.parse(
-          Buffer.from(token, 'base64').toString('utf8')
-        );
-        apiKey = decoded.apiKey || '';
-      }
-    } catch (e) {
-      console.error('UploadThing token decode failed:', e);
-    }
-     
-                const options = {
+    const options = {
       hostname: 'api.uploadthing.com',
       path: '/v6/uploadFiles',
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Content-Length': Buffer.byteLength(body),
-        'x-uploadthing-api-key': apiKey || process.env.UPLOADTHING_SECRET || '',
-        'x-uploadthing-version': '6.4.0' // 🌟 This forces the server to accept the old v6 request format!
+        'x-uploadthing-api-key': apiKey,
+        'x-uploadthing-app-id': appId,
+        'x-uploadthing-version': '6.4.0'
       }
     };
 
@@ -70,6 +60,7 @@ function _utPresign(fileInfo) {
     req.end();
   });
 }
+
 
 async function _handleUpload(req, res) {
   /* Auth check — only sellers/admins */
