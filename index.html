@@ -3606,8 +3606,7 @@ async function uploadToUploadThing(file, onProgress) {
       'Authorization': 'Bearer ' + authToken
     },
     body: JSON.stringify({
-      files: [{ name: file.name, size: file.size, type: file.type }],
-      routeConfig: routeSlug
+      files: [{ fileName: file.name, fileSize: file.size, fileType: file.type, lastModified: file.lastModified || Date.now() }]
     })
   });
 
