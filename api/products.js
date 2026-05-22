@@ -22,18 +22,39 @@ function _utPresign(fileInfo) {
   /* fileInfo: { name, size, type } */
   return new Promise(function(resolve, reject) {
     const body = JSON.stringify({
-      files: [{ name: fileInfo.name, size: fileInfo.size, type: fileInfo.type }],
+      files: [{ name: fileInfo.name, size: fileInfo.size, type: fileInfo.type }]
     });
+
+    // 1. Grab your modern v7 token from Vercel
+    const token = process.env.UPLOADTHING_TOKEN || '';
+    let apiKey = '';
+
+    // 2. Safely decode the token to extract the raw v6 compatible API key
+    try {
+      if (token) {
+        const decoded = JSON.parse(
+          Buffer.from(token, 'base64').toString('utf8')
+        );
+        apiKey = decoded.apiKey || '';
+      }
+    } catch (e) {
+      console.error('UploadThing token decode failed:', e);
+    }
+
     const options = {
       hostname: 'api.uploadthing.com',
-      path:     '/v6/uploadFiles',
-      method:   'POST',
-      headers:  {
-        'Content-Type':  'application/json',
+      path: '/v6/uploadFiles', // Keeps your existing v6 endpoint intact
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
         'Content-Length': Buffer.byteLength(body),
-        'x-uploadthing-api-key': process.env.UPLOADTHING_SECRET || '',
+        // 3. Inject the decoded API key securely into the header
+        'x-uploadthing-api-key': apiKey || process.env.UPLOADTHING_SECRET || ''
       }
     };
+
+    const req = https.request(options, function(res) {
+
     const req = https.request(options, function(res) {
       let data = '';
       res.on('data', function(chunk){ data += chunk; });
