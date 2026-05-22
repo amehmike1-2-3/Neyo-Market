@@ -54,12 +54,27 @@ function _utPresign(fileInfo) {
     try { decoded = _decodeUTToken(); }
     catch(e) { return reject(e); }
 
+    /* Ultimate fallbacks: support fileName, name, or provide a generic placeholder string */
+    let rawName = fileInfo.fileName || fileInfo.name;
+    if (!rawName || typeof rawName !== 'string') {
+      rawName = 'uploaded_file_' + Date.now() + '.bin';
+    }
+
+    /* Fallback size: support fileSize, size, or default to a 1MB placeholder number */
+    let rawSize = fileInfo.fileSize || fileInfo.size;
+    if (rawSize === undefined || rawSize === null || isNaN(Number(rawSize))) {
+      rawSize = 1024 * 1024; 
+    }
+
+    /* Fallback type */
+    let rawType = fileInfo.fileType || fileInfo.type || 'application/octet-stream';
+
     /* v7 endpoint + Token auth */
     const body = JSON.stringify({
       files: [{
-        fileName:     fileInfo.name,
-        fileSize:     fileInfo.size,
-        fileType:     fileInfo.type || 'application/octet-stream',
+        fileName:     String(rawName),
+        fileSize:     Number(rawSize),
+        fileType:     String(rawType),
         lastModified: fileInfo.lastModified || Date.now(),
       }],
       routeConfig: {
