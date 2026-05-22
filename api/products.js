@@ -18,55 +18,28 @@ const { neon } = require('@neondatabase/serverless');
 ═══════════════════════════════════════════════════════════════════════════ */
 const https = require('https');
 
+const { UTFiles } = require("@uploadthing/drop-in");
+
 function _utPresign(fileInfo) {
   /* fileInfo: { name, size, type } */
-  return new Promise(function(resolve, reject) {
-    // Ensure the payload exactly matches what the v6 backend expects
-    const body = JSON.stringify({
-      files: [{ name: fileInfo.name, size: fileInfo.size, type: fileInfo.type }]
-    });
-
-    const apiKey = process.env.UPLOADTHING_SECRET || '';
-    const appId = process.env.UPLOADTHING_APP_ID || '';
-
-    const options = {
-      hostname: 'api.uploadthing.com',
-      path: '/v6/uploadFiles',
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(body),
-        'x-uploadthing-api-key': apiKey,
-        'x-uploadthing-app-id': appId,
-        'x-uploadthing-version': '6.4.0'
-      }
-    };
-
-    const req = https.request(options, function(res) {
-      let data = '';
-      res.on('data', function(chunk) { data += chunk; });
-      res.on('end', function() {
-        console.log('UploadThing Status Code:', res.statusCode);
-        try {
-          const parsed = JSON.parse(data);
-          if (res.statusCode !== 200 || parsed.error) {
-            console.error('UploadThing Error Body:', parsed);
-            return reject(new Error(parsed.error || 'UploadThing rejected request'));
-          }
-          resolve(parsed);
-        } catch (e) {
-          reject(new Error('Invalid JSON response from UploadThing'));
-        }
+  return new Promise(async function(resolve, reject) {
+    try {
+      // This initializes the client using your Vercel credentials securely
+      const ut = new UTFiles({
+        apiKey: process.env.UPLOADTHING_SECRET,
+        appId: process.env.UPLOADTHING_APP_ID,
       });
-    });
 
-    req.on('error', function(err) {
-      console.error('Network request error:', err);
-      reject(err);
-    });
-    
-    req.write(body);
-    req.end();
+      // Let the official SDK generate the safe upload presign URLs
+      const response = await ut.getPresignedUrls({
+        files: [{ name: fileInfo.name, size: fileInfo.size, type: fileInfo.type }]
+      });
+
+      resolve(response);
+    } catch (error) {
+      console.error("Official UploadThing SDK failed:", error);
+      reject(error);
+    }
   });
 }
 
