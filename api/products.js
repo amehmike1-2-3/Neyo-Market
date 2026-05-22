@@ -39,6 +39,7 @@ function toProduct(r) {
     saleEndsAt:     r.sale_ends_at     || null,
     shippingFee:    r.shipping_fee     ? parseFloat(r.shipping_fee) : 0,
     sellerVerified: (r.seller_verified !== undefined && r.seller_verified !== null) ? Boolean(r.seller_verified) : false,
+    lessons:       r.lessons || [],
     badgeVerified:  (r.badge_verified  !== undefined && r.badge_verified  !== null) ? Boolean(r.badge_verified)  : false,
     commission:     parseFloat(r.commission || 0),
     description:    r.description      || '',
@@ -212,6 +213,7 @@ module.exports = async function handler(req, res) {
       const productCondition = p.condition || null;
       const productCurrency  = ['NGN','USD','GBP','EUR','CAD','GHS'].includes(p.currency) ? p.currency : 'NGN';
       const productVariants  = (p.variants && Array.isArray(p.variants) && p.variants.length) ? JSON.stringify(p.variants) : '[]';
+      const productLessons   = (p.lessons  && Array.isArray(p.lessons)  && p.lessons.length)  ? JSON.stringify(p.lessons)  : '[]';
 
       const rows = await sql`
         INSERT INTO products (
@@ -220,7 +222,7 @@ module.exports = async function handler(req, res) {
           commission, description, seller, seller_id, seller_email, seller_whatsapp,
           rating, reviews, emoji, imgs, status, badge, date, escrow,
           file_ext, file_name, file_url, is_verified, disputed,
-          quantity, location, seller_bio, created_at, condition, currency, variants
+          quantity, location, seller_bio, created_at, condition, currency, variants, lessons
         ) VALUES (
           ${id}, ${p.name}, ${productType}, ${productCat}, ${parseFloat(p.price)},
           ${discountPrice}, ${isOnSale}, ${saleEndsAt}, ${shippingFee},
@@ -233,7 +235,7 @@ module.exports = async function handler(req, res) {
           ${p.location || ''},
           ${p.sellerBio || p.seller_bio || ''},
           NOW(),
-          ${productCondition}, ${productCurrency}, ${productVariants}::jsonb
+          ${productCondition}, ${productCurrency}, ${productVariants}::jsonb, ${productLessons}::jsonb
         )
         RETURNING *
       `;
@@ -268,6 +270,7 @@ module.exports = async function handler(req, res) {
       const newPrice          = (p.price          !== undefined && p.price !== null) ? parseFloat(p.price)       : null;
       const newCurrency       = (p.currency !== undefined && ['NGN','USD','GBP','EUR','CAD','GHS'].includes(p.currency)) ? p.currency : null;
       const newVariants       = (p.variants !== undefined && Array.isArray(p.variants)) ? JSON.stringify(p.variants) : null;
+      const newLessons        = (p.lessons  !== undefined && Array.isArray(p.lessons))  ? JSON.stringify(p.lessons)  : null;
 
       let newDiscountPrice = null;
       if (p.discountPrice !== undefined && p.discountPrice !== null)
@@ -298,7 +301,8 @@ module.exports = async function handler(req, res) {
           description     = COALESCE(${newDescription},    description),
           price           = COALESCE(${newPrice},          price),
           currency        = COALESCE(${newCurrency},       currency),
-          variants        = COALESCE(${newVariants}::jsonb, variants)
+          variants        = COALESCE(${newVariants}::jsonb, variants),
+          lessons         = COALESCE(${newLessons}::jsonb, lessons)
         WHERE id = ${productId}
       `;
       return res.status(200).json({ ok: true });
