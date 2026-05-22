@@ -22,24 +22,50 @@ const { UTFiles } = require("uploadthing");
 
 function _utPresign(fileInfo) {
   /* fileInfo: { name, size, type } */
-  return new Promise(async function(resolve, reject) {
-    try {
-      // This initializes the client using your Vercel credentials securely
-      const ut = new UTFiles({
-        apiKey: process.env.UPLOADTHING_SECRET,
-        appId: process.env.UPLOADTHING_APP_ID,
-      });
+  return new Promise(function(resolve, reject) {
+    const body = JSON.stringify({
+      files: [{ name: fileInfo.name, size: fileInfo.size, type: fileInfo.type }]
+    });
 
-      // Let the official SDK generate the safe upload presign URLs
-      const response = await ut.getPresignedUrls({
-        files: [{ name: fileInfo.name, size: fileInfo.size, type: fileInfo.type }]
-      });
+    const apiKey = process.env.UPLOADTHING_SECRET || '';
+    const appId = process.env.UPLOADTHING_APP_ID || '';
 
-      resolve(response);
-    } catch (error) {
-      console.error("Official UploadThing SDK failed:", error);
-      reject(error);
-    }
+    const options = {
+      hostname: 'api.uploadthing.com',
+      path: '/v6/uploadFiles',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(body),
+        'x-uploadthing-api-key': apiKey,
+        'x-uploadthing-app-id': appId,
+        'x-uploadthing-version': '6.4.0'
+      }
+    };
+
+    const req = https.request(options, function(res) {
+      let data = '';
+      res.on('data', function(chunk) { data += chunk; });
+      res.on('end', function() {
+        try {
+          const parsed = JSON.parse(data);
+          // If it returns presigned URLs, format them for your frontend uploader
+          if (Array.isArray(parsed)) {
+            resolve(parsed);
+          } else if (parsed.data || parsed.urls) {
+            resolve(parsed.data || parsed.urls);
+          } else {
+            resolve(parsed);
+          }
+        } catch (e) {
+          reject(new Error('Invalid UploadThing response'));
+        }
+      });
+    });
+
+    req.on('error', reject);
+    req.write(body);
+    req.end();
   });
 }
 
