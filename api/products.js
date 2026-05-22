@@ -48,16 +48,13 @@ function _utPresign(fileInfo) {
         try {
           const parsed = JSON.parse(data);
           
-          // 🌟 Match raw arrays, nested arrays, or .data configurations safely 
-          if (Array.isArray(parsed)) {
-            resolve(parsed);
-          } else if (parsed && parsed.data && Array.isArray(parsed.data)) {
+          // 🌟 Extract the inner array directly so the frontend doesn't see an "Invalid URL"
+          if (parsed && parsed.data) {
             resolve(parsed.data);
-          } else if (parsed && Array.isArray(parsed.urls)) {
-            resolve(parsed.urls);
+          } else if (Array.isArray(parsed)) {
+            resolve(parsed);
           } else {
-            // Fallback to pass the whole object if the client extracts it manually
-            resolve([parsed]); 
+            resolve([parsed]);
           }
         } catch (e) {
           reject(new Error('Invalid JSON from UploadThing'));
@@ -70,6 +67,7 @@ function _utPresign(fileInfo) {
     req.end();
   });
 }
+
 
 
 async function _handleUpload(req, res) {
