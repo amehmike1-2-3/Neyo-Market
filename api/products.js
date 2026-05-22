@@ -10,178 +10,14 @@
 'use strict';
 
 const { neon } = require('@neondatabase/serverless');
-/* ═══ UPLOADTHING v7 TOKEN-BASED PRESIGN HANDLER ═════════════════════════
-   Handles POST /api/products?action=upload
-   Uses UPLOADTHING_TOKEN env var (base64 JWT containing apiKey + appId).
-   Returns presigned upload data to frontend — plain Node.js, no SDK.
-═══════════════════════════════════════════════════════════════════════════ */
-const https = require('https');
-
-/* Decode the UPLOADTHING_TOKEN to extract apiKey and appId */
-function _decodeUTToken() {
-  /* Try UPLOADTHING_TOKEN first (base64 JWT), then fallback to raw UPLOADTHING_SECRET */
-  const rawToken  = (process.env.UPLOADTHING_TOKEN  || '').trim();
-  const rawSecret = (process.env.UPLOADTHING_SECRET || '').trim();
-
-  /* If raw secret key provided directly (starts with sk_live_) — use it as-is */
-  if (rawSecret && rawSecret.startsWith('sk_')) {
-    console.log('[UploadThing] Using UPLOADTHING_SECRET directly');
-    return { apiKey: rawSecret, appId: process.env.UPLOADTHING_APP_ID || '' };
-  }
-
-  /* Decode base64 JWT token */
-  if (!rawToken) {
-    throw new Error('Neither UPLOADTHING_TOKEN nor UPLOADTHING_SECRET is set in Vercel env vars');
-  }
-
-  try {
-    /* Fix base64 padding — Vercel sometimes strips trailing = */
-    const padded  = rawToken.replace(/-/g, '+').replace(/_/g, '/');
-    const padFixed = padded + '='.repeat((4 - padded.length % 4) % 4);
-    const decoded  = JSON.parse(Buffer.from(padFixed, 'base64').toString('utf8'));
-    if (!decoded.apiKey) throw new Error('apiKey field missing from decoded token');
-    console.log('[UploadThing] Token decoded OK, appId:', decoded.appId);
-    return decoded;
-  } catch(e) {
-    throw new Error('UPLOADTHING_TOKEN decode failed: ' + e.message + '. Raw length: ' + rawToken.length);
-  }
-}
+/* UploadThing migration pending — using direct file URL for now */
 
 /* ═══ UPLOADTHING DIRECT UPLOAD HANDLER ══════════════════════════════════
    Instead of presigning, we receive the file as multipart form data
    and forward it directly to UploadThing using their simple upload API.
    This avoids all the presign complexity.
 ═══════════════════════════════════════════════════════════════════════════ */
-async function _handleUpload(req, res) {
-  let decoded;
-  try { decoded = _decodeUTToken(); }
-  catch(e) {
-    return res.status(500).json({ ok: false, error: 'UploadThing config error: ' + e.message });
-  }
 
-  /* Auth check */
-  try {
-    const auth = req.headers['authorization'] || '';
-    const tok  = auth.replace('Bearer ', '');
-    if (tok) {
-      const user = JSON.parse(Buffer.from(tok, 'base64').toString('utf8'));
-      if (!user || !['seller','admin'].includes(user.role)) {
-        return res.status(403).json({ ok: false, error: 'Sellers only.' });
-      }
-    }
-  } catch(e) {}
-
-  const body     = req.body || {};
-  console.log('[UT] Received body:', JSON.stringify(body).substring(0, 200));
-
-  const fileInfo = (body.files && body.files[0]) || body;
-  console.log('[UT] fileInfo:', JSON.stringify(fileInfo));
-
-  /* Accept both naming conventions from frontend */
-  const fileName = fileInfo.fileName || fileInfo.name || '';
-  const fileSize = fileInfo.fileSize || fileInfo.size || 0;
-  const fileType = fileInfo.fileType || fileInfo.type || 'application/octet-stream';
-  const lastMod  = fileInfo.lastModified || Date.now();
-
-  console.log('[UT] Parsed:', { fileName, fileSize, fileType });
-
-  if (!fileName || !fileSize) {
-    return res.status(400).json({ ok: false, error: 'fileName and fileSize required. Got: ' + JSON.stringify({ fileName, fileSize }) });
-  }
-
-  const isVideo  = fileType.startsWith('video/');
-  const maxBytes = isVideo ? 512 * 1024 * 1024 : 256 * 1024 * 1024;
-  if (fileSize > maxBytes) {
-    return res.status(400).json({ ok: false, error: 'File too large. Max ' + (isVideo ? '512MB' : '256MB') });
-  }
-
-  /* v7 — try multiple body shapes until one works */
-  const endpoints = [
-    {
-      path: '/v7/prepareUpload',
-      body: JSON.stringify({
-        files: [{ fileName, fileSize, fileType, lastModified: lastMod }],
-        routeConfig: { blob: { maxFileSize: '512MiB', maxFileCount: 1 } },
-        metadata: {},
-        callbackUrl: 'https://neyomarket.com.ng',
-      })
-    },
-    {
-      path: '/v7/prepareUpload',
-      body: JSON.stringify({
-        files: [{ fileName, fileSize, contentDisposition: 'inline' }],
-        routeConfig: { blob: { maxFileSize: '512MiB', maxFileCount: 1 } },
-        metadata: {},
-        callbackUrl: 'https://neyomarket.com.ng',
-      })
-    },
-    {
-      path: '/v7/prepareUpload',
-      body: JSON.stringify({
-        files: [{ name: fileName, size: fileSize, type: fileType }],
-        routeConfig: { blob: { maxFileSize: '512MiB', maxFileCount: 1 } },
-        metadata: {},
-        callbackUrl: 'https://neyomarket.com.ng',
-      })
-    },
-  ];
-
-  const rawToken = (process.env.UPLOADTHING_TOKEN || '').trim();
-  let lastError  = '';
-
-  for (const endpoint of endpoints) {
-    try {
-      const result = await new Promise(function(resolve, reject) {
-        const bodyBuf = Buffer.from(endpoint.body);
-        const options = {
-          hostname: 'api.uploadthing.com',
-          path:     endpoint.path,
-          method:   'POST',
-          headers:  {
-            'Content-Type':             'application/json',
-            'Content-Length':           bodyBuf.length,
-            'x-uploadthing-api-key':    decoded.apiKey,
-            'x-uploadthing-token':      rawToken,
-            'x-uploadthing-package':    '@uploadthing/server',
-            'x-uploadthing-version':    '7.4.4',
-          }
-        };
-        const r = https.request(options, function(resp) {
-          let data = '';
-          resp.on('data', function(c){ data += c; });
-          resp.on('end', function() {
-            try {
-              const p = JSON.parse(data);
-              console.log('[UT] ' + endpoint.path + ' ->', JSON.stringify(p).substring(0,150));
-              resolve(p);
-            } catch(e) { reject(new Error('Bad JSON: ' + data.substring(0,80))); }
-          });
-        });
-        r.on('error', reject);
-        r.write(endpoint.body);
-        r.end();
-      });
-
-      /* Check if this endpoint worked */
-      if (result.error) { lastError = result.error; continue; }
-
-      /* Normalise to array */
-      let arr = [];
-      if (Array.isArray(result))           arr = result;
-      else if (Array.isArray(result.data)) arr = result.data;
-      else if (result.url)                 arr = [result];
-
-      if (arr.length && arr[0].url) {
-        return res.status(200).json(arr);
-      }
-      lastError = 'No url in response';
-
-    } catch(e) { lastError = e.message; }
-  }
-
-  console.error('[UploadThing] All endpoints failed. Last error:', lastError);
-  return res.status(500).json({ ok: false, error: 'UploadThing upload failed: ' + lastError });
-}
 const sql = neon(process.env.DATABASE_URL);
 
 function cors(res) {
@@ -251,11 +87,6 @@ module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
-
-    /* ── UPLOAD action — delegate to UploadThing handler ── */
-    if (req.query.action === 'upload') {
-      return _handleUpload(req, res);
-    }
 
     /* ════════════════════════════════════════════════
        GET
@@ -379,13 +210,7 @@ module.exports = async function handler(req, res) {
       const escrow         = (p.escrow !== false);
       const fileExt        = p.fileExt  || null;
       const fileName       = p.fileName || null;
-      /* Reject base64 data URLs — only UploadThing https URLs allowed */
-      if (p.fileUrl && p.fileUrl.startsWith('data:')) {
-        return res.status(400).json({
-          ok: false,
-          error: 'Base64 file data is not accepted. Upload your file via the product form and submit again.'
-        });
-      }
+      /* fileUrl accepted in any format */
       const fileUrl        = p.fileUrl  || null;
       const fileSize       = p.fileSize || null;
       const imgs           = JSON.stringify(p.imgs || []);
