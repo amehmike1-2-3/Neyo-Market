@@ -95,7 +95,7 @@ async function _handleUpload(req, res) {
     return res.status(400).json({ ok: false, error: 'File too large. Max ' + (isVideo ? '512MB' : '256MB') });
   }
 
-  /* v7 is the correct endpoint — only try that */
+  /* v7 — try multiple body shapes until one works */
   const endpoints = [
     {
       path: '/v7/prepareUpload',
@@ -103,6 +103,25 @@ async function _handleUpload(req, res) {
         files: [{ fileName, fileSize, fileType, lastModified: lastMod }],
         routeConfig: { blob: { maxFileSize: '512MiB', maxFileCount: 1 } },
         metadata: {},
+        callbackUrl: 'https://neyomarket.com.ng',
+      })
+    },
+    {
+      path: '/v7/prepareUpload',
+      body: JSON.stringify({
+        files: [{ fileName, fileSize, contentDisposition: 'inline' }],
+        routeConfig: { blob: { maxFileSize: '512MiB', maxFileCount: 1 } },
+        metadata: {},
+        callbackUrl: 'https://neyomarket.com.ng',
+      })
+    },
+    {
+      path: '/v7/prepareUpload',
+      body: JSON.stringify({
+        files: [{ name: fileName, size: fileSize, type: fileType }],
+        routeConfig: { blob: { maxFileSize: '512MiB', maxFileCount: 1 } },
+        metadata: {},
+        callbackUrl: 'https://neyomarket.com.ng',
       })
     },
   ];
