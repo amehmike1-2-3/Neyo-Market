@@ -10,6 +10,66 @@
 'use strict';
 
 const { neon } = require('@neondatabase/serverless');
+const { createUploadthing, createRouteHandler } = require('uploadthing/server');
+
+/* ═══ UPLOADTHING FILE ROUTER — merged into products.js ═══════════════════
+   Handles /api/products?action=upload
+   Digital products: PDF, ZIP (max 256MB)
+   Course videos: MP4, MOV, WebM (max 512MB)
+   Only the returned URL is saved in Neon — no base64, no DB bloat.
+═══════════════════════════════════════════════════════════════════════════ */
+const _f = createUploadthing();
+
+function _getUploader(req) {
+  try {
+    const auth  = req.headers['authorization'] || '';
+    const token = auth.replace('Bearer ', '');
+    if (!token) return null;
+    const user  = JSON.parse(Buffer.from(token, 'base64').toString('utf8'));
+    if (!user || !user.id) return null;
+    if (!['seller', 'admin'].includes(user.role)) return null;
+    return { id: user.id, name: user.name || 'seller' };
+  } catch(e) { return null; }
+}
+
+const _fileRouter = {
+  digitalProductUploader: _f({
+    pdf:               { maxFileSize: '256MB', maxFileCount: 1 },
+    'application/zip': { maxFileSize: '256MB', maxFileCount: 1 },
+    blob:              { maxFileSize: '256MB', maxFileCount: 1 },
+  })
+    .middleware(async ({ req }) => {
+      const u = _getUploader(req);
+      if (!u) throw new Error('Unauthorized');
+      return { uploadedBy: u.id };
+    })
+    .onUploadComplete(async ({ file }) => {
+      return { url: file.url, name: file.name, size: file.size };
+    }),
+
+  courseVideoUploader: _f({
+    'video/mp4':  { maxFileSize: '512MB', maxFileCount: 1 },
+    'video/mov':  { maxFileSize: '512MB', maxFileCount: 1 },
+    'video/webm': { maxFileSize: '512MB', maxFileCount: 1 },
+    video:        { maxFileSize: '512MB', maxFileCount: 1 },
+  })
+    .middleware(async ({ req }) => {
+      const u = _getUploader(req);
+      if (!u) throw new Error('Unauthorized');
+      return { uploadedBy: u.id };
+    })
+    .onUploadComplete(async ({ file }) => {
+      return { url: file.url, name: file.name, size: file.size };
+    }),
+};
+
+const _utHandlers = createRouteHandler({
+  router: _fileRouter,
+  config: {
+    uploadthingSecret: process.env.UPLOADTHING_SECRET,
+    uploadthingId:     process.env.UPLOADTHING_APP_ID,
+  },
+});
 const sql = neon(process.env.DATABASE_URL);
 
 function cors(res) {
@@ -58,6 +118,7 @@ function toProduct(r) {
     fileExt:        r.file_ext         || null,
     fileName:       r.file_name        || null,
     fileUrl:        r.file_url         || null,
+    fileSize:       r.file_size        || null,
     disputed:       r.disputed         || false,
     quantity:       r.quantity         !== undefined ? parseInt(r.quantity, 10) : null,
     location:       r.location         || r.seller_location || '',
@@ -78,6 +139,11 @@ module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
+
+    /* ── UPLOAD action — delegate to UploadThing handler ── */
+    if (req.query.action === 'upload') {
+      return _utHandlers(req, res);
+    }
 
     /* ════════════════════════════════════════════════
        GET
@@ -201,7 +267,15 @@ module.exports = async function handler(req, res) {
       const escrow         = (p.escrow !== false);
       const fileExt        = p.fileExt  || null;
       const fileName       = p.fileName || null;
+      /* Reject base64 data URLs — only UploadThing https URLs allowed */
+      if (p.fileUrl && p.fileUrl.startsWith('data:')) {
+        return res.status(400).json({
+          ok: false,
+          error: 'Base64 file data is not accepted. Upload your file via the product form and submit again.'
+        });
+      }
       const fileUrl        = p.fileUrl  || null;
+      const fileSize       = p.fileSize || null;
       const imgs           = JSON.stringify(p.imgs || []);
       const dateStr        = new Date().toLocaleDateString();
       const productCat     = p.cat         || 'other';
@@ -221,7 +295,7 @@ module.exports = async function handler(req, res) {
           discount_price, is_on_sale, sale_ends_at, shipping_fee,
           commission, description, seller, seller_id, seller_email, seller_whatsapp,
           rating, reviews, emoji, imgs, status, badge, date, escrow,
-          file_ext, file_name, file_url, is_verified, disputed,
+          file_ext, file_name, file_url, file_size, is_verified, disputed,
           quantity, location, seller_bio, created_at, condition, currency, variants, lessons
         ) VALUES (
           ${id}, ${p.name}, ${productType}, ${productCat}, ${parseFloat(p.price)},
@@ -230,7 +304,7 @@ module.exports = async function handler(req, res) {
           ${sellerEmail}, ${sellerWhatsapp},
           ${0}, ${0},
           ${productEmoji}, ${imgs}, ${'pending'}, ${productBadge}, ${dateStr}, ${escrow},
-          ${fileExt}, ${fileName}, ${fileUrl}, ${false}, ${false},
+          ${fileExt}, ${fileName}, ${fileUrl}, ${fileSize}, ${false}, ${false},
           ${p.quantity !== undefined && p.quantity !== null ? parseInt(p.quantity, 10) : null},
           ${p.location || ''},
           ${p.sellerBio || p.seller_bio || ''},
@@ -257,6 +331,7 @@ module.exports = async function handler(req, res) {
       const newSellerVerified = (p.sellerVerified !== undefined) ? Boolean(p.sellerVerified): null;
       const newSellerWhatsapp = (p.sellerWhatsapp !== undefined) ? String(p.sellerWhatsapp) : null;
       const newFileUrl        = (p.fileUrl        !== undefined) ? (p.fileUrl || null)      : null;
+      const newFileSize       = (p.fileSize       !== undefined) ? (p.fileSize || null)     : null;
       const newIsVerified     = (p.isVerified     !== undefined) ? Boolean(p.isVerified)   : null;
       const newDisputed       = (p.disputed       !== undefined) ? Boolean(p.disputed)     : null;
       const newIsOnSale       = (p.isOnSale       !== undefined) ? Boolean(p.isOnSale)     : null;
@@ -291,6 +366,7 @@ module.exports = async function handler(req, res) {
           seller_verified = COALESCE(${newSellerVerified}, seller_verified),
           seller_whatsapp = COALESCE(${newSellerWhatsapp}, seller_whatsapp),
           file_url        = COALESCE(${newFileUrl},        file_url),
+          file_size       = COALESCE(${newFileSize},       file_size),
           is_verified     = COALESCE(${newIsVerified},     is_verified),
           disputed        = COALESCE(${newDisputed},       disputed),
           quantity        = COALESCE(${newQuantity},      quantity),
