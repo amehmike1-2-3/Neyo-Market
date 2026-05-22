@@ -3296,27 +3296,16 @@ function cntImgs() { var c = 0; uploadedImages.forEach(function (x) { if (x) c++
 function triggerFile() { var i = document.getElementById('dfile-inp'); i.value = ''; i.click(); }
 window.triggerFile = triggerFile;
 
-/* Store digital file ref — NO base64. Upload to UploadThing on submit. */
-var digitalFileData = null; /* { file, name, ext, size } — raw File object */
+/* Digital file — store raw File object, upload to UploadThing on submit */
+var digitalFileData = null; /* { file, name, ext, size } */
 
 function onFilePick(e) {
   var f = e.target.files[0]; if (!f) return;
   var sizeMB = f.size / (1024 * 1024);
-
-  /* Strict size check — UploadThing allows 256MB */
-  if (sizeMB > 256) {
-    toast('File too large. Maximum size is 256MB.', 'fail');
-    dReady = false;
-    validateSell();
-    return;
-  }
-
+  if (sizeMB > 256) { toast('File too large. Max 256MB.', 'fail'); return; }
   var ext = f.name.lastIndexOf('.') > -1 ? f.name.substring(f.name.lastIndexOf('.')) : '';
-
-  /* Store raw File object — no FileReader, no base64 */
   digitalFileData = { file: f, name: f.name, ext: ext, size: f.size };
   dReady = true;
-
   document.getElementById('dfile-name').textContent = '✅ ' + f.name + ' (' + sizeMB.toFixed(2) + ' MB)';
   document.getElementById('fz').classList.add('has');
   validateSell();
@@ -3540,18 +3529,12 @@ function submitProduct() {
   if (needsFileUpload) {
     if (btn) { btn.disabled = true; btn.textContent = 'Saving product...'; }
 
-    /* ── UPLOAD TO UPLOADTHING ─────────────────────────────────────────
-       File goes directly to UploadThing cloud storage.
-       ONLY the returned URL string is saved in Neon — no base64, no bloat.
-    ─────────────────────────────────────────────────────────────────── */
-
-    if (!digitalFileData.file) {
+    /* ── UPLOAD TO UPLOADTHING ────────────────────────────────────── */
+    if (!digitalFileData || !digitalFileData.file) {
       if (btn) { btn.disabled = false; btn.textContent = 'Submit for Review'; }
       toast('No file selected. Please choose a file.', 'fail');
       return;
     }
-
-    /* Show progress */
     if (btn) btn.textContent = '⬆️ Uploading file…';
     var progWrap = document.getElementById('dfile-progress');
     var progBar  = document.getElementById('dfile-progress-bar');
@@ -3560,13 +3543,12 @@ function submitProduct() {
     if (progText) progText.textContent   = 'Uploading to secure cloud…';
 
     uploadToUploadThing(digitalFileData.file, function(progress) {
-      if (progBar)  progBar.style.width    = progress + '%';
-      if (progText) progText.textContent   = 'Uploading… ' + progress + '%';
+      if (progBar)  progBar.style.width  = progress + '%';
+      if (progText) progText.textContent = 'Uploading… ' + progress + '%';
     })
     .then(function(result) {
       if (progWrap) progWrap.style.display = 'none';
-      /* Save ONLY the URL string to Neon — zero base64 */
-      payload.fileUrl  = result.url;              /* "https://utfs.io/f/..." */
+      payload.fileUrl  = result.url;
       payload.fileName = digitalFileData.name;
       payload.fileExt  = digitalFileData.ext;
       payload.fileSize = digitalFileData.size;
@@ -3575,7 +3557,7 @@ function submitProduct() {
     .catch(function(err) {
       if (progWrap) progWrap.style.display = 'none';
       if (btn) { btn.disabled = false; btn.textContent = 'Submit for Review'; }
-      toast('Upload failed: ' + err.message + '. Try again.', 'fail');
+      toast('Upload failed: ' + err.message, 'fail');
     });
 
   } else {
