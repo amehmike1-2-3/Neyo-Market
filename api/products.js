@@ -25,11 +25,9 @@ function _utPresign(fileInfo) {
       files: [{ name: fileInfo.name, size: fileInfo.size, type: fileInfo.type }]
     });
 
-    // 1. Grab your modern v7 token from Vercel
     const token = process.env.UPLOADTHING_TOKEN || '';
     let apiKey = '';
 
-    // 2. Safely decode the token to extract the raw v6 compatible API key
     try {
       if (token) {
         const decoded = JSON.parse(
@@ -43,29 +41,29 @@ function _utPresign(fileInfo) {
 
     const options = {
       hostname: 'api.uploadthing.com',
-      path: '/v6/uploadFiles', // Keeps your existing v6 endpoint intact
+      path: '/v6/uploadFiles',
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Content-Length': Buffer.byteLength(body),
-        // 3. Inject the decoded API key securely into the header
         'x-uploadthing-api-key': apiKey || process.env.UPLOADTHING_SECRET || ''
       }
     };
 
     const req = https.request(options, function(res) {
-
-    const req = https.request(options, function(res) {
       let data = '';
-      res.on('data', function(chunk){ data += chunk; });
+      res.on('data', function(chunk) { data += chunk; });
       res.on('end', function() {
         try {
           const parsed = JSON.parse(data);
           if (parsed.error) return reject(new Error(parsed.error));
           resolve(parsed);
-        } catch(e) { reject(new Error('Invalid UploadThing response')); }
+        } catch (e) {
+          reject(new Error('Invalid UploadThing response'));
+        }
       });
     });
+
     req.on('error', reject);
     req.write(body);
     req.end();
