@@ -39,8 +39,8 @@ function _utPresign(fileInfo) {
       console.error('UploadThing token decode failed:', e);
     }
      
-        const options = {
-      hostname: 'sea1.api.uploadthing.com',
+            const options = {
+      hostname: 'api.uploadthing.com', // 🌟 Change this back to exactly 'api.uploadthing.com'
       path: '/v6/uploadFiles',
       method: 'POST',
       headers: {
