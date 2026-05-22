@@ -16,59 +16,29 @@ const { neon } = require('@neondatabase/serverless');
    Returns { url, fields, fileUrl } to frontend — no SDK router needed.
    Compatible with Vercel Node.js (req, res) => void signature.
 ═══════════════════════════════════════════════════════════════════════════ */
-const https = require('https');
+const { createUploadthingUrlBuilder } = require("uploadthing/server");
 
 function _utPresign(fileInfo) {
   /* fileInfo: { name, size, type } */
-  return new Promise(function(resolve, reject) {
-    const body = JSON.stringify({
-      files: [{ name: fileInfo.name, size: fileInfo.size, type: fileInfo.type }]
-    });
-
-    const apiKey = process.env.UPLOADTHING_SECRET || '';
-    const appId = process.env.UPLOADTHING_APP_ID || '';
-
-    const options = {
-      hostname: 'api.uploadthing.com',
-      path: '/v6/uploadFiles',
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(body),
-        'x-uploadthing-api-key': apiKey,
-        'x-uploadthing-app-id': appId,
-        'x-uploadthing-version': '6.4.0'
-      }
-    };
-
-    const req = https.request(options, function(res) {
-      let data = '';
-      res.on('data', function(chunk) { data += chunk; });
-      res.on('end', function() {
-        try {
-          const parsed = JSON.parse(data);
-          
-          // 🌟 Extract the inner array directly so the frontend doesn't see an "Invalid URL"
-          if (parsed && parsed.data) {
-            resolve(parsed.data);
-          } else if (Array.isArray(parsed)) {
-            resolve(parsed);
-          } else {
-            resolve([parsed]);
-          }
-        } catch (e) {
-          reject(new Error('Invalid JSON from UploadThing'));
-        }
+  return new Promise(async function(resolve, reject) {
+    try {
+      const urlBuilder = createUploadthingUrlBuilder({
+        apiKey: process.env.UPLOADTHING_SECRET,
+        appId: process.env.UPLOADTHING_APP_ID,
       });
-    });
 
-    req.on('error', reject);
-    req.write(body);
-    req.end();
+      // The official SDK builds the exact array layout your frontend needs
+      const response = await urlBuilder([
+        { name: fileInfo.name, size: fileInfo.size, type: fileInfo.type }
+      ]);
+
+      resolve(response);
+    } catch (error) {
+      console.error("UploadThing SDK builder error:", error);
+      reject(error);
+    }
   });
 }
-
-
 
 async function _handleUpload(req, res) {
   /* Auth check — only sellers/admins */
