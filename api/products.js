@@ -39,14 +39,15 @@ function _utPresign(fileInfo) {
       console.error('UploadThing token decode failed:', e);
     }
      
-            const options = {
-      hostname: 'api.uploadthing.com', // 🌟 Change this back to exactly 'api.uploadthing.com'
+                const options = {
+      hostname: 'api.uploadthing.com',
       path: '/v6/uploadFiles',
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Content-Length': Buffer.byteLength(body),
-        'x-uploadthing-api-key': apiKey || process.env.UPLOADTHING_SECRET || ''
+        'x-uploadthing-api-key': apiKey || process.env.UPLOADTHING_SECRET || '',
+        'x-uploadthing-version': '6.4.0' // 🌟 This forces the server to accept the old v6 request format!
       }
     };
 
