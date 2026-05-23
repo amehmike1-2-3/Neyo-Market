@@ -3256,28 +3256,50 @@ function triggerImg(i) {
 }
 window.triggerImg = triggerImg;
 
-var IMGBB_KEY = 'b2c01e6615189dbcad9377d41098676e'; /* free ImgBB key */
-
+/* ═══ CLOUDINARY IMAGE UPLOAD ══════════════════════════════════════════════
+   Reads image as base64 → sends to /api/products?action=upload (Cloudinary)
+   Stores the returned secure_url in uploadedImages[slot]
+════════════════════════════════════════════════════════════════════════════ */
 function onImgPick(e) {
   var f = e.target.files[0]; if (!f) return;
-  if (f.size > 5 * 1024 * 1024) { toast('Image too large. Max 5MB.', 'fail'); return; }
+  if (f.size > 10 * 1024 * 1024) { toast('Image too large. Max 10MB.', 'fail'); return; }
   var slot = activeSlot;
-  var sl = document.getElementById('sl-' + slot);
+  var sl   = document.getElementById('sl-' + slot);
 
-  var r = new FileReader();
-  r.onload = function (ev) {
-    var base64 = ev.target.result;
-    uploadedImages[slot] = base64;
-    sl.innerHTML = '<img src="' + base64 + '" alt=""/><button class="rx" onclick="rmImg(event,' + slot + ')">✕</button>';
-    sl.classList.add('filled');
-    validateSell();
-    toast('Image uploaded ✓', 'ok');
-    document.getElementById('img-inp').value = '';
+  /* Show preview immediately while uploading */
+  var previewURL = URL.createObjectURL(f);
+  sl.innerHTML = '<img src="' + previewURL + '" alt="" style="opacity:.5"/><button class="rx" onclick="rmImg(event,' + slot + ')">✕</button>';
+  sl.classList.add('filled');
+
+  /* Read as base64 then upload to Cloudinary via our backend */
+  var rdr = new FileReader();
+  rdr.onload = function(ev) {
+    var authToken = '';
+    try { if (CU) authToken = btoa(JSON.stringify({ id: CU.id, name: CU.name, role: CU.role })); } catch(e){}
+
+    fetch('/api/products?action=upload', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+      body:    JSON.stringify({ data: ev.target.result, fileName: f.name, fileType: f.type, folder: 'neyomarket/images' })
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d) {
+      if (!d.ok || !d.url) throw new Error(d.error || 'Upload failed');
+      uploadedImages[slot] = d.url;   /* store Cloudinary URL */
+      sl.innerHTML = '<img src="' + d.url + '" alt=""/><button class="rx" onclick="rmImg(event,' + slot + ')">✕</button>';
+      validateSell();
+      toast('Image uploaded ✓', 'ok');
+    })
+    .catch(function(err) {
+      uploadedImages[slot] = null;
+      sl.innerHTML = '<span class="sp">＋</span>';
+      sl.classList.remove('filled');
+      toast('Image upload failed: ' + err.message, 'fail');
+    })
+    .finally(function(){ document.getElementById('img-inp').value = ''; });
   };
-  r.onerror = function() {
-    toast('Could not read image', 'fail');
-  };
-  r.readAsDataURL(f);
+  rdr.onerror = function(){ toast('Could not read image', 'fail'); };
+  rdr.readAsDataURL(f);
 }
 window.onImgPick = onImgPick;
 
@@ -3296,34 +3318,19 @@ function cntImgs() { var c = 0; uploadedImages.forEach(function (x) { if (x) c++
 function triggerFile() { var i = document.getElementById('dfile-inp'); i.value = ''; i.click(); }
 window.triggerFile = triggerFile;
 
-/* Digital file data — base64 for instant delivery */
-var digitalFileData = null; /* { dataUrl, name, ext, size } */
+/* Digital file — store raw File object, upload to Cloudinary on submit */
+var digitalFileData = null; /* { file, name, ext, size } */
 
 function onFilePick(e) {
   var f = e.target.files[0]; if (!f) return;
   var sizeMB = f.size / (1024 * 1024);
-
-  if (sizeMB > 15) {
-    toast('⚠️ File is ' + sizeMB.toFixed(1) + 'MB. For files over 15MB, use Google Drive and paste a link in the description.', 'warn');
-  }
-
+  if (sizeMB > 256) { toast('File too large. Max 256MB.', 'fail'); return; }
   var ext = f.name.lastIndexOf('.') > -1 ? f.name.substring(f.name.lastIndexOf('.')) : '';
-  document.getElementById('dfile-name').textContent = '⏳ Reading file…';
-
-  var reader = new FileReader();
-  reader.onload = function(ev) {
-    digitalFileData = { dataUrl: ev.target.result, name: f.name, ext: ext, size: f.size };
-    dReady = true;
-    document.getElementById('dfile-name').textContent = '✅ ' + f.name + ' (' + sizeMB.toFixed(2) + ' MB)';
-    document.getElementById('fz').classList.add('has');
-    validateSell();
-  };
-  reader.onerror = function() {
-    toast('Could not read the file. Please try again.', 'fail');
-    dReady = false;
-    validateSell();
-  };
-  reader.readAsDataURL(f);
+  digitalFileData = { file: f, name: f.name, ext: ext, size: f.size };
+  dReady = true;
+  document.getElementById('dfile-name').textContent = '✅ ' + f.name + ' (' + sizeMB.toFixed(2) + ' MB)';
+  document.getElementById('fz').classList.add('has');
+  validateSell();
 }
 window.onFilePick = onFilePick;
 
@@ -3496,7 +3503,7 @@ function submitProduct() {
   };
 
   var pType = payload.type;
-  var needsFileUpload = (pType === 'digital' || pType === 'course') && digitalFileData && digitalFileData.dataUrl;
+  var needsFileUpload = (pType === 'digital' || pType === 'course') && digitalFileData && digitalFileData.file;
 
   function doSubmitPayload(finalPayload) {
     var payloadStr;
@@ -3544,18 +3551,36 @@ function submitProduct() {
   if (needsFileUpload) {
     if (btn) { btn.disabled = true; btn.textContent = 'Saving product...'; }
 
-    /* ── BASE64 INSTANT DELIVERY ───────────────────────────────────── */
-    if (!digitalFileData || !digitalFileData.dataUrl || digitalFileData.dataUrl.length < 100) {
+    /* ── UPLOAD TO CLOUDINARY ──────────────────────────────────────── */
+    if (!digitalFileData || !digitalFileData.file) {
       if (btn) { btn.disabled = false; btn.textContent = 'Submit for Review'; }
-      toast('File data is empty. Please re-select your file.', 'fail');
+      toast('No file selected. Please choose a file.', 'fail');
       return;
     }
+    if (btn) btn.textContent = '⬆️ Uploading file…';
+    var progWrap = document.getElementById('dfile-progress');
+    var progBar  = document.getElementById('dfile-progress-bar');
+    var progText = document.getElementById('dfile-progress-text');
+    if (progWrap) progWrap.style.display = 'block';
+    if (progText) progText.textContent   = 'Uploading to Cloudinary…';
 
-    payload.fileUrl  = digitalFileData.dataUrl;
-    payload.fileName = digitalFileData.name;
-    payload.fileExt  = digitalFileData.ext;
-
-    doSubmitPayload(payload);
+    uploadFileToCloudinary(digitalFileData.file, function(progress) {
+      if (progBar)  progBar.style.width  = progress + '%';
+      if (progText) progText.textContent = 'Uploading… ' + progress + '%';
+    })
+    .then(function(result) {
+      if (progWrap) progWrap.style.display = 'none';
+      payload.fileUrl  = result.url;
+      payload.fileName = digitalFileData.name;
+      payload.fileExt  = digitalFileData.ext;
+      payload.fileSize = digitalFileData.size;
+      doSubmitPayload(payload);
+    })
+    .catch(function(err) {
+      if (progWrap) progWrap.style.display = 'none';
+      if (btn) { btn.disabled = false; btn.textContent = 'Submit for Review'; }
+      toast('Upload failed: ' + err.message, 'fail');
+    });
 
   } else {
     doSubmitPayload(payload);
@@ -3563,98 +3588,44 @@ function submitProduct() {
 }
 window.submitProduct = submitProduct;
 
-/* ═══ UPLOADTHING UPLOAD HELPER ════════════════════════════════════════════
-   Uploads a file directly to UploadThing using their presigned URL flow.
-   Returns a Promise that resolves with { url, name, size }.
-   No SDK needed — pure fetch.
-═══════════════════════════════════════════════════════════════════════════ */
-async function uploadToUploadThing(file, onProgress) {
-  /* Step 1: Get presigned upload URL from our backend router */
-  var authToken = '';
-  try {
-    if (CU) authToken = btoa(JSON.stringify({ id: CU.id, name: CU.name, role: CU.role }));
-  } catch(e){}
+/* ═══ CLOUDINARY FILE UPLOAD ════════════════════════════════════════════════
+   Reads digital product file as base64 → sends to /api/products?action=upload
+   Returns the Cloudinary secure_url to be saved in Neon (no base64 in DB).
+════════════════════════════════════════════════════════════════════════════ */
+async function uploadFileToCloudinary(file, onProgress) {
+  return new Promise(function(resolve, reject) {
+    if (onProgress) onProgress(10);
+    var rdr = new FileReader();
+    rdr.onload = function(ev) {
+      if (onProgress) onProgress(40);
+      var authToken = '';
+      try { if (CU) authToken = btoa(JSON.stringify({ id: CU.id, name: CU.name, role: CU.role })); } catch(e){}
 
-  var routeSlug = file.type.startsWith('video/') ? 'courseVideoUploader' : 'digitalProductUploader';
-
-  /* Request presigned URL */
-  var presignRes = await fetch('/api/products?action=upload', {
-    method:  'POST',
-    headers: {
-      'Content-Type':  'application/json',
-      'Authorization': 'Bearer ' + authToken
-    },
-    body: JSON.stringify({
-      files: [{ fileName: file.name, fileSize: file.size, fileType: file.type, lastModified: file.lastModified || Date.now() }]
-    })
-  });
-
-  if (!presignRes.ok) {
-    var err = await presignRes.json().catch(function(){ return {}; });
-    throw new Error(err.message || err.error || 'Could not get upload URL');
-  }
-
-  var presignData = await presignRes.json();
-  /* UploadThing v7 returns array of { url, fields, fileUrl/ufsUrl } */
-  var uploadInfo = null;
-  if (Array.isArray(presignData) && presignData.length) {
-    uploadInfo = presignData[0];
-  } else if (presignData && presignData.url) {
-    uploadInfo = presignData;
-  } else if (presignData && presignData.data) {
-    uploadInfo = Array.isArray(presignData.data) ? presignData.data[0] : presignData.data;
-  }
-
-  if (!uploadInfo || !uploadInfo.url) {
-    console.error('[UploadThing] Bad presign response:', JSON.stringify(presignData).substring(0,200));
-    throw new Error('No upload URL returned. Check UploadThing token in Vercel.');
-  }
-
-  /* Step 2: Upload file directly to UploadThing S3 using presigned URL */
-  var formData = new FormData();
-  /* Append all presigned fields first */
-  if (uploadInfo.fields) {
-    Object.keys(uploadInfo.fields).forEach(function(key) {
-      formData.append(key, uploadInfo.fields[key]);
-    });
-  }
-  formData.append('file', file);
-
-  /* Use XHR for progress tracking */
-  var fileUrl = await new Promise(function(resolve, reject) {
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', uploadInfo.url, true);
-
-    xhr.upload.onprogress = function(e) {
-      if (e.lengthComputable && onProgress) {
-        onProgress(Math.round((e.loaded / e.total) * 100));
-      }
+      fetch('/api/products?action=upload', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+        body:    JSON.stringify({
+          data:     ev.target.result,
+          fileName: file.name,
+          fileType: file.type || 'application/octet-stream',
+          folder:   'neyomarket/files'
+        })
+      })
+      .then(function(r){ return r.json(); })
+      .then(function(d) {
+        if (onProgress) onProgress(100);
+        if (!d.ok || !d.url) throw new Error(d.error || 'Upload returned no URL');
+        resolve({ url: d.url, name: file.name, size: file.size });
+      })
+      .catch(reject);
     };
-
-    xhr.onload = function() {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        /* UploadThing v7 final URL — try all known field names */
-        var finalUrl = uploadInfo.ufsUrl
-          || uploadInfo.fileUrl
-          || uploadInfo.appUrl
-          || uploadInfo.url
-          || (uploadInfo.fields && uploadInfo.fields.key
-              ? 'https://uploadthing.com/f/' + uploadInfo.fields.key
-              : '');
-        resolve(finalUrl);
-      } else {
-        reject(new Error('Upload failed with status ' + xhr.status));
-      }
-    };
-
-    xhr.onerror = function() { reject(new Error('Upload network error')); };
-    xhr.send(formData);
+    rdr.onerror = function(){ reject(new Error('Could not read file')); };
+    rdr.readAsDataURL(file);
   });
-
-  if (!fileUrl) throw new Error('No file URL returned from UploadThing');
-  return { url: fileUrl, name: file.name, size: file.size };
 }
-window.uploadToUploadThing = uploadToUploadThing;
+window.uploadFileToCloudinary = uploadFileToCloudinary;
+
+
 
 /* ═══ AI PRODUCT DESCRIPTION GENERATOR ═══════════════════════════════════
    Reads current form values, calls Claude API, auto-fills s-desc textarea.
@@ -4770,10 +4741,20 @@ function submitReview(productId) {
     toast('⏳ Uploading photo…', 'ok');
     var fd = new FormData();
     fd.append('image', file);
-    fetch('https://api.imgbb.com/1/upload?key=' + (window.IMGBB_KEY || ''), { method: 'POST', body: fd })
+    /* Upload review image to Cloudinary */
+    var rdrR = new FileReader();
+    rdrR.onload = function(ev) {
+      fetch('/api/products?action=upload', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ data: ev.target.result, fileName: file.name, fileType: file.type, folder: 'neyomarket/reviews' })
+      })
       .then(function(r){ return r.json(); })
-      .then(function(d){ postReview(d.data && d.data.url ? d.data.url : null); })
+      .then(function(d){ postReview(d.ok && d.url ? d.url : null); })
       .catch(function(){ postReview(null); });
+    };
+    rdrR.onerror = function(){ postReview(null); };
+    rdrR.readAsDataURL(file);
   } else {
     postReview(null);
   }
