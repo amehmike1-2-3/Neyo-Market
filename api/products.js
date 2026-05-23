@@ -10,7 +10,70 @@
 'use strict';
 
 const { neon } = require('@neondatabase/serverless');
-/* UploadThing migration pending — using direct file URL for now */
+/* ═══ CLOUDINARY UPLOAD HANDLER ══════════════════════════════════════════
+   Handles POST /api/products?action=upload
+   Uses CLOUDINARY_URL env var — automatically parsed by cloudinary SDK.
+   resource_type:'auto' accepts images, PDFs, ZIPs, videos — everything.
+   Returns { url, secure_url, public_id } to frontend.
+═══════════════════════════════════════════════════════════════════════════ */
+const cloudinary = require('cloudinary').v2;
+
+/* SDK auto-configures from CLOUDINARY_URL env var — no extra config needed */
+cloudinary.config({ secure: true });
+
+async function _handleUpload(req, res) {
+  /* Auth check — only sellers/admins */
+  try {
+    const auth = req.headers['authorization'] || '';
+    const tok  = auth.replace('Bearer ', '');
+    if (tok) {
+      const user = JSON.parse(Buffer.from(tok, 'base64').toString('utf8'));
+      if (!user || !['seller','admin'].includes(user.role)) {
+        return res.status(403).json({ ok: false, error: 'Sellers only.' });
+      }
+    }
+  } catch(e) {}
+
+  /* Expect base64 data in body: { data, fileName, fileType, folder } */
+  const body     = req.body || {};
+  const b64data  = body.data     || '';
+  const fileName = body.fileName || body.name || 'upload';
+  const fileType = body.fileType || body.type || 'application/octet-stream';
+  const folder   = body.folder   || 'neyomarket';
+
+  if (!b64data) {
+    return res.status(400).json({ ok: false, error: 'No file data provided.' });
+  }
+
+  /* Build data URI if not already one */
+  const dataUri = b64data.startsWith('data:')
+    ? b64data
+    : 'data:' + fileType + ';base64,' + b64data;
+
+  try {
+    const result = await cloudinary.uploader.upload(dataUri, {
+      resource_type: 'auto',      /* auto = images + raw files + videos */
+      folder:         folder,
+      use_filename:   true,
+      unique_filename: true,
+      overwrite:      false,
+      public_id:      fileName.replace(/[^a-zA-Z0-9._-]/g, '_').replace(/\.[^.]+$/, ''),
+    });
+
+    console.log('[Cloudinary] Uploaded:', result.secure_url);
+    return res.status(200).json({
+      ok:         true,
+      url:        result.secure_url,
+      public_id:  result.public_id,
+      format:     result.format,
+      bytes:      result.bytes,
+    });
+
+  } catch(err) {
+    console.error('[Cloudinary] Upload error:', err.message);
+    return res.status(500).json({ ok: false, error: 'Upload failed: ' + err.message });
+  }
+}
 
 /* ═══ UPLOADTHING DIRECT UPLOAD HANDLER ══════════════════════════════════
    Instead of presigning, we receive the file as multipart form data
@@ -87,6 +150,8 @@ module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
+
+    if (req.query.action === 'upload') return _handleUpload(req, res);
 
     /* ════════════════════════════════════════════════
        GET
