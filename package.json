@@ -4,6 +4,7 @@
   "dependencies": {
     "@neondatabase/serverless": "^0.10.0",
     "bcryptjs": "^2.4.3",
-    "nodemailer": "^6.9.13"
+    "nodemailer": "^6.9.13",
+    "cloudinary": "^2.5.1"
   }
 }
