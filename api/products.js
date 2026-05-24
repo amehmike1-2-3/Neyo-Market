@@ -75,11 +75,7 @@ async function _handleUpload(req, res) {
   }
 }
 
-/* ═══ UPLOADTHING DIRECT UPLOAD HANDLER ══════════════════════════════════
-   Instead of presigning, we receive the file as multipart form data
-   and forward it directly to UploadThing using their simple upload API.
-   This avoids all the presign complexity.
-═══════════════════════════════════════════════════════════════════════════ */
+/* ═══ 
 
 const sql = neon(process.env.DATABASE_URL);
 
@@ -177,6 +173,40 @@ module.exports = async function handler(req, res) {
           WHERE seller_id = ${String(sellerId)}
           ORDER BY created_at DESC
         `;
+
+      } else if (req.query.storeName) {
+        /* ── STOREFRONT: public active products by seller affCode (unique per seller) ── */
+        const storeCode = String(req.query.storeName).trim();
+        /* Look up seller id from aff_code first, then fallback to name match */
+        const sellerRows = await sql`
+          SELECT id FROM users WHERE aff_code = ${storeCode} LIMIT 1
+        `;
+        if (sellerRows.length) {
+          const sid = String(sellerRows[0].id);
+          rows = await sql`
+            SELECT p.*, u.membership_tier AS seller_tier,
+                   u.is_verified AS seller_verified,
+                   u.badge_verified AS badge_verified
+            FROM products p
+            LEFT JOIN users u ON u.id::text = p.seller_id::text
+            WHERE p.status = 'active'
+              AND p.seller_id::text = ${sid}
+            ORDER BY p.created_at DESC
+          `;
+        } else {
+          /* Fallback: match by seller display name */
+          rows = await sql`
+            SELECT p.*, u.membership_tier AS seller_tier,
+                   u.is_verified AS seller_verified,
+                   u.badge_verified AS badge_verified
+            FROM products p
+            LEFT JOIN users u ON u.id::text = p.seller_id::text
+            WHERE p.status = 'active'
+              AND LOWER(p.seller) = LOWER(${storeCode})
+            ORDER BY p.created_at DESC
+          `;
+        }
+
       } else if (admin === 'true') {
         /* Admin: all products, optionally filtered by status */
         if (status && status !== 'all') {
