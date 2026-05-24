@@ -75,8 +75,7 @@ async function _handleUpload(req, res) {
   }
 }
 
-/* ═══ 
-
+/* ═══ DATABASE AND UTILITY METHODS ═══ */
 const sql = neon(process.env.DATABASE_URL);
 
 function cors(res) {
