@@ -2716,6 +2716,17 @@ footer{background:var(--text);color:#fff;border-top:1px solid rgba(255,255,255,.
       <button class="bg" style="padding:10px 22px;width:100%" id="sel-save-btn" onclick="saveSellerPayout()">💳 Save &amp; Activate Split Payment</button>
     </div>
 
+    <!-- Store Link -->
+    <div class="dc" style="background:linear-gradient(135deg,rgba(201,146,42,.06),var(--bg2));border:1px solid rgba(201,146,42,.2)">
+      <h3>🏪 Your Seller Storefront</h3>
+      <p style="color:var(--muted);font-size:.82rem;margin-bottom:12px">Share your personal store link on social media. Customers can browse and buy directly from your store.</p>
+      <div style="display:flex;gap:8px;align-items:center;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:10px">
+        <span id="store-link-display" style="flex:1;font-size:.78rem;color:var(--gold);word-break:break-all;font-family:monospace"></span>
+        <button onclick="copyStoreLink()" style="background:var(--gold);color:#fff;border:none;padding:6px 12px;border-radius:6px;font-size:.72rem;font-weight:700;cursor:pointer;white-space:nowrap">Copy</button>
+      </div>
+      <button onclick="shareStoreLink()" style="width:100%;background:var(--bg2);border:1.5px solid var(--gold);color:var(--gold);padding:10px;border-radius:8px;font-weight:700;font-size:.82rem;cursor:pointer">📤 Share Store Link</button>
+    </div>
+
     <!-- Affiliate Links for own products -->
     <div class="dc">
       <h3>🔗 Promote Your Products</h3>
@@ -2733,6 +2744,56 @@ footer{background:var(--text);color:#fff;border-top:1px solid rgba(255,255,255,.
 
   </div>
 </div>
+<!-- ═══ SELLER STOREFRONT PAGE ═══ -->
+<div class="page" id="page-store">
+  <div style="max-width:700px;margin:0 auto;padding:0 0 80px">
+
+    <!-- Store Header -->
+    <div id="store-header" style="background:linear-gradient(135deg,#1a1a2e,#0f3460);padding:28px 20px 20px;margin-bottom:0;position:relative">
+      <button onclick="go('market')" style="position:absolute;top:16px;left:14px;background:rgba(255,255,255,.12);border:none;color:#fff;border-radius:50%;width:34px;height:34px;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center">←</button>
+      <div style="text-align:center;padding-top:8px">
+        <div id="store-avatar" style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#c9922a,#f5c842);display:flex;align-items:center;justify-content:center;font-size:1.8rem;font-weight:800;color:#fff;margin:0 auto 12px;border:3px solid rgba(255,255,255,.2)">S</div>
+        <div id="store-name" style="font-size:1.2rem;font-weight:800;color:#fff;margin-bottom:4px">Store</div>
+        <div id="store-meta" style="font-size:.78rem;color:rgba(255,255,255,.6);margin-bottom:12px"></div>
+        <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+          <div id="store-verified-badge" style="display:none;background:rgba(29,78,216,.9);color:#fff;font-size:.65rem;font-weight:700;padding:3px 10px;border-radius:20px">✓ VERIFIED</div>
+          <div id="store-trusted-badge" style="display:none;background:rgba(180,83,9,.9);color:#fff;font-size:.65rem;font-weight:700;padding:3px 10px;border-radius:20px">✓ TRUSTED</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Store Stats Bar -->
+    <div id="store-stats" style="display:flex;background:var(--bg2);border-bottom:1px solid var(--border);padding:12px 20px;gap:0">
+      <div style="flex:1;text-align:center;border-right:1px solid var(--border)">
+        <div id="store-prod-count" style="font-size:1.1rem;font-weight:800;color:var(--gold)">0</div>
+        <div style="font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">Products</div>
+      </div>
+      <div style="flex:1;text-align:center;border-right:1px solid var(--border)">
+        <div id="store-rating" style="font-size:1.1rem;font-weight:800;color:var(--gold)">—</div>
+        <div style="font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">Avg Rating</div>
+      </div>
+      <div style="flex:1;text-align:center">
+        <div id="store-joined" style="font-size:1.1rem;font-weight:800;color:var(--gold)">—</div>
+        <div style="font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">Joined</div>
+      </div>
+    </div>
+
+    <!-- Category filter pills -->
+    <div id="store-cats" style="display:flex;gap:8px;overflow-x:auto;padding:12px 16px;border-bottom:1px solid var(--border);-webkit-overflow-scrolling:touch"></div>
+
+    <!-- Products grid -->
+    <div style="padding:14px 12px">
+      <div id="store-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px"></div>
+      <div id="store-empty" style="display:none;text-align:center;padding:40px 20px;color:var(--muted)">
+        <div style="font-size:2.5rem;margin-bottom:12px">🏪</div>
+        <div style="font-size:.9rem;font-weight:600">No products yet</div>
+        <div style="font-size:.78rem;margin-top:6px">This seller hasn't listed any products yet.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
 <div class="page" id="page-admin">
   <div class="adl">
     <div class="ads">
@@ -3177,6 +3238,7 @@ function go(pageId) {
     }
     renderSellerPage();
   }
+  if (pageId === 'store') { /* populated by openStorefront() */ }
   if (pageId === 'shipping') bSum('shipping');
   if (pageId === 'checkout') bSum('checkout');
 }
@@ -4062,6 +4124,125 @@ function loadAnnouncements() {
     .catch(function(){});
 }
 window.loadAnnouncements = loadAnnouncements;
+
+/* ═══ SELLER STOREFRONT ════════════════════════════════════════════════════
+   Opens a seller's store page showing only their active products.
+   URL: neyomarket.com.ng/?store=sellerName
+   Reuses existing product grid, mkCard(), opn() — no new systems.
+═══════════════════════════════════════════════════════════════════════════ */
+function openStorefront(sellerName) {
+  if (!sellerName) return;
+  go('store');
+
+  /* Fetch seller's active products from existing API */
+  var encodedName = encodeURIComponent(sellerName.trim());
+  fetch('/api/products?storeName=' + encodedName)
+    .then(function(r){ return r.json(); })
+    .then(function(data) {
+      var products = (data.products || []).filter(function(p){ return p.status === 'active'; });
+
+      /* Populate store header */
+      var firstProd = products[0];
+      var sName     = firstProd ? firstProd.seller : sellerName;
+      var sVerified = firstProd && firstProd.sellerVerified;
+      var sTrusted  = firstProd && firstProd.badgeVerified;
+
+      var avatarEl = document.getElementById('store-avatar');
+      var nameEl   = document.getElementById('store-name');
+      var metaEl   = document.getElementById('store-meta');
+      var verEl    = document.getElementById('store-verified-badge');
+      var truEl    = document.getElementById('store-trusted-badge');
+      var countEl  = document.getElementById('store-prod-count');
+      var emptyEl  = document.getElementById('store-empty');
+      var gridEl   = document.getElementById('store-grid');
+
+      if (avatarEl) avatarEl.textContent = sName.charAt(0).toUpperCase();
+      if (nameEl)   nameEl.textContent   = sName;
+      if (metaEl)   metaEl.textContent   = products.length + ' product' + (products.length !== 1 ? 's' : '') + ' available';
+      if (countEl)  countEl.textContent  = products.length;
+      if (verEl)    verEl.style.display  = sVerified ? 'inline-block' : 'none';
+      if (truEl)    truEl.style.display  = sTrusted  ? 'inline-block' : 'none';
+
+      /* Ratings */
+      var ratings = products.filter(function(p){ return p.rating > 0; });
+      var avgRating = ratings.length
+        ? (ratings.reduce(function(s,p){ return s + p.rating; }, 0) / ratings.length).toFixed(1)
+        : '—';
+      var ratingEl = document.getElementById('store-rating');
+      if (ratingEl) ratingEl.textContent = avgRating !== '—' ? '⭐ ' + avgRating : '—';
+
+      /* Category pills */
+      var cats    = [...new Set(products.map(function(p){ return p.cat || p.type || 'other'; }))];
+      var catNav  = document.getElementById('store-cats');
+      if (catNav) {
+        var pillsHtml = '<a onclick="filterStoreCat(&quot;all&quot;)" id="sc-all" style="flex-shrink:0;padding:6px 14px;border-radius:20px;background:var(--gold);color:#fff;font-size:.75rem;font-weight:700;cursor:pointer;white-space:nowrap">All</a>';
+        cats.forEach(function(c) {
+          pillsHtml += '<a onclick="filterStoreCat(&quot;' + c + '&quot;)" style="flex-shrink:0;padding:6px 14px;border-radius:20px;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:.75rem;font-weight:600;cursor:pointer;white-space:nowrap">' + c.charAt(0).toUpperCase() + c.slice(1) + '</a>';
+        });
+        catNav.innerHTML = pillsHtml;
+      }
+
+      /* Store products in global for category filtering */
+      window._storeProducts = products;
+
+      /* Render grid */
+      if (!products.length) {
+        if (gridEl)  gridEl.innerHTML  = '';
+        if (emptyEl) emptyEl.style.display = 'block';
+      } else {
+        if (emptyEl) emptyEl.style.display = 'none';
+        rGrid('store-grid', products);
+      }
+    })
+    .catch(function(err) {
+      console.error('[Storefront]', err.message);
+      toast('Could not load store. Please try again.', 'fail');
+    });
+}
+window.openStorefront = openStorefront;
+
+function filterStoreCat(cat) {
+  /* Highlight active pill */
+  document.querySelectorAll('#store-cats a').forEach(function(a){ 
+    a.style.background = 'var(--bg3)'; a.style.color = 'var(--text)'; a.style.border = '1px solid var(--border)';
+  });
+  var allPill = document.getElementById('sc-all');
+  var activePill = allPill;
+  if (cat !== 'all') {
+    document.querySelectorAll('#store-cats a').forEach(function(a){
+      if (a.getAttribute('onclick') && a.getAttribute('onclick').indexOf(cat) !== -1 && a.id !== 'sc-all') activePill = a;
+    });
+  }
+  if (activePill) { activePill.style.background = 'var(--gold)'; activePill.style.color = '#fff'; activePill.style.border = 'none'; }
+
+  var all = window._storeProducts || [];
+  var filtered = cat === 'all' ? all : all.filter(function(p){ return (p.cat||p.type||'other') === cat; });
+  rGrid('store-grid', filtered);
+}
+window.filterStoreCat = filterStoreCat;
+
+function copyStoreLink() {
+  if (!CU) return;
+  var link = 'https://neyomarket.com.ng/?store=' + (CU.affCode || encodeURIComponent(CU.name));
+  navigator.clipboard.writeText(link).then(function(){
+    toast('Store link copied! 🔗', 'ok');
+  }).catch(function(){
+    prompt('Copy your store link:', link);
+  });
+}
+window.copyStoreLink = copyStoreLink;
+
+function shareStoreLink() {
+  if (!CU) return;
+  var link = 'https://neyomarket.com.ng/?store=' + (CU.affCode || encodeURIComponent(CU.name));
+  var msg  = '🛍 Shop on my NeyoMarket store!\n\nFind all my products here:\n' + link;
+  if (navigator.share) {
+    navigator.share({ title: CU.name + ' on NeyoMarket', text: msg, url: link }).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(link).then(function(){ toast('Link copied!', 'ok'); });
+  }
+}
+window.shareStoreLink = shareStoreLink;
 
 /* ═══ RELATED PRODUCTS ═════════════════════════════════════════════════════
    Shows products from same category. Injected below reviews in product modal.
@@ -5027,7 +5208,8 @@ function processPaystack(mode) {
   var waEl    = document.getElementById(isPhys ? 'sh-wa'    : 'co-wa');
   var addrEl  = document.getElementById('sh-addr');
 
-  var email = (emailEl && emailEl.value.trim()) || (CU ? CU.email : '');
+  /* Always use raw email from session — never read from DOM display */
+  var email = (CU ? CU.email : '') || (emailEl && emailEl.value.trim()) || '';
   var name  = (nameEl  && nameEl.value.trim())  || (CU ? CU.name  : '');
   var wa    = (waEl    && waEl.value.trim())    || (CU ? (CU.phone || '') : '');
   var addr  = isPhys ? ((addrEl && addrEl.value.trim()) || '') : 'Digital Delivery';
@@ -5141,7 +5323,7 @@ function processPaystack(mode) {
           };
         }),
         total:         total,
-        customer:      { name: name, email: maskEmail(email), whatsapp: wa || '', address: addr || '' },
+        customer:      { name: name, email: (CU ? CU.email : email), whatsapp: wa || '', address: addr || '' }, /* raw email — never mask */
         mode:          mode,
         affCode:       refCode || null,
         shipping:      addr ? { address: addr, whatsapp: wa } : null
@@ -6305,6 +6487,9 @@ function refreshProf() {
       }
     }).catch(function(){});
   var al = document.getElementById('aff-l'); if (al) al.value = SITE_BASE + '?ref=' + (CU.affCode || 'USER');
+  /* Populate store link */
+  var slDisp = document.getElementById('store-link-display');
+  if (slDisp && CU) slDisp.textContent = 'neyomarket.com.ng/?store=' + (CU.affCode || encodeURIComponent(CU.name));
   if (CU.payoutBank)  sval('po-bank', CU.payoutBank);
   if (CU.payoutAcct)  sval('po-acct', CU.payoutAcct);
   if (CU.payoutAname) sval('po-aname', CU.payoutAname);
@@ -6470,7 +6655,7 @@ function renderPromoteProducts() {
   if (!container || !CU) return;
 
   var myProds = prods.filter(function(p){
-    return (p.seller === CU.name || p.sellerEmail === maskEmail(CU.email)) && p.status === 'active';
+    return (p.seller === CU.name || p.sellerEmail === CU.email || p.sellerEmail === maskEmail(CU.email)) && p.status === 'active';
   });
 
   if (!myProds.length) {
@@ -7089,7 +7274,7 @@ function renderSellerDash() {
   if (sellerInner)   sellerInner.style.display   = 'block';
 
   var myProds = prods.filter(function (p) {
-    return p.seller === CU.name || p.sellerEmail === maskEmail(CU.email);
+    return p.seller === CU.name || p.sellerEmail === CU.email || p.sellerEmail === CU.email || p.sellerEmail === maskEmail(CU.email);
   });
 
   var active  = myProds.filter(function (p) { return p.status === 'active'; }).length;
@@ -10571,6 +10756,12 @@ validateSell();
     } catch(e) {
       try { sessionStorage.setItem('nm_ref_session', ref.trim()); } catch(e2) {}
     }
+  }
+
+  // Storefront: ?store=username
+  var storeParam = params.get('store');
+  if (storeParam) {
+    setTimeout(function() { openStorefront(storeParam.trim()); }, 800);
   }
 
   // Deep-link: ?p=PRODUCT_ID  — BULLETPROOF VERSION
