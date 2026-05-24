@@ -856,14 +856,21 @@ module.exports = async function handler(req, res) {
 
       /* Award buyer 10 loyalty points for purchase */
       try {
-        const buyerRows = await sql`SELECT id, loyalty_points, loyalty_history FROM users WHERE email = ${String(customer.email || '').toLowerCase()} LIMIT 1`;
-        if (buyerRows.length) {
-          const bId      = String(buyerRows[0].id);
-          const currPts  = parseInt(buyerRows[0].loyalty_points || 0);
+        /* Use userId (passed in payload) — more reliable than email which can be masked */
+        const buyerLookup = userId
+          ? await sql`SELECT id, loyalty_points, loyalty_history FROM users WHERE id::text = ${String(userId)} LIMIT 1`
+          : await sql`SELECT id, loyalty_points, loyalty_history FROM users WHERE email = ${String(customer.email || '').toLowerCase().trim()} LIMIT 1`;
+
+        if (buyerLookup.length) {
+          const bId      = String(buyerLookup[0].id);
+          const currPts  = parseInt(buyerLookup[0].loyalty_points || 0);
           const newPts   = currPts + 10;
-          const bHistory = buyerRows[0].loyalty_history || [];
+          const bHistory = safeJson(buyerLookup[0].loyalty_history, []);
           bHistory.push({ pts: 10, label: 'Purchase: ' + orderId, date: new Date().toLocaleDateString() });
           await sql`UPDATE users SET loyalty_points = ${newPts}, loyalty_history = ${JSON.stringify(bHistory)}::jsonb WHERE id = ${bId}`;
+          console.log('[payment/confirm] +10 loyalty pts → userId:', bId, 'total:', newPts);
+        } else {
+          console.warn('[payment/confirm] buyer not found for loyalty points. userId:', userId, 'email:', customer && customer.email);
         }
       } catch (e) { console.warn('[payment/confirm] buyer loyalty points (non-fatal):', e.message); }
 
@@ -1035,7 +1042,7 @@ module.exports = async function handler(req, res) {
         if (sellerRows.length) {
           const currentPts  = parseInt(sellerRows[0].loyalty_points || 0);
           const newPts      = currentPts + 20;
-          const history     = sellerRows[0].loyalty_history || [];
+          const history     = safeJson(sellerRows[0].loyalty_history, []);
           history.push({ pts: 20, label: 'Sale confirmed: ' + orderId, date: new Date().toLocaleDateString() });
           await sql`UPDATE users SET loyalty_points = ${newPts}, loyalty_history = ${JSON.stringify(history)}::jsonb WHERE id = ${resolvedSellerId}`;
         }
