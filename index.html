@@ -7500,16 +7500,11 @@ function renderSellerPage() {
   }
 
   /* ── Incoming Orders — SELLER ONLY ── */
-  if (!CU || (CU.role !== 'seller' && CU.role !== 'admin')) return; /* buyers never see this */
-  var selOrders = ords.filter(function (o) {
-    return o.items && o.items.some(function (item) {
-      return myProds.some(function (p) { return p.id === item.id; });
-    });
-  });
+  if (!CU || (CU.role !== 'seller' && CU.role !== 'admin')) return;
 
+  /* Always ensure the wrapper exists */
   var ordWrap = document.getElementById('sel-orders-wrap');
   if (!ordWrap) {
-    /* Create the section if it doesn't exist yet */
     var selDash = document.getElementById('page-seller');
     if (selDash) {
       var newSection = document.createElement('div');
@@ -7522,11 +7517,62 @@ function renderSellerPage() {
     }
   }
 
-  if (ordWrap) {
-    ordWrap.innerHTML = '<h3>📬 Incoming Orders (' + selOrders.length + ')</h3>'
-      + (selOrders.length === 0
-        ? '<p style="color:var(--muted);font-size:.84rem;padding:12px 0">No orders yet. Share your product links to get your first sale! 🚀</p>'
-        : selOrders.slice().reverse().map(function (o) {
+  /* Show loading immediately — never blank on refresh */
+  if (ordWrap) ordWrap.innerHTML = '<h3>📬 Incoming Orders</h3><p style="color:var(--muted);font-size:.84rem;padding:8px 0">⏳ Loading orders…</p>';
+
+  /* ALWAYS fetch fresh from DB — never rely on in-memory ords which may be empty on refresh */
+  fetch('/api/payment?action=orders&userId=' + encodeURIComponent(String(CU.id)))
+    .then(function(r){ return r.json(); })
+    .then(function(data) {
+      var allOrders = data.orders || [];
+      /* Store in global so other functions can use */
+      window.ordersCache = allOrders;
+
+      /* Filter to only orders containing this seller's products */
+      var selOrders = allOrders.filter(function(o) {
+        return o.items && o.items.some(function(item) {
+          return myProds.some(function(p) { return String(p.id) === String(item.id); });
+        });
+      });
+
+      /* Also fetch as seller — orders where seller_id matches */
+      return fetch('/api/payment?action=orders&sellerId=' + encodeURIComponent(String(CU.id)))
+        .then(function(r2){ return r2.json(); })
+        .then(function(d2) {
+          var sellerOrders = d2.orders || [];
+          /* Merge both arrays, deduplicate by order id */
+          sellerOrders.forEach(function(o) {
+            if (!selOrders.find(function(x){ return x.id === o.id; })) {
+              selOrders.push(o);
+            }
+          });
+          /* Sort newest first */
+          selOrders.sort(function(a,b){ return new Date(b.date||b.created_at||0) - new Date(a.date||a.created_at||0); });
+          renderIncomingOrdersList(ordWrap, selOrders, myProds);
+        })
+        .catch(function() {
+          /* Fallback — just use buyer orders filtered by product */
+          selOrders.sort(function(a,b){ return new Date(b.date||b.created_at||0) - new Date(a.date||a.created_at||0); });
+          renderIncomingOrdersList(ordWrap, selOrders, myProds);
+        });
+    })
+    .catch(function(err) {
+      if (ordWrap) ordWrap.innerHTML = '<h3>📬 Incoming Orders</h3><p style="color:var(--red);font-size:.84rem;padding:8px 0">Could not load orders. <button onclick="renderSellerPage()" style="background:none;border:none;color:var(--gold);cursor:pointer;font-weight:700;text-decoration:underline">Retry</button></p>';
+    });
+}
+
+/* ── Render incoming orders list — separated so it can be called after DB fetch ── */
+function renderIncomingOrdersList(ordWrap, selOrders, myProds) {
+  if (!ordWrap) return;
+
+  if (!selOrders.length) {
+    ordWrap.innerHTML = '<h3>📬 Incoming Orders (0)</h3>'
+      + '<p style="color:var(--muted);font-size:.84rem;padding:12px 0">No orders yet. Share your product links to get your first sale! 🚀</p>';
+    return;
+  }
+
+  ordWrap.innerHTML = '<h3>📬 Incoming Orders (' + selOrders.length + ')</h3>'
+    + selOrders.map(function (o) {
             /* Which of my products were in this order? */
             var myItems = o.items.filter(function (item) {
               return myProds.some(function (p) { return p.id === item.id; });
@@ -7589,10 +7635,10 @@ function renderSellerPage() {
                 + '<div id="dvc-claim-err-' + o.id + '" style="font-size:.75rem;color:#dc2626;margin-top:5px;min-height:14px"></div>'
                 + '</div>' : '')
               + '</div></div>';
-          }).join(''));
-  }
+          }).join('');
 }
 window.renderSellerPage = renderSellerPage;
+window.renderIncomingOrdersList = renderIncomingOrdersList;
 
 /* ════════════════════════════════════════════════════════
    SELLER CLAIM FUNDS — validates DVC then releases escrow
