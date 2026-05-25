@@ -651,6 +651,11 @@ textarea.fi{resize:vertical;min-height:88px}
 .points-how-val{font-size:.78rem;font-weight:700;color:var(--gold);margin-top:2px}
 
 /* Promoted products badge */
+.promo-input-row{display:flex;gap:6px;padding:8px 14px;border-top:1px solid var(--border)}
+.promo-input-row input{flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:.82rem;background:var(--bg3);color:var(--text);outline:none}
+.promo-input-row input:focus{border-color:var(--gold)}
+.promo-input-row button{background:var(--gold);color:#fff;border:none;padding:9px 14px;border-radius:8px;font-size:.78rem;font-weight:700;cursor:pointer;white-space:nowrap}
+.promo-applied{padding:6px 14px;font-size:.75rem;font-weight:600;min-height:20px}
 .promo-badge{display:inline-flex;align-items:center;gap:4px;background:linear-gradient(135deg,#7c3aed,#a855f7);
   color:#fff;font-size:.58rem;font-weight:800;padding:2px 8px;border-radius:4px;letter-spacing:.4px;text-transform:uppercase}
 
@@ -1060,6 +1065,14 @@ footer{background:var(--text);color:#fff;border-top:1px solid rgba(255,255,255,.
 }
 .price-original{
   font-size:.78rem;color:var(--muted);text-decoration:line-through;margin-right:6px
+}
+.sale-timer-card{
+  display:inline-flex;align-items:center;gap:4px;
+  background:linear-gradient(135deg,#dc2626,#ef4444);
+  color:#fff;font-size:.68rem;font-weight:800;
+  padding:3px 8px;border-radius:6px;letter-spacing:.3px;
+  animation:pulse-badge 1.2s infinite;
+  box-shadow:0 2px 8px rgba(220,38,38,.4);
 }
 .sale-timer{
   font-size:.66rem;color:var(--orange);font-weight:600;margin-bottom:6px
@@ -3118,6 +3131,8 @@ function loadAll() {
   loadAnnouncements();
   /* Load recently viewed */
   renderHomeRecentlyViewed();
+  /* Check for price drops on recently viewed products */
+  setTimeout(checkPriceDrops, 2000);
 
   /* Fetch live orders from Neon — always from DB, never from localStorage */
   if (CU) {
@@ -3823,6 +3838,8 @@ function mkCard(p) {
 
   return '<div class="pcard' + (outOfStock ? ' out-of-stock' : '') + '"'
     + (outOfStock ? '' : ' onclick="opn(' + p.id + ')"') + timerData + '>'
+    + cdHtml
+    + cdHtml
     + (isAdmin ? '<button class="admin-delete-btn" onclick="event.stopPropagation();delProd(' + p.id + ')" title="Delete product">🗑️</button>' : '')
     + '<div class="pci">' + mi
     + '<button class="wishlist-btn' + (isWished ? ' wishlisted' : '') + '" onclick="event.stopPropagation();toggleWishlist(' + p.id + ',this)" title="' + (isWished ? 'Remove from wishlist' : 'Add to wishlist') + '">' + (isWished ? '❤️' : '🤍') + '</button>'
@@ -5075,11 +5092,74 @@ function openCart() {
       + '<span class="ctp">' + priceHtml + '</span>'
       + '<button class="rmbtn" onclick="rmCart(' + i.id + ')">🗑</button></div>';
   }).join('')
-    + '<div class="ctr"><span>Total</span><span class="ctrc">' + currSymbol((cart[0]&&cart[0].currency)||'NGN') + total.toLocaleString() + '</span></div>'
-    + '<button class="cobtn" onclick="cM(\'m-cart\');startCheckout()">Proceed to Secure Checkout 🔐</button>';
+    + '<div class="promo-input-row"><input type="text" id="promo-inp" placeholder="??️ Promo code..." oninput="this.value=this.value.toUpperCase()"><button onclick="applyPromo()">Apply</button></div>'
+    + '<div id="promo-msg" class="promo-applied" style="display:none"></div>'
+    + '<div class="ctr"><span>Subtotal</span><span>' + currSymbol((cart[0]&&cart[0].currency)||'NGN') + total.toLocaleString() + '</span></div>'
+    + '<div class="ctr" id="promo-discount-row" style="display:none"><span style="color:#16a34a">?? Promo Discount</span><span style="color:#16a34a" id="promo-discount-amt"></span></div>'
+    + '<div class="ctr" style="font-weight:800"><span>Total</span><span class="ctrc" id="cart-final-total">' + currSymbol((cart[0]&&cart[0].currency)||'NGN') + total.toLocaleString() + '</span></div>'
+    + '<button class="cobtn" onclick="cM(\'m-cart\');startCheckout()">Proceed to Secure Checkout ??</button>';
   oM('m-cart');
 }
 window.openCart = openCart;
+
+/* ═══ PROMO CODES ════════════════════════════════════════════════════════════
+   Promo codes are stored in window.PROMO_CODES — admin sets these.
+   Format: { CODE: { type:'percent'|'fixed', value: 10, label:'10% off' } }
+   Frontend-only validation — simple and Vercel-safe, no new API needed.
+═══════════════════════════════════════════════════════════════════════════ */
+window.PROMO_CODES = {
+  'NEYO10':   { type: 'percent', value: 10,   label: '10% off'      },
+  'WELCOME':  { type: 'percent', value: 15,   label: '15% off'      },
+  'SAVE500':  { type: 'fixed',   value: 500,  label: '₦500 off'     },
+  'NEYO2026': { type: 'percent', value: 20,   label: '20% off'      },
+  'FREESHIP': { type: 'fixed',   value: 300,  label: '₦300 off'     },
+};
+var appliedPromo = null;
+
+function applyPromo() {
+  var code = (document.getElementById('promo-inp') || {}).value || '';
+  code = code.trim().toUpperCase();
+  var msgEl   = document.getElementById('promo-msg');
+  var discRow = document.getElementById('promo-discount-row');
+  var discAmt = document.getElementById('promo-discount-amt');
+  var finalEl = document.getElementById('cart-final-total');
+
+  if (!code) { toast('Enter a promo code', 'warn'); return; }
+
+  var promo = window.PROMO_CODES[code];
+  if (!promo) {
+    appliedPromo = null;
+    if (msgEl)   { msgEl.style.display='block'; msgEl.style.color='#dc2626'; msgEl.textContent='❌ Invalid promo code'; }
+    if (discRow) discRow.style.display='none';
+    return;
+  }
+
+  /* Calculate discount */
+  var total = cart.reduce(function(s, i) {
+    var qty  = i.qty || 1;
+    var disc = parseFloat(i.discountPrice || i.discount_price || 0);
+    var base = parseFloat(i.price || 0);
+    var ship = i.type === 'physical' ? parseFloat(i.shippingFee || i.shipping_fee || 0) : 0;
+    return s + ((disc > 0 && disc < base ? disc : base) + ship) * qty;
+  }, 0);
+
+  var discount = promo.type === 'percent'
+    ? Math.round(total * promo.value / 100)
+    : Math.min(promo.value, total);
+
+  var newTotal = Math.max(0, total - discount);
+  var sym      = currSymbol((cart[0] && cart[0].currency) || 'NGN');
+
+  appliedPromo = { code: code, discount: discount, newTotal: newTotal };
+
+  if (msgEl)   { msgEl.style.display='block'; msgEl.style.color='#16a34a'; msgEl.textContent='✅ ' + promo.label + ' applied!'; }
+  if (discRow) discRow.style.display='flex';
+  if (discAmt) discAmt.textContent = '-' + sym + discount.toLocaleString();
+  if (finalEl) finalEl.textContent = sym + newTotal.toLocaleString();
+
+  toast('?? Promo code applied! ' + promo.label, 'ok');
+}
+window.applyPromo = applyPromo;
 
 function rmCart(id) { var numId = Number(id); cart = cart.filter(function (i) { return Number(i.id) !== numId; }); updBadge(); openCart(); }
 window.rmCart = rmCart;
@@ -5158,9 +5238,14 @@ function bSum(pageId) {
   var sellerPay = total - platFee;
   var cSym     = currSymbol((cart[0]&&cart[0].currency)||'NGN');
 
+  /* Apply promo discount if active */
+  var promoDiscount = (appliedPromo && appliedPromo.discount > 0) ? appliedPromo.discount : 0;
+  if (promoDiscount > 0) total = Math.max(1, total - promoDiscount);
+
   var html = (savings > 0
     ? '<div class="cor" style="color:var(--green)"><span>You Save</span><span>-' + cSym + savings.toLocaleString() + '</span></div>'
     : '')
+    + (promoDiscount > 0 ? '<div class="cor" style="color:#16a34a"><span>?? Promo Discount</span><span>-' + cSym + promoDiscount.toLocaleString() + '</span></div>' : '')
     + '<div class="cor"><span>Subtotal</span><span>' + cSym + subtotal.toLocaleString() + '</span></div>'
     + (shipping > 0 ? '<div class="cor"><span>Shipping</span><span>' + cSym + shipping.toLocaleString() + '</span></div>' : '')
     + '<div class="cor"><span>Platform Fee (5%)</span><span>' + cSym + platFee.toLocaleString() + '</span></div>'
@@ -5238,6 +5323,11 @@ function processPaystack(mode) {
     total += (disc + ship) * qty;
   });
   if (total <= 0) { toast('Your cart is empty.', 'fail'); return; }
+
+  /* Apply promo discount if active */
+  if (appliedPromo && appliedPromo.discount > 0) {
+    total = Math.max(1, total - appliedPromo.discount);
+  }
 
   var trackId = 'NYO-' + Math.floor(1000 + Math.random() * 9000);
 
@@ -7095,7 +7185,7 @@ function processWalletPay(mode) {
     var newOrder = Object.assign({}, orderPayload, { items: cart.slice(), date: new Date().toLocaleDateString() });
     ords.unshift(newOrder);
     sv('nm_orders', ords);
-    cart = []; sv('nm_cart', cart); updBadge();
+    cart = []; sv('nm_cart', cart); updBadge(); appliedPromo = null;
 
     /* Award +10 loyalty points */
     if (typeof awardLoyaltyPoints === 'function') awardLoyaltyPoints(10, 'Wallet purchase: ' + trackId);
@@ -9549,6 +9639,60 @@ function startCountdownTicker() {
 }
 window.startCountdownTicker = startCountdownTicker;
 
+/* ═══ PRICE DROP NOTIFICATIONS ════════════════════════════════════════════
+   Watches localStorage for products user viewed recently.
+   If any now have a sale price lower than last seen price → notify.
+═══════════════════════════════════════════════════════════════════════════ */
+function checkPriceDrops() {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  try {
+    var viewed = JSON.parse(localStorage.getItem('nm_rv') || '[]');
+    if (!viewed.length) return;
+    var active = getActive();
+    var prices = JSON.parse(localStorage.getItem('nm_last_prices') || '{}');
+    var newPrices = {};
+    viewed.forEach(function(pid) {
+      var p = active.find(function(x){ return String(x.id) === String(pid); });
+      if (!p) return;
+      var curPrice = parseFloat(p.discountPrice || p.discount_price || p.price || 0);
+      var lastPrice = prices[pid];
+      newPrices[pid] = curPrice;
+      if (lastPrice && curPrice < lastPrice) {
+        sendLocalNotification(
+          '?? Price Drop on NeyoMarket!',
+          p.name + ' dropped from ' + currSymbol(p.currency||'NGN') + lastPrice.toLocaleString()
+            + ' to ' + currSymbol(p.currency||'NGN') + curPrice.toLocaleString() + '. Grab it now!',
+          ''
+        );
+      }
+    });
+    localStorage.setItem('nm_last_prices', JSON.stringify(newPrices));
+  } catch(e){}
+}
+window.checkPriceDrops = checkPriceDrops;
+
+/* ═══ NEW PRODUCT NOTIFICATIONS ═══════════════════════════════════════════
+   When prods array loads, compare count to last known count.
+   If more products → notify buyer new listings are available.
+═══════════════════════════════════════════════════════════════════════════ */
+function checkNewProducts(newProds) {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  try {
+    var lastCount = parseInt(localStorage.getItem('nm_prod_count') || '0');
+    var newCount  = (newProds || []).filter(function(p){ return p.status === 'active'; }).length;
+    localStorage.setItem('nm_prod_count', String(newCount));
+    if (lastCount > 0 && newCount > lastCount) {
+      var diff = newCount - lastCount;
+      sendLocalNotification(
+        '?? New on NeyoMarket!',
+        diff + ' new product' + (diff > 1 ? 's' : '') + ' just listed. Check them out!',
+        ''
+      );
+    }
+  } catch(e){}
+}
+window.checkNewProducts = checkNewProducts;
+
 /* ════════════════════════════════════════════════════════
    PRODUCT SHARE — WhatsApp-friendly clean link
    Updates OG meta tags so the link preview shows the product.
@@ -10111,24 +10255,86 @@ function buildSystemPrompt() {
         + (p.type === "digital" ? " (instant download)" : " (physical, delivered)");
     }).join("\n") || "  No active listings yet.",
     "",
-    "## NEYOMARKET FACTS (only use when relevant, never contradict)",
-    "- Payment split: 90% seller · 5% affiliate · 5% platform",
-    "- All payments via Paystack — 256-bit SSL, escrow-protected",
-    "- Sellers must complete KYC (NIN or BVN) to list products",
-    "- Minimum withdrawal: ₦2,000",
-    "- Affiliate commission: 5% per referred sale via ?ref= link",
-    "- Digital products: instant download after payment",
-    "- Physical products: buyer confirms receipt to release escrow",
-    "- Zero Scam Guarantee: escrow holds funds until delivery confirmed",
-    "- Support: +2349072212496 or +2349168321317 (WhatsApp/call, 8am–8pm WAT)",
-    "- Products can be listed in NGN, USD, GBP, EUR, CAD or GHS",
-    "- Foreign currency products are converted to NGN at live rate during checkout",
+    "## NEYOMARKET PLATFORM — COMPLETE KNOWLEDGE BASE",
     "",
-    "## FORMAT",
+    "### PAYMENTS & ESCROW",
+    "- All payments processed via Paystack — 256-bit SSL encrypted, fully secure",
+    "- Payment split: 90% to seller · 5% to affiliate (if referred) · 5% platform fee",
+    "- Escrow system: funds are held until buyer confirms delivery — Zero Scam Guarantee",
+    "- Digital products: payment releases instantly, buyer gets download/access immediately",
+    "- Physical products: buyer must confirm receipt → escrow releases to seller",
+    "- Wallet system: sellers store earnings in NeyoMarket wallet and can also pay for purchases with it",
+    "- Minimum withdrawal: ₦2,000 | Goes directly to seller's verified bank account",
+    "- Currency support: NGN, USD, GBP, EUR, CAD, GHS — foreign currencies converted at live rate at checkout",
+    "",
+    "### SELLER FEATURES",
+    "- KYC required (NIN or BVN) before listing products",
+    "- Verified badge (✅) shows on products after KYC approval",
+    "- Trusted badge (✓) unlocks after a one-time ₦2,000 verification fee",
+    "- Personal storefront link: neyomarket.com.ng/?store=AffiliateCode — share on social media bios",
+    "- Seller dashboard: products, earnings, pending orders, completed orders, top products",
+    "- Sales analytics: revenue chart, orders chart, conversion rate, avg order value, best day",
+    "- Incoming orders: shows all orders for seller's products — stays even after page refresh",
+    "- Physical orders: seller receives a Delivery Verification Code (DVC) — buyer enters it to confirm delivery and release escrow",
+    "- WhatsApp notification sent to seller when a buyer places an order",
+    "- AI Description Generator: tap 'Generate with AI' button when listing a product to auto-write the description",
+    "- List products in multiple currencies, add variants (size, color etc.), set sale prices, flash sale badge",
+    "- Membership tiers: Free, Business, Premium — badge shown on product cards",
+    "",
+    "### BUYER FEATURES",
+    "- Browse with 15 category filters: Digital, Physical, Courses, Fashion, Electronics, Tech, Beauty, Gaming, eBooks, Books, Home, Sports, Food, Automobiles, Art",
+    "- Product detail: full image carousel, variants selector, quantity stepper (+/-), Add to Cart",
+    "- Checkout: pay with Paystack or NeyoMarket Wallet",
+    "- My Orders: track purchases, download digital products, view course lessons, confirm physical delivery",
+    "- Dispute system: raise a dispute if product not as described — resolved via platform",
+    "- Reviews: star ratings and written reviews — one per product per user",
+    "- Loyalty points: buyers earn +10 points per purchase, sellers earn +20 points per completed sale",
+    "- Recently viewed products shown on home page and inside product detail modal",
+    "- Related products shown in product detail (same category)",
+    "",
+    "### COURSE / VIDEO SYSTEM",
+    "- Sellers list video courses with multiple lessons",
+    "- Each lesson: title + video URL (YouTube, Vimeo, or Google Drive) + free preview toggle",
+    "- Free preview lessons are watchable by anyone before purchase",
+    "- After purchase: buyer goes to My Orders → tap 'View Course' → all lessons unlock instantly",
+    "- Video player is embedded directly in the product page — no redirect needed",
+    "- Course cover = first product image uploaded by seller",
+    "",
+    "### AFFILIATE SYSTEM",
+    "- Every user has a unique affiliate code (e.g. REF7ABC123)",
+    "- Affiliate link: neyomarket.com.ng/?ref=CODE or neyomarket.com.ng/?ref=CODE&p=PRODUCT_ID",
+    "- Earn 5% commission on every sale made through your affiliate link",
+    "- Track commissions in the Affiliate tab of your dashboard",
+    "- Storefront also uses affiliate code: neyomarket.com.ng/?store=CODE",
+    "",
+    "### DIGITAL PRODUCTS & INSTANT DELIVERY",
+    "- Sellers upload files (PDF, ZIP, MP4) — stored securely in Cloudinary cloud",
+    "- After payment: Download button appears immediately in My Orders",
+    "- Buyer can re-download anytime from their order history",
+    "",
+    "### ANNOUNCEMENTS",
+    "- Platform announcements appear as a banner on the home page",
+    "- Announcements include title, message, and optional badge (e.g. NEW, HOT, UPDATE)",
+    "- Links in announcements are auto-clickable",
+    "",
+    "### NAVIGATION & UI",
+    "- Mobile-first design with bottom navigation bar on phones",
+    "- Hamburger menu has a category drawer with all product categories",
+    "- Dark mode and light mode toggle available",
+    "- Home page: Announcements, Recently Viewed, Trending, Categories, Hot Deals, How It Works, Course Guide, How We Protect You",
+    "- Neyo AI: full-screen chat — tap the gold pill button at bottom-right of any page",
+    "",
+    "### SUPPORT",
+    "- WhatsApp/call: +2349072212496 or +2349168321317 (8am–8pm WAT)",
+    "- Website: neyomarket.com.ng",
+    "",
+    "## FORMAT RULES",
     "- Use **bold** for key terms and important figures",
-    "- Match your length to the question: quick question = quick answer, deep question = detailed answer",
-    "- Never show a bullet-point menu when someone asks a specific question",
-    "- Never say 'I can help you with X, Y, Z' — just answer what they actually asked"
+    "- Match length to question: quick question = quick answer, deep question = detailed answer",
+    "- Never show a bullet menu when someone asks a specific question",
+    "- Never say 'I can help you with X, Y, Z' — just answer what they actually asked",
+    "- If asked about admin, backend, or platform management — politely say that information is not available here",
+    "- Always use the correct currency symbol for prices — never assume everything is NGN"
   ].join("\n");
 }
 
@@ -10263,6 +10469,7 @@ function tChat() {
         if (d && d.products && d.products.length) {
           window.prods = d.products;
           prods = d.products;
+          checkNewProducts(d.products);
         }
       })
       .catch(function(){});
