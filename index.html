@@ -651,6 +651,30 @@ textarea.fi{resize:vertical;min-height:88px}
 .points-how-val{font-size:.78rem;font-weight:700;color:var(--gold);margin-top:2px}
 
 /* Promoted products badge */
+.btn-optimize{
+  display:inline-flex;align-items:center;gap:8px;
+  background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 50%,#a855f7 100%);
+  color:#fff;border:none;padding:11px 18px;border-radius:10px;
+  font-size:.82rem;font-weight:700;cursor:pointer;white-space:nowrap;
+  box-shadow:0 4px 15px rgba(99,102,241,.4);
+  transition:all .25s cubic-bezier(.4,0,.2,1);
+  position:relative;overflow:hidden;letter-spacing:.3px;
+}
+.btn-optimize:hover{
+  transform:translateY(-2px);
+  box-shadow:0 8px 25px rgba(99,102,241,.5);
+  background:linear-gradient(135deg,#4338ca 0%,#6d28d9 50%,#9333ea 100%);
+}
+.btn-optimize:active{ transform:scale(.97); }
+.btn-optimize:disabled{ opacity:.65; cursor:not-allowed; transform:none; }
+.btn-optimize .opt-spin{
+  width:14px;height:14px;border:2px solid rgba(255,255,255,.3);
+  border-top-color:#fff;border-radius:50%;
+  animation:opt-spin .7s linear infinite;display:none;
+}
+.btn-optimize.loading .opt-spin{ display:block; }
+.btn-optimize.loading .opt-icon{ display:none; }
+@keyframes opt-spin{ to{ transform:rotate(360deg); } }
 .promo-input-row{display:flex;gap:6px;padding:8px 14px;border-top:1px solid var(--border)}
 .promo-input-row input{flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:.82rem;background:var(--bg3);color:var(--text);outline:none}
 .promo-input-row input:focus{border-color:var(--gold)}
@@ -1852,7 +1876,22 @@ footer{background:var(--text);color:#fff;border-top:1px solid rgba(255,255,255,.
         <p class="hint" id="img-hint-text">Tap a slot to pick from your gallery. Clear photos = more sales.</p>
       </div>
 
-      <div class="fg"><label>Product Name <span class="rq">*</span></label><input class="fi" type="text" id="s-name" placeholder="e.g. Complete Web Dev Bootcamp 2025" oninput="validateSell()"/></div>
+      <div class="fg">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <label style="margin-bottom:0">Product Name <span class="rq">*</span></label>
+          <button type="button" class="btn-optimize" id="btn-optimize" onclick="optimizeProduct()">
+            <span class="opt-icon">✨</span>
+            <div class="opt-spin"></div>
+            <span id="opt-label">Optimize with AI</span>
+          </button>
+        </div>
+        <input class="fi" type="text" id="s-name" placeholder="e.g. Complete Web Dev Bootcamp 2025" oninput="validateSell()"/>
+        <div id="opt-result" style="display:none;margin-top:10px;background:linear-gradient(135deg,rgba(79,70,229,.08),rgba(168,85,247,.08));border:1px solid rgba(99,102,241,.25);border-radius:10px;padding:12px 14px">
+          <div style="font-size:.72rem;font-weight:700;color:#7c3aed;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">✨ AI Optimization Applied</div>
+          <div id="opt-ksp" style="font-size:.8rem;color:var(--text);line-height:1.55;margin-bottom:8px"></div>
+          <div id="opt-tags" style="display:flex;flex-wrap:wrap;gap:5px"></div>
+        </div>
+      </div>
       <div class="fg">
         <label>Product Type <span class="rq">*</span></label>
         <select class="fi" id="s-type" onchange="onType();validateSell()">
@@ -3664,6 +3703,88 @@ function submitProduct() {
   }
 }
 window.submitProduct = submitProduct;
+
+/* ═══ AI PRODUCT OPTIMIZER ════════════════════════════════════════════════
+   Reads title, category, type, price from the sell form.
+   Calls /api/products?action=optimize (Groq llama-3.1-8b-instant).
+   Auto-fills title and description. Shows key selling point + tags.
+═══════════════════════════════════════════════════════════════════════════ */
+async function optimizeProduct() {
+  /* ── Read form values using exact IDs ── */
+  var titleEl = document.getElementById('s-name');
+  var catEl   = document.getElementById('s-cat');
+  var typeEl  = document.getElementById('s-type');
+  var priceEl = document.getElementById('s-price');
+  var descEl  = document.getElementById('s-desc');
+
+  var title = (titleEl && titleEl.value || '').trim();
+  var cat   = (catEl   && catEl.options  && catEl.options[catEl.selectedIndex]  ? catEl.options[catEl.selectedIndex].text  : '') || '';
+  var type  = (typeEl  && typeEl.options && typeEl.options[typeEl.selectedIndex] ? typeEl.options[typeEl.selectedIndex].text : '') || '';
+  var price = (priceEl && priceEl.value  || '').trim();
+
+  /* ── Validate — need at least a title ── */
+  if (!title) {
+    toast('Enter a product name first before optimizing.', 'warn');
+    if (titleEl) titleEl.focus();
+    return;
+  }
+
+  /* ── Loading state ── */
+  var btn      = document.getElementById('btn-optimize');
+  var lbl      = document.getElementById('opt-label');
+  var resBox   = document.getElementById('opt-result');
+  var kspEl    = document.getElementById('opt-ksp');
+  var tagsEl   = document.getElementById('opt-tags');
+
+  if (btn) { btn.disabled = true; btn.classList.add('loading'); }
+  if (lbl) lbl.textContent = 'Analyzing...';
+  if (resBox) resBox.style.display = 'none';
+
+  try {
+    var resp = await fetch('/api/products?action=optimize', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ title: title, category: cat, type: type, price: price })
+    });
+
+    var data = await resp.json();
+
+    if (!resp.ok || !data.ok) {
+      throw new Error(data.error || 'Optimization failed. Try again.');
+    }
+
+    var r = data.result;
+
+    /* ── Auto-fill title ── */
+    if (r.optimized_title && titleEl) {
+      titleEl.value = r.optimized_title;
+      titleEl.dispatchEvent(new Event('input'));
+    }
+
+    /* ── Auto-fill description if empty ── */
+    if (r.key_selling_point && descEl && !descEl.value.trim()) {
+      descEl.value = r.key_selling_point;
+      descEl.dispatchEvent(new Event('input'));
+    }
+
+    /* ── Show result card ── */
+    if (kspEl)  kspEl.textContent  = r.key_selling_point || '';
+    if (tagsEl) tagsEl.innerHTML   = (r.target_tags || []).map(function(t) {
+      return '<span style="background:rgba(99,102,241,.12);color:#6366f1;padding:3px 9px;border-radius:20px;font-size:.68rem;font-weight:700">#' + t + '</span>';
+    }).join('');
+    if (resBox) resBox.style.display = 'block';
+
+    toast('\u2728 Product optimized by AI!', 'ok');
+
+  } catch(e) {
+    console.error('[optimizer]', e.message);
+    toast('AI error: ' + e.message, 'fail');
+  } finally {
+    if (btn) { btn.disabled = false; btn.classList.remove('loading'); }
+    if (lbl) lbl.textContent = 'Optimize with AI';
+  }
+}
+window.optimizeProduct = optimizeProduct;
 
 /* ═══ CLOUDINARY FILE UPLOAD ════════════════════════════════════════════════
    Reads digital product file as base64 → sends to /api/products?action=upload
