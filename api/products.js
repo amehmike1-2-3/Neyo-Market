@@ -148,6 +148,104 @@ module.exports = async function handler(req, res) {
 
     if (req.query.action === 'upload') return _handleUpload(req, res);
 
+    /* ═══ AI PRODUCT OPTIMIZER ════════════════════════════════════════════
+       POST /api/products?action=optimize
+       Reuses exact same Groq setup as chat.js.
+       Returns: { optimized_title, key_selling_point, target_tags }
+    ═══════════════════════════════════════════════════════════════════════ */
+    if (req.query.action === 'optimize' && req.method === 'POST') {
+      const GROQ_KEY = process.env.GROQ_API_KEY;
+      if (!GROQ_KEY) return res.status(500).json({ ok: false, error: 'GROQ_API_KEY not set in Vercel env vars.' });
+
+      const body  = req.body || {};
+      const title = String(body.title || '').trim();
+      const cat   = String(body.category || '').trim();
+      const price = String(body.price || '').trim();
+      const type  = String(body.type || '').trim();
+
+      if (!title) return res.status(400).json({ ok: false, error: 'Product title is required.' });
+
+      const systemPrompt = [
+        "You are a world-class e-commerce product optimizer for NeyoMarket, Nigeria's leading marketplace.",
+        "Your task: analyze the product details provided and return ONLY a raw JSON object — no markdown,",
+        "no explanation, no code fences, no extra text. Just the JSON object itself.",
+        '',
+        'Return exactly this structure:',
+        '{"optimized_title":"...","key_selling_point":"...","target_tags":["tag1","tag2","tag3"]}',
+        '',
+        'Rules:',
+        '- optimized_title: SEO-friendly, Nigerian market focused, max 80 chars, include key benefit',
+        '- key_selling_point: One high-converting sentence for Nigerian buyers, mention value/trust',
+        '- target_tags: Exactly 5 relevant search tags, lowercase, no spaces in each tag',
+        '- Write for a Nigerian audience — reference local context where natural',
+        '- Never include any text outside the JSON object'
+      ].join('\n');
+
+      const userPrompt = [
+        'Optimize this product listing:',
+        'Title: ' + title,
+        'Category: ' + (cat || 'general'),
+        'Type: ' + (type || 'physical'),
+        'Price: ₦' + (price || 'not set'),
+        '',
+        'Return only the raw JSON object.'
+      ].join('\n');
+
+      let resp, raw2, data;
+      try {
+        resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method:  'POST',
+          headers: {
+            'Content-Type':  'application/json',
+            'Authorization': 'Bearer ' + GROQ_KEY
+          },
+          body: JSON.stringify({
+            model:       'llama-3.1-8b-instant',
+            messages:    [
+              { role: 'system', content: systemPrompt },
+              { role: 'user',   content: userPrompt   }
+            ],
+            max_tokens:  300,
+            temperature: 0.4,
+            stream:      false
+          })
+        });
+        raw2 = await resp.text();
+        data = JSON.parse(raw2);
+      } catch(e) {
+        console.error('[optimizer] fetch error:', e.message);
+        return res.status(502).json({ ok: false, error: 'Could not reach AI. Try again.' });
+      }
+
+      if (!resp.ok) {
+        const errMsg = (data.error && data.error.message) || raw2.slice(0, 120);
+        console.error('[optimizer] Groq error:', resp.status, errMsg);
+        return res.status(resp.status).json({ ok: false, error: 'AI error: ' + errMsg });
+      }
+
+      const reply = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+      if (!reply) return res.status(502).json({ ok: false, error: 'No response from AI.' });
+
+      /* Strip any accidental markdown fences */
+      const clean = reply.trim().replace(/^```json?\s*/i, '').replace(/```\s*$/i, '').trim();
+
+      let parsed;
+      try {
+        parsed = JSON.parse(clean);
+      } catch(e) {
+        console.error('[optimizer] JSON parse failed. Raw reply:', reply.slice(0, 200));
+        return res.status(502).json({ ok: false, error: 'AI returned invalid format. Try again.' });
+      }
+
+      /* Validate required fields */
+      if (!parsed.optimized_title || !parsed.key_selling_point || !Array.isArray(parsed.target_tags)) {
+        return res.status(502).json({ ok: false, error: 'AI response missing required fields.' });
+      }
+
+      console.log('[optimizer] OK — title:', parsed.optimized_title.slice(0, 50));
+      return res.status(200).json({ ok: true, result: parsed });
+    }
+
     /* ════════════════════════════════════════════════
        GET
     ════════════════════════════════════════════════ */
