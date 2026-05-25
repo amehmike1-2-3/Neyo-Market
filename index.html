@@ -651,6 +651,11 @@ textarea.fi{resize:vertical;min-height:88px}
 .points-how-val{font-size:.78rem;font-weight:700;color:var(--gold);margin-top:2px}
 
 /* Promoted products badge */
+.promo-input-row{display:flex;gap:6px;padding:8px 14px;border-top:1px solid var(--border)}
+.promo-input-row input{flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:.82rem;background:var(--bg3);color:var(--text);outline:none}
+.promo-input-row input:focus{border-color:var(--gold)}
+.promo-input-row button{background:var(--gold);color:#fff;border:none;padding:9px 14px;border-radius:8px;font-size:.78rem;font-weight:700;cursor:pointer;white-space:nowrap}
+.promo-applied{padding:6px 14px;font-size:.75rem;font-weight:600;min-height:20px}
 .promo-badge{display:inline-flex;align-items:center;gap:4px;background:linear-gradient(135deg,#7c3aed,#a855f7);
   color:#fff;font-size:.58rem;font-weight:800;padding:2px 8px;border-radius:4px;letter-spacing:.4px;text-transform:uppercase}
 
@@ -1060,6 +1065,14 @@ footer{background:var(--text);color:#fff;border-top:1px solid rgba(255,255,255,.
 }
 .price-original{
   font-size:.78rem;color:var(--muted);text-decoration:line-through;margin-right:6px
+}
+.sale-timer-card{
+  display:inline-flex;align-items:center;gap:4px;
+  background:linear-gradient(135deg,#dc2626,#ef4444);
+  color:#fff;font-size:.68rem;font-weight:800;
+  padding:3px 8px;border-radius:6px;letter-spacing:.3px;
+  animation:pulse-badge 1.2s infinite;
+  box-shadow:0 2px 8px rgba(220,38,38,.4);
 }
 .sale-timer{
   font-size:.66rem;color:var(--orange);font-weight:600;margin-bottom:6px
@@ -3118,6 +3131,8 @@ function loadAll() {
   loadAnnouncements();
   /* Load recently viewed */
   renderHomeRecentlyViewed();
+  /* Check for price drops on recently viewed products */
+  setTimeout(checkPriceDrops, 2000);
 
   /* Fetch live orders from Neon — always from DB, never from localStorage */
   if (CU) {
@@ -3789,6 +3804,7 @@ function mkCard(p) {
 
   var timerStr  = '';
   var timerData = '';
+  var cdHtml    = '';
   if (saleActive && saleEnds) {
     var diff = Math.max(0, new Date(saleEnds) - new Date());
     if (diff > 0) {
@@ -3797,6 +3813,7 @@ function mkCard(p) {
       var s = Math.floor((diff % 60000) / 1000);
       timerStr  = (h > 0 ? h + 'h ' : '') + m + 'm ' + (s < 10 ? '0' : '') + s + 's';
       timerData = ' data-sale-ends="' + saleEnds + '" data-timer-id="t' + p.id + '"';
+      cdHtml    = '<div class="sale-timer-card" id="st-' + p.id + '" style="position:absolute;top:8px;left:8px;z-index:4">⏱ ' + timerStr + '</div>';
     }
   }
 
@@ -3823,6 +3840,7 @@ function mkCard(p) {
 
   return '<div class="pcard' + (outOfStock ? ' out-of-stock' : '') + '"'
     + (outOfStock ? '' : ' onclick="opn(' + p.id + ')"') + timerData + '>'
+    + cdHtml
     + (isAdmin ? '<button class="admin-delete-btn" onclick="event.stopPropagation();delProd(' + p.id + ')" title="Delete product">🗑️</button>' : '')
     + '<div class="pci">' + mi
     + '<button class="wishlist-btn' + (isWished ? ' wishlisted' : '') + '" onclick="event.stopPropagation();toggleWishlist(' + p.id + ',this)" title="' + (isWished ? 'Remove from wishlist' : 'Add to wishlist') + '">' + (isWished ? '❤️' : '🤍') + '</button>'
@@ -5075,11 +5093,74 @@ function openCart() {
       + '<span class="ctp">' + priceHtml + '</span>'
       + '<button class="rmbtn" onclick="rmCart(' + i.id + ')">🗑</button></div>';
   }).join('')
-    + '<div class="ctr"><span>Total</span><span class="ctrc">' + currSymbol((cart[0]&&cart[0].currency)||'NGN') + total.toLocaleString() + '</span></div>'
-    + '<button class="cobtn" onclick="cM(\'m-cart\');startCheckout()">Proceed to Secure Checkout 🔐</button>';
+    + '<div class="promo-input-row"><input type="text" id="promo-inp" placeholder="??️ Promo code..." oninput="this.value=this.value.toUpperCase()"><button onclick="applyPromo()">Apply</button></div>'
+    + '<div id="promo-msg" class="promo-applied" style="display:none"></div>'
+    + '<div class="ctr"><span>Subtotal</span><span>' + currSymbol((cart[0]&&cart[0].currency)||'NGN') + total.toLocaleString() + '</span></div>'
+    + '<div class="ctr" id="promo-discount-row" style="display:none"><span style="color:#16a34a">?? Promo Discount</span><span style="color:#16a34a" id="promo-discount-amt"></span></div>'
+    + '<div class="ctr" style="font-weight:800"><span>Total</span><span class="ctrc" id="cart-final-total">' + currSymbol((cart[0]&&cart[0].currency)||'NGN') + total.toLocaleString() + '</span></div>'
+    + '<button class="cobtn" onclick="cM(\'m-cart\');startCheckout()">Proceed to Secure Checkout ??</button>';
   oM('m-cart');
 }
 window.openCart = openCart;
+
+/* ═══ PROMO CODES ════════════════════════════════════════════════════════════
+   Promo codes are stored in window.PROMO_CODES — admin sets these.
+   Format: { CODE: { type:'percent'|'fixed', value: 10, label:'10% off' } }
+   Frontend-only validation — simple and Vercel-safe, no new API needed.
+═══════════════════════════════════════════════════════════════════════════ */
+window.PROMO_CODES = {
+  'NEYO10':   { type: 'percent', value: 10,   label: '10% off'      },
+  'WELCOME':  { type: 'percent', value: 15,   label: '15% off'      },
+  'SAVE500':  { type: 'fixed',   value: 500,  label: '₦500 off'     },
+  'NEYO2026': { type: 'percent', value: 20,   label: '20% off'      },
+  'FREESHIP': { type: 'fixed',   value: 300,  label: '₦300 off'     },
+};
+var appliedPromo = null;
+
+function applyPromo() {
+  var code = (document.getElementById('promo-inp') || {}).value || '';
+  code = code.trim().toUpperCase();
+  var msgEl   = document.getElementById('promo-msg');
+  var discRow = document.getElementById('promo-discount-row');
+  var discAmt = document.getElementById('promo-discount-amt');
+  var finalEl = document.getElementById('cart-final-total');
+
+  if (!code) { toast('Enter a promo code', 'warn'); return; }
+
+  var promo = window.PROMO_CODES[code];
+  if (!promo) {
+    appliedPromo = null;
+    if (msgEl)   { msgEl.style.display='block'; msgEl.style.color='#dc2626'; msgEl.textContent='❌ Invalid promo code'; }
+    if (discRow) discRow.style.display='none';
+    return;
+  }
+
+  /* Calculate discount */
+  var total = cart.reduce(function(s, i) {
+    var qty  = i.qty || 1;
+    var disc = parseFloat(i.discountPrice || i.discount_price || 0);
+    var base = parseFloat(i.price || 0);
+    var ship = i.type === 'physical' ? parseFloat(i.shippingFee || i.shipping_fee || 0) : 0;
+    return s + ((disc > 0 && disc < base ? disc : base) + ship) * qty;
+  }, 0);
+
+  var discount = promo.type === 'percent'
+    ? Math.round(total * promo.value / 100)
+    : Math.min(promo.value, total);
+
+  var newTotal = Math.max(0, total - discount);
+  var sym      = currSymbol((cart[0] && cart[0].currency) || 'NGN');
+
+  appliedPromo = { code: code, discount: discount, newTotal: newTotal };
+
+  if (msgEl)   { msgEl.style.display='block'; msgEl.style.color='#16a34a'; msgEl.textContent='✅ ' + promo.label + ' applied!'; }
+  if (discRow) discRow.style.display='flex';
+  if (discAmt) discAmt.textContent = '-' + sym + discount.toLocaleString();
+  if (finalEl) finalEl.textContent = sym + newTotal.toLocaleString();
+
+  toast('?? Promo code applied! ' + promo.label, 'ok');
+}
+window.applyPromo = applyPromo;
 
 function rmCart(id) { var numId = Number(id); cart = cart.filter(function (i) { return Number(i.id) !== numId; }); updBadge(); openCart(); }
 window.rmCart = rmCart;
@@ -5158,9 +5239,14 @@ function bSum(pageId) {
   var sellerPay = total - platFee;
   var cSym     = currSymbol((cart[0]&&cart[0].currency)||'NGN');
 
+  /* Apply promo discount if active */
+  var promoDiscount = (appliedPromo && appliedPromo.discount > 0) ? appliedPromo.discount : 0;
+  if (promoDiscount > 0) total = Math.max(1, total - promoDiscount);
+
   var html = (savings > 0
     ? '<div class="cor" style="color:var(--green)"><span>You Save</span><span>-' + cSym + savings.toLocaleString() + '</span></div>'
     : '')
+    + (promoDiscount > 0 ? '<div class="cor" style="color:#16a34a"><span>?? Promo Discount</span><span>-' + cSym + promoDiscount.toLocaleString() + '</span></div>' : '')
     + '<div class="cor"><span>Subtotal</span><span>' + cSym + subtotal.toLocaleString() + '</span></div>'
     + (shipping > 0 ? '<div class="cor"><span>Shipping</span><span>' + cSym + shipping.toLocaleString() + '</span></div>' : '')
     + '<div class="cor"><span>Platform Fee (5%)</span><span>' + cSym + platFee.toLocaleString() + '</span></div>'
@@ -5238,6 +5324,11 @@ function processPaystack(mode) {
     total += (disc + ship) * qty;
   });
   if (total <= 0) { toast('Your cart is empty.', 'fail'); return; }
+
+  /* Apply promo discount if active */
+  if (appliedPromo && appliedPromo.discount > 0) {
+    total = Math.max(1, total - appliedPromo.discount);
+  }
 
   var trackId = 'NYO-' + Math.floor(1000 + Math.random() * 9000);
 
@@ -5661,10 +5752,26 @@ function renderOrders() {
 
         /* Dispute button: shown for paid/escrow orders that are not yet complete or disputed */
         var disputeBtn = '';
-        if (isPaid && !isDone && !isDisputed) {
-          disputeBtn = '<button onclick="disputeOrder(\'' + o.id + '\')" style="width:100%;margin-top:8px;background:transparent;border:1px solid var(--red);color:var(--red);padding:10px;border-radius:6px;font-size:.8rem;font-weight:600;cursor:pointer">⚖️ Dispute This Order</button>';
+        /* Check if within return window (7 days for physical, 24hrs for digital) */
+        var orderDate   = o.date || o.created_at || null;
+        var hoursSince  = orderDate ? (Date.now() - new Date(orderDate).getTime()) / 3600000 : 999;
+        var returnWindow = isPhys ? 168 : 24; /* 7 days or 24 hours */
+        var inWindow    = hoursSince <= returnWindow;
+
+        if (isPaid && !isDone && !isDisputed && inWindow) {
+          disputeBtn = '<button onclick="openReturnRequest(\'' + o.id + '\',\'' + (isPhys?'physical':'digital') + '\')" '
+            + 'style="width:100%;margin-top:8px;background:transparent;border:1.5px solid #dc2626;color:#dc2626;padding:11px;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">'
+            + '?? Request Return / Refund</button>';
+        } else if (isPaid && !isDone && !isDisputed && !inWindow) {
+          disputeBtn = '<div style="color:var(--muted);font-size:.74rem;margin-top:8px;padding:8px 12px;background:var(--bg3);border-radius:6px;text-align:center">'
+            + '⏰ Return window closed (' + (isPhys ? '7-day' : '24-hour') + ' limit)</div>';
         } else if (isDisputed) {
-          disputeBtn = '<div style="color:#991b1b;font-size:.78rem;margin-top:8px;padding:8px 12px;background:#fef2f2;border-radius:6px;text-align:center;border:1px solid #fecaca">⚖️ Dispute raised — Admin reviewing within 24h</div>';
+          var returnType = o.return_type || 'dispute';
+          disputeBtn = '<div style="color:#991b1b;font-size:.78rem;margin-top:8px;padding:10px 12px;background:#fef2f2;border-radius:8px;border:1px solid #fecaca">'
+            + '<div style="font-weight:700;margin-bottom:3px">⚖️ Return Request Submitted</div>'
+            + '<div style="color:#b91c1c">Admin reviewing — decision within 24 hours.</div>'
+            + (o.dispute_reason ? '<div style="color:var(--muted);margin-top:4px;font-size:.72rem">Reason: ' + String(o.dispute_reason).substring(0,60) + '</div>' : '')
+            + '</div>';
         }
 
         var addrRow = '';
@@ -5973,60 +6080,99 @@ window.markDL = markDL;
    DISPUTE ORDER — Buyer raises a dispute on a paid/escrow order.
    Flags order as 'disputed' in Neon. Admin then decides in panel.
 ════════════════════════════════════════════════════════════════ */
-function disputeOrder(orderId) {
-  var o = ords.find(function(x){ return x.id === orderId; });
-  if (!o) return;
+/* ═══ RETURN & REFUND REQUEST ══════════════════════════════════════════════
+   Structured return request form — replaces plain dispute textarea.
+   Sends returnType, category, and description to /api/payment?action=disputes
+═══════════════════════════════════════════════════════════════════════════ */
+function openReturnRequest(orderId, orderType) {
+  var o = (window.ordersCache || ords || []).find(function(x){ return x.id === orderId; });
+  var productName = (o && o.items && o.items[0]) ? o.items[0].name : 'this product';
+
+  var formHtml =
+    '<div style="text-align:left;font-size:.85rem">'
+    + '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:.78rem;color:#991b1b">'
+    + '?? <strong>' + productName.substring(0,40) + '</strong><br>'
+    + (orderType === 'physical' ? 'Return window: <strong>7 days</strong> from purchase' : 'Return window: <strong>24 hours</strong> from purchase')
+    + '</div>'
+
+    + '<label style="display:block;font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Return Type *</label>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">'
+    + '<label style="display:flex;align-items:center;gap:8px;padding:10px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;font-size:.82rem"><input type="radio" name="rtype" value="refund" checked> ?? Full Refund</label>'
+    + (orderType === 'physical' ? '<label style="display:flex;align-items:center;gap:8px;padding:10px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;font-size:.82rem"><input type="radio" name="rtype" value="replacement"> ?? Replacement</label>' : '<label style="display:flex;align-items:center;gap:8px;padding:10px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;font-size:.82rem"><input type="radio" name="rtype" value="exchange"> ?? Exchange</label>')
+    + '</div>'
+
+    + '<label style="display:block;font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Reason *</label>'
+    + '<select id="return-cat" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:8px;font-size:.84rem;background:var(--bg3);color:var(--text);margin-bottom:12px">'
+    + '<option value="">— Select a reason —</option>'
+    + '<option value="not_as_described">Item not as described</option>'
+    + '<option value="not_received">Item not received</option>'
+    + '<option value="damaged">Item arrived damaged</option>'
+    + '<option value="wrong_item">Wrong item sent</option>'
+    + '<option value="seller_unresponsive">Seller unresponsive</option>'
+    + '<option value="quality_issue">Quality issue</option>'
+    + (orderType === 'digital' ? '<option value="file_not_working">File not working / corrupted</option>' : '')
+    + '<option value="other">Other</option>'
+    + '</select>'
+
+    + '<label style="display:block;font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Additional Details *</label>'
+    + '<textarea id="return-desc" rows="3" placeholder="Please describe the issue clearly (min 20 characters)..." style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:8px;font-size:.84rem;background:var(--bg3);color:var(--text);resize:none;box-sizing:border-box"></textarea>'
+    + '<div style="font-size:.72rem;color:var(--muted);margin-top:6px">??️ Your payment is held in escrow and will only be released after this is resolved.</div>'
+    + '</div>';
 
   Swal.fire({
-    icon:              'warning',
-    title:             '⚖️ Raise a Dispute?',
-    html:              '<p style="color:var(--text);font-size:.9rem">Only raise a dispute if there is a genuine problem with your order — e.g. item not received, not as described, or seller is unresponsive.</p>'
-                     + '<p style="color:var(--muted);font-size:.82rem;margin-top:8px">Admin will review within 24 hours. If the seller is at fault, you will receive a <strong>full refund</strong>.</p>',
-    input:             'textarea',
-    inputPlaceholder:  'Describe the problem (required)…',
-    inputAttributes:   { rows: 3, style: 'font-size:.85rem;padding:8px' },
+    title:             '?? Return & Refund Request',
+    html:              formHtml,
     showCancelButton:  true,
-    confirmButtonText: '⚖️ Submit Dispute',
+    confirmButtonText: 'Submit Request',
     cancelButtonText:  'Cancel',
     confirmButtonColor:'#dc2626',
-    preConfirm: function(reason) {
-      if (!reason || reason.trim().length < 10) {
-        Swal.showValidationMessage('Please describe the problem (at least 10 characters).');
-        return false;
-      }
-      return reason.trim();
+    width:             '92%',
+    preConfirm: function() {
+      var cat  = document.getElementById('return-cat').value;
+      var desc = (document.getElementById('return-desc').value || '').trim();
+      var rtype = document.querySelector('input[name="rtype"]:checked');
+      if (!cat)  { Swal.showValidationMessage('Please select a reason.'); return false; }
+      if (desc.length < 20) { Swal.showValidationMessage('Please add more detail (at least 20 characters).'); return false; }
+      return { category: cat, description: desc, returnType: rtype ? rtype.value : 'refund' };
     }
   }).then(function(result) {
     if (!result.isConfirmed) return;
-    var reason = result.value;
+    var data = result.value;
+    var fullReason = '[' + data.returnType.toUpperCase() + '] ' + data.category + ': ' + data.description;
 
-    /* Saves dispute_reason to Neon via combined payment.js handler */
     fetch('/api/payment?action=disputes', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ orderId: orderId, userId: CU ? String(CU.id) : null, reason: reason })
+      body:    JSON.stringify({
+        orderId:    orderId,
+        userId:     CU ? String(CU.id) : null,
+        reason:     fullReason,
+        returnType: data.returnType,
+        category:   data.category
+      })
     })
-    .then(function(r) {
-      if (!r.ok) {
-        /* Server returned 4xx/5xx — read text to see the real error */
-        return r.text().then(function(txt) {
-          throw new Error('Server error ' + r.status + ': ' + txt.replace(/<[^>]+>/g,'').slice(0,120));
-        });
-      }
-      return r.json();
-    })
-    .then(function(data) {
-      if (data.ok || !data.error) {
-        if (o) { o.status = 'disputed'; o.disputed = true; }
+    .then(function(r){ return r.json(); })
+    .then(function(resp) {
+      if (resp.ok || !resp.error) {
+        if (o) { o.status = 'disputed'; o.disputed = true; o.dispute_reason = fullReason; o.return_type = data.returnType; }
         renderOrders();
-        toast('⚖️ Dispute submitted. Admin will review within 24 hours.', 'ok');
+        Swal.fire({
+          icon:  'success',
+          title: 'Request Submitted!',
+          html:  '<p style="font-size:.88rem">Your return request has been submitted.<br>Admin will review within <strong>24 hours</strong>.<br><br>Your payment remains safely in escrow until resolved.</p>',
+          confirmButtonColor: '#c9922a'
+        });
       } else {
-        toast('Could not submit dispute: ' + (data.error || 'Try again'), 'fail');
+        toast('Could not submit: ' + (resp.error || 'Try again'), 'fail');
       }
     })
-    .catch(function(e){ toast('Dispute error: ' + e.message, 'fail'); });
+    .catch(function(e){ toast('Error: ' + e.message, 'fail'); });
   });
 }
+window.openReturnRequest = openReturnRequest;
+
+/* Keep disputeOrder as alias for backward compat */
+function disputeOrder(orderId) { openReturnRequest(orderId, 'physical'); }
 window.disputeOrder = disputeOrder;
 
 /* ════════════════════════════════════════════════════════════════
@@ -7095,7 +7241,7 @@ function processWalletPay(mode) {
     var newOrder = Object.assign({}, orderPayload, { items: cart.slice(), date: new Date().toLocaleDateString() });
     ords.unshift(newOrder);
     sv('nm_orders', ords);
-    cart = []; sv('nm_cart', cart); updBadge();
+    cart = []; sv('nm_cart', cart); updBadge(); appliedPromo = null;
 
     /* Award +10 loyalty points */
     if (typeof awardLoyaltyPoints === 'function') awardLoyaltyPoints(10, 'Wallet purchase: ' + trackId);
@@ -9549,6 +9695,60 @@ function startCountdownTicker() {
 }
 window.startCountdownTicker = startCountdownTicker;
 
+/* ═══ PRICE DROP NOTIFICATIONS ════════════════════════════════════════════
+   Watches localStorage for products user viewed recently.
+   If any now have a sale price lower than last seen price → notify.
+═══════════════════════════════════════════════════════════════════════════ */
+function checkPriceDrops() {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  try {
+    var viewed = JSON.parse(localStorage.getItem('nm_rv') || '[]');
+    if (!viewed.length) return;
+    var active = getActive();
+    var prices = JSON.parse(localStorage.getItem('nm_last_prices') || '{}');
+    var newPrices = {};
+    viewed.forEach(function(pid) {
+      var p = active.find(function(x){ return String(x.id) === String(pid); });
+      if (!p) return;
+      var curPrice = parseFloat(p.discountPrice || p.discount_price || p.price || 0);
+      var lastPrice = prices[pid];
+      newPrices[pid] = curPrice;
+      if (lastPrice && curPrice < lastPrice) {
+        sendLocalNotification(
+          '?? Price Drop on NeyoMarket!',
+          p.name + ' dropped from ' + currSymbol(p.currency||'NGN') + lastPrice.toLocaleString()
+            + ' to ' + currSymbol(p.currency||'NGN') + curPrice.toLocaleString() + '. Grab it now!',
+          ''
+        );
+      }
+    });
+    localStorage.setItem('nm_last_prices', JSON.stringify(newPrices));
+  } catch(e){}
+}
+window.checkPriceDrops = checkPriceDrops;
+
+/* ═══ NEW PRODUCT NOTIFICATIONS ═══════════════════════════════════════════
+   When prods array loads, compare count to last known count.
+   If more products → notify buyer new listings are available.
+═══════════════════════════════════════════════════════════════════════════ */
+function checkNewProducts(newProds) {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  try {
+    var lastCount = parseInt(localStorage.getItem('nm_prod_count') || '0');
+    var newCount  = (newProds || []).filter(function(p){ return p.status === 'active'; }).length;
+    localStorage.setItem('nm_prod_count', String(newCount));
+    if (lastCount > 0 && newCount > lastCount) {
+      var diff = newCount - lastCount;
+      sendLocalNotification(
+        '?? New on NeyoMarket!',
+        diff + ' new product' + (diff > 1 ? 's' : '') + ' just listed. Check them out!',
+        ''
+      );
+    }
+  } catch(e){}
+}
+window.checkNewProducts = checkNewProducts;
+
 /* ════════════════════════════════════════════════════════
    PRODUCT SHARE — WhatsApp-friendly clean link
    Updates OG meta tags so the link preview shows the product.
@@ -10111,24 +10311,86 @@ function buildSystemPrompt() {
         + (p.type === "digital" ? " (instant download)" : " (physical, delivered)");
     }).join("\n") || "  No active listings yet.",
     "",
-    "## NEYOMARKET FACTS (only use when relevant, never contradict)",
-    "- Payment split: 90% seller · 5% affiliate · 5% platform",
-    "- All payments via Paystack — 256-bit SSL, escrow-protected",
-    "- Sellers must complete KYC (NIN or BVN) to list products",
-    "- Minimum withdrawal: ₦2,000",
-    "- Affiliate commission: 5% per referred sale via ?ref= link",
-    "- Digital products: instant download after payment",
-    "- Physical products: buyer confirms receipt to release escrow",
-    "- Zero Scam Guarantee: escrow holds funds until delivery confirmed",
-    "- Support: +2349072212496 or +2349168321317 (WhatsApp/call, 8am–8pm WAT)",
-    "- Products can be listed in NGN, USD, GBP, EUR, CAD or GHS",
-    "- Foreign currency products are converted to NGN at live rate during checkout",
+    "## NEYOMARKET PLATFORM — COMPLETE KNOWLEDGE BASE",
     "",
-    "## FORMAT",
+    "### PAYMENTS & ESCROW",
+    "- All payments processed via Paystack — 256-bit SSL encrypted, fully secure",
+    "- Payment split: 90% to seller · 5% to affiliate (if referred) · 5% platform fee",
+    "- Escrow system: funds are held until buyer confirms delivery — Zero Scam Guarantee",
+    "- Digital products: payment releases instantly, buyer gets download/access immediately",
+    "- Physical products: buyer must confirm receipt → escrow releases to seller",
+    "- Wallet system: sellers store earnings in NeyoMarket wallet and can also pay for purchases with it",
+    "- Minimum withdrawal: ₦2,000 | Goes directly to seller's verified bank account",
+    "- Currency support: NGN, USD, GBP, EUR, CAD, GHS — foreign currencies converted at live rate at checkout",
+    "",
+    "### SELLER FEATURES",
+    "- KYC required (NIN or BVN) before listing products",
+    "- Verified badge (✅) shows on products after KYC approval",
+    "- Trusted badge (✓) unlocks after a one-time ₦2,000 verification fee",
+    "- Personal storefront link: neyomarket.com.ng/?store=AffiliateCode — share on social media bios",
+    "- Seller dashboard: products, earnings, pending orders, completed orders, top products",
+    "- Sales analytics: revenue chart, orders chart, conversion rate, avg order value, best day",
+    "- Incoming orders: shows all orders for seller's products — stays even after page refresh",
+    "- Physical orders: seller receives a Delivery Verification Code (DVC) — buyer enters it to confirm delivery and release escrow",
+    "- WhatsApp notification sent to seller when a buyer places an order",
+    "- AI Description Generator: tap 'Generate with AI' button when listing a product to auto-write the description",
+    "- List products in multiple currencies, add variants (size, color etc.), set sale prices, flash sale badge",
+    "- Membership tiers: Free, Business, Premium — badge shown on product cards",
+    "",
+    "### BUYER FEATURES",
+    "- Browse with 15 category filters: Digital, Physical, Courses, Fashion, Electronics, Tech, Beauty, Gaming, eBooks, Books, Home, Sports, Food, Automobiles, Art",
+    "- Product detail: full image carousel, variants selector, quantity stepper (+/-), Add to Cart",
+    "- Checkout: pay with Paystack or NeyoMarket Wallet",
+    "- My Orders: track purchases, download digital products, view course lessons, confirm physical delivery",
+    "- Dispute system: raise a dispute if product not as described — resolved via platform",
+    "- Reviews: star ratings and written reviews — one per product per user",
+    "- Loyalty points: buyers earn +10 points per purchase, sellers earn +20 points per completed sale",
+    "- Recently viewed products shown on home page and inside product detail modal",
+    "- Related products shown in product detail (same category)",
+    "",
+    "### COURSE / VIDEO SYSTEM",
+    "- Sellers list video courses with multiple lessons",
+    "- Each lesson: title + video URL (YouTube, Vimeo, or Google Drive) + free preview toggle",
+    "- Free preview lessons are watchable by anyone before purchase",
+    "- After purchase: buyer goes to My Orders → tap 'View Course' → all lessons unlock instantly",
+    "- Video player is embedded directly in the product page — no redirect needed",
+    "- Course cover = first product image uploaded by seller",
+    "",
+    "### AFFILIATE SYSTEM",
+    "- Every user has a unique affiliate code (e.g. REF7ABC123)",
+    "- Affiliate link: neyomarket.com.ng/?ref=CODE or neyomarket.com.ng/?ref=CODE&p=PRODUCT_ID",
+    "- Earn 5% commission on every sale made through your affiliate link",
+    "- Track commissions in the Affiliate tab of your dashboard",
+    "- Storefront also uses affiliate code: neyomarket.com.ng/?store=CODE",
+    "",
+    "### DIGITAL PRODUCTS & INSTANT DELIVERY",
+    "- Sellers upload files (PDF, ZIP, MP4) — stored securely in Cloudinary cloud",
+    "- After payment: Download button appears immediately in My Orders",
+    "- Buyer can re-download anytime from their order history",
+    "",
+    "### ANNOUNCEMENTS",
+    "- Platform announcements appear as a banner on the home page",
+    "- Announcements include title, message, and optional badge (e.g. NEW, HOT, UPDATE)",
+    "- Links in announcements are auto-clickable",
+    "",
+    "### NAVIGATION & UI",
+    "- Mobile-first design with bottom navigation bar on phones",
+    "- Hamburger menu has a category drawer with all product categories",
+    "- Dark mode and light mode toggle available",
+    "- Home page: Announcements, Recently Viewed, Trending, Categories, Hot Deals, How It Works, Course Guide, How We Protect You",
+    "- Neyo AI: full-screen chat — tap the gold pill button at bottom-right of any page",
+    "",
+    "### SUPPORT",
+    "- WhatsApp/call: +2349072212496 or +2349168321317 (8am–8pm WAT)",
+    "- Website: neyomarket.com.ng",
+    "",
+    "## FORMAT RULES",
     "- Use **bold** for key terms and important figures",
-    "- Match your length to the question: quick question = quick answer, deep question = detailed answer",
-    "- Never show a bullet-point menu when someone asks a specific question",
-    "- Never say 'I can help you with X, Y, Z' — just answer what they actually asked"
+    "- Match length to question: quick question = quick answer, deep question = detailed answer",
+    "- Never show a bullet menu when someone asks a specific question",
+    "- Never say 'I can help you with X, Y, Z' — just answer what they actually asked",
+    "- If asked about admin, backend, or platform management — politely say that information is not available here",
+    "- Always use the correct currency symbol for prices — never assume everything is NGN"
   ].join("\n");
 }
 
@@ -10263,6 +10525,7 @@ function tChat() {
         if (d && d.products && d.products.length) {
           window.prods = d.products;
           prods = d.products;
+          checkNewProducts(d.products);
         }
       })
       .catch(function(){});
