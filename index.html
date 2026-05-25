@@ -3199,8 +3199,12 @@ function syncOrderUpdateToAPI(orderId, update) {
 ════════════════════════════════════════════════════════════════════ */
 /* runAutonomousCOO removed — manual COO only via the Confirm Collection button */
 
-function getActive() { return prods.filter(function (p) { return p.status === 'active'; }); }
-
+function getActive() {
+  return prods.filter(function (p) {
+    return !p.status || p.status === 'active';
+  });
+  }
+  
 /* ═══ 5. go() — hides ALL .page elements first ═══ */
 function go(pageId) {
   // Hide ALL pages
