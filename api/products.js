@@ -275,35 +275,21 @@ module.exports = async function handler(req, res) {
       } else if (req.query.storeName) {
         const storeCode = String(req.query.storeName).trim();
         
-        // Stabilized text comparison casting to eliminate database type mapping crashes
-        const sellerRows = await sql`
-          SELECT id FROM users WHERE aff_code = ${storeCode} OR id::text = ${storeCode} LIMIT 1
+        // FIXED: Using a more inclusive query to handle store name, ID, or affiliate code matches
+        rows = await sql`
+          SELECT p.*, u.membership_tier AS seller_tier,
+                 u.is_verified AS seller_verified,
+                 u.badge_verified AS badge_verified
+          FROM products p
+          LEFT JOIN users u ON u.id::text = p.seller_id::text
+          WHERE LOWER(p.status) IN ('active','approved','published')
+            AND (
+              LOWER(p.seller) = LOWER(${storeCode}) 
+              OR p.seller_id::text = ${storeCode} 
+              OR u.aff_code = ${storeCode}
+            )
+          ORDER BY p.created_at DESC
         `;
-        
-        if (sellerRows.length) {
-          const sid = String(sellerRows[0].id);
-          rows = await sql`
-            SELECT p.*, u.membership_tier AS seller_tier,
-                   u.is_verified AS seller_verified,
-                   u.badge_verified AS badge_verified
-            FROM products p
-            LEFT JOIN users u ON u.id::text = p.seller_id::text
-            WHERE LOWER(p.status) IN ('active','approved','published')
-              AND (p.seller_id::text = ${sid} OR p.seller_id::text = ${storeCode})
-            ORDER BY p.created_at DESC
-          `;
-        } else {
-          rows = await sql`
-            SELECT p.*, u.membership_tier AS seller_tier,
-                   u.is_verified AS seller_verified,
-                   u.badge_verified AS badge_verified
-            FROM products p
-            LEFT JOIN users u ON u.id::text = p.seller_id::text
-            WHERE LOWER(p.status) IN ('active','approved','published')
-              AND (LOWER(p.seller) = LOWER(${storeCode}) OR p.seller_id::text = ${storeCode})
-            ORDER BY p.created_at DESC
-          `;
-        }
 
       } else if (admin === 'true') {
         if (status && status !== 'all') {
