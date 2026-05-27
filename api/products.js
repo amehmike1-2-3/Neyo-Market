@@ -5,6 +5,7 @@
 // ✅ FIX 4: Condition field now included in PATCH UPDATE
 // ✅ FIX 5: Every route and catch returns res.json() — never HTML
 // ✅ FIX 6: New/Used filter added to product sorting
+// ✅ FIX 7: Upstash Redis caching on public GET routes — safe fallback if Redis fails
 // All ID lookups: Number() for product IDs, String() for user IDs
 
 'use strict';
@@ -20,6 +21,60 @@ const cloudinary = require('cloudinary').v2;
 
 /* SDK auto-configures from CLOUDINARY_URL env var — no extra config needed */
 cloudinary.config({ secure: true });
+
+/* ═══ UPSTASH REDIS CACHE ════════════════════════════════════════════════
+   Optional caching layer — if UPSTASH_REDIS_REST_URL / TOKEN are missing
+   or Redis throws, the API falls back to Neon silently.
+   All Redis calls are wrapped in try/catch — Redis failure = no crash.
+
+   Cache keys used:
+     products:public            — public marketplace listing (no filters)
+     products:cat:{cat}         — category filter
+     products:type:{type}       — type filter
+     products:sale              — sale items
+     products:id:{id}           — single product by ID
+     products:seller:{sellerId} — seller's own product list
+
+   TTL: 60 seconds for listings, 120 seconds for single products.
+═══════════════════════════════════════════════════════════════════════════ */
+let redis = null;
+
+function _getRedis() {
+  if (redis) return redis;
+  const url   = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token) return null;
+  try {
+    /* Use the official @upstash/redis package (must be in package.json) */
+    const { Redis } = require('@upstash/redis');
+    redis = new Redis({ url, token });
+    return redis;
+  } catch(e) {
+    console.warn('[redis] @upstash/redis not available — caching disabled:', e.message);
+    return null;
+  }
+}
+
+async function cacheGet(key) {
+  try {
+    const r = _getRedis();
+    if (!r) return null;
+    return await r.get(key);
+  } catch(e) {
+    console.warn('[redis] GET failed, falling back to DB:', e.message);
+    return null;
+  }
+}
+
+async function cacheSet(key, value, ttlSeconds) {
+  try {
+    const r = _getRedis();
+    if (!r) return;
+    await r.set(key, value, { ex: ttlSeconds });
+  } catch(e) {
+    console.warn('[redis] SET failed — cache miss saved:', e.message);
+  }
+}
 
 async function _handleUpload(req, res) {
   /* Auth check — only sellers/admins */
@@ -252,27 +307,54 @@ module.exports = async function handler(req, res) {
     if (req.method === 'GET') {
       const { admin, sellerId, status, id } = req.query;
 
+      /* ── Single product by ID ── */
       if (id) {
+        const cacheKey = 'products:id:' + id;
+
+        /* Try cache first */
+        const cached = await cacheGet(cacheKey);
+        if (cached) {
+          console.log('[redis] HIT', cacheKey);
+          return res.status(200).json({ product: cached, _cached: true });
+        }
+
         const rows = await sql`
           SELECT * FROM products WHERE id = ${Number(id)} LIMIT 1
         `;
         if (!rows.length) return jsonErr(res, 404, 'Product not found.');
-        return res.status(200).json({ product: toProduct(rows[0]) });
+
+        const product = toProduct(rows[0]);
+        await cacheSet(cacheKey, product, 120);
+        return res.status(200).json({ product });
       }
 
       let rows;
 
       if (sellerId) {
         /* FIX 3: strict WHERE seller_id = authenticated seller's ID (String type)
-           Never return other sellers' products — even if the query string is tampered */
+           Never return other sellers' products — even if the query string is tampered.
+           Cache per-seller list for 60s. */
+        const cacheKey = 'products:seller:' + String(sellerId);
+        const cached   = await cacheGet(cacheKey);
+        if (cached) {
+          console.log('[redis] HIT', cacheKey);
+          return res.status(200).json({ products: cached, _cached: true });
+        }
+
         rows = await sql`
           SELECT * FROM products
           WHERE seller_id = ${String(sellerId)}
           ORDER BY created_at DESC
         `;
 
+        const mapped = rows.map(toProduct);
+        await cacheSet(cacheKey, mapped, 60);
+        return res.status(200).json({ products: mapped });
+
       } else if (req.query.storeName) {
-        /* ── STOREFRONT FIX: Handles search parameters using aff_code, raw string matching, OR exact seller_id fallback ── */
+        /* ── STOREFRONT FIX: Handles search parameters using aff_code, raw string matching, OR exact seller_id fallback ──
+           NOTE: storeName lookups are NOT cached — they are highly specific and
+           the ::text casting / dual-path logic must always run fresh to stay correct. */
         const storeCode = String(req.query.storeName).trim();
         
         /* Look up user metrics by aff_code or raw user matching */
@@ -306,8 +388,10 @@ module.exports = async function handler(req, res) {
           `;
         }
 
+        return res.status(200).json({ products: rows.map(toProduct) });
+
       } else if (admin === 'true') {
-        /* Admin: all products, optionally filtered by status */
+        /* Admin: all products, optionally filtered by status — NOT cached */
         if (status && status !== 'all') {
           rows = await sql`
             SELECT * FROM products WHERE status = ${String(status)} ORDER BY created_at DESC
@@ -315,14 +399,19 @@ module.exports = async function handler(req, res) {
         } else {
           rows = await sql`SELECT * FROM products ORDER BY created_at DESC`;
         }
+        return res.status(200).json({ products: rows.map(toProduct) });
+
       } else {
-        /* Public marketplace — active only, with seller tier + optional search/filter */
+        /* Public marketplace — active only, with seller tier + optional search/filter.
+           Search queries are NOT cached (too many permutations).
+           Category, type, sale, and unfiltered listing ARE cached for 60s. */
         const searchQ    = req.query.q    ? '%' + String(req.query.q).trim().toLowerCase()    + '%' : null;
         const catFilter  = req.query.cat  ? String(req.query.cat).trim().toLowerCase()               : null;
         const typeFilter = req.query.type ? String(req.query.type).trim().toLowerCase()              : null;
         const saleOnly   = req.query.sale === 'true';
 
         if (searchQ) {
+          /* Search is never cached — too many unique queries */
           rows = await sql`
             SELECT p.*, u.membership_tier AS seller_tier, u.is_verified AS seller_verified, u.badge_verified AS badge_verified
             FROM products p
@@ -331,7 +420,16 @@ module.exports = async function handler(req, res) {
               AND (LOWER(p.name) LIKE ${searchQ} OR LOWER(p.description) LIKE ${searchQ} OR LOWER(p.seller) LIKE ${searchQ})
             ORDER BY p.created_at DESC
           `;
+          return res.status(200).json({ products: rows.map(toProduct) });
+
         } else if (catFilter) {
+          const cacheKey = 'products:cat:' + catFilter;
+          const cached   = await cacheGet(cacheKey);
+          if (cached) {
+            console.log('[redis] HIT', cacheKey);
+            return res.status(200).json({ products: cached, _cached: true });
+          }
+
           rows = await sql`
             SELECT p.*, u.membership_tier AS seller_tier, u.is_verified AS seller_verified, u.badge_verified AS badge_verified
             FROM products p
@@ -339,7 +437,18 @@ module.exports = async function handler(req, res) {
             WHERE p.status = 'active' AND LOWER(p.cat) = ${catFilter}
             ORDER BY p.created_at DESC
           `;
+          const mapped = rows.map(toProduct);
+          await cacheSet(cacheKey, mapped, 60);
+          return res.status(200).json({ products: mapped });
+
         } else if (typeFilter) {
+          const cacheKey = 'products:type:' + typeFilter;
+          const cached   = await cacheGet(cacheKey);
+          if (cached) {
+            console.log('[redis] HIT', cacheKey);
+            return res.status(200).json({ products: cached, _cached: true });
+          }
+
           rows = await sql`
             SELECT p.*, u.membership_tier AS seller_tier, u.is_verified AS seller_verified, u.badge_verified AS badge_verified
             FROM products p
@@ -347,7 +456,18 @@ module.exports = async function handler(req, res) {
             WHERE p.status = 'active' AND LOWER(p.type) = ${typeFilter}
             ORDER BY p.created_at DESC
           `;
+          const mapped = rows.map(toProduct);
+          await cacheSet(cacheKey, mapped, 60);
+          return res.status(200).json({ products: mapped });
+
         } else if (saleOnly) {
+          const cacheKey = 'products:sale';
+          const cached   = await cacheGet(cacheKey);
+          if (cached) {
+            console.log('[redis] HIT', cacheKey);
+            return res.status(200).json({ products: cached, _cached: true });
+          }
+
           rows = await sql`
             SELECT p.*, u.membership_tier AS seller_tier, u.is_verified AS seller_verified, u.badge_verified AS badge_verified
             FROM products p
@@ -356,7 +476,19 @@ module.exports = async function handler(req, res) {
               AND (p.sale_ends_at IS NULL OR p.sale_ends_at > NOW())
             ORDER BY p.created_at DESC
           `;
+          const mapped = rows.map(toProduct);
+          await cacheSet(cacheKey, mapped, 60);
+          return res.status(200).json({ products: mapped });
+
         } else {
+          /* Unfiltered public listing — most frequently hit, cache for 60s */
+          const cacheKey = 'products:public';
+          const cached   = await cacheGet(cacheKey);
+          if (cached) {
+            console.log('[redis] HIT', cacheKey);
+            return res.status(200).json({ products: cached, _cached: true });
+          }
+
           rows = await sql`
             SELECT p.*, u.membership_tier AS seller_tier, u.is_verified AS seller_verified, u.badge_verified AS badge_verified
             FROM products p
@@ -364,10 +496,11 @@ module.exports = async function handler(req, res) {
             WHERE p.status = 'active'
             ORDER BY p.created_at DESC
           `;
+          const mapped = rows.map(toProduct);
+          await cacheSet(cacheKey, mapped, 60);
+          return res.status(200).json({ products: mapped });
         }
       }
-
-      return res.status(200).json({ products: rows.map(toProduct) });
     }
 
     /* ════════════════════════════════════════════════
@@ -583,4 +716,3 @@ module.exports = async function handler(req, res) {
     return jsonErr(res, 500, 'Internal server error.', err.message);
   }
 };
-              
