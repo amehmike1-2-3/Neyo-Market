@@ -286,7 +286,7 @@ module.exports = async function handler(req, res) {
                    u.badge_verified AS badge_verified
             FROM products p
             LEFT JOIN users u ON u.id::text = p.seller_id::text
-            WHERE p.status = 'active'
+            WHERE LOWER(p.status) IN ('active','approved','published')
               AND p.seller_id::text = ${sid}
             ORDER BY p.created_at DESC
           `;
@@ -298,7 +298,7 @@ module.exports = async function handler(req, res) {
                    u.badge_verified AS badge_verified
             FROM products p
             LEFT JOIN users u ON u.id::text = p.seller_id::text
-            WHERE p.status = 'active'
+            WHERE LOWER(p.status) IN ('active','approved','published')
               AND LOWER(p.seller) = LOWER(${storeCode})
             ORDER BY p.created_at DESC
           `;
