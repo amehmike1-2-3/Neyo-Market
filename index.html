@@ -204,6 +204,96 @@
 }
 
 /* Hot deals */
+.leaderboard-card{display:flex;align-items:center;gap:12px;padding:11px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:.15s}
+.leaderboard-card:hover{border-color:var(--gold);background:var(--bg3)}
+.lb-rank{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:800;flex-shrink:0}
+.lb-rank.gold{background:linear-gradient(135deg,#f5c842,#c9922a);color:#fff}
+.lb-rank.silver{background:linear-gradient(135deg,#cbd5e1,#94a3b8);color:#fff}
+.lb-rank.bronze{background:linear-gradient(135deg,#d97706,#92400e);color:#fff}
+.lb-rank.other{background:var(--bg3);color:var(--muted)}
+
+/* ═══ HERO SLIDER ═══════════════════════════════════════════════════════ */
+.nyo-slider-wrap{position:relative;width:100%;overflow:hidden;margin-bottom:0;background:#0a0a0f}
+.nyo-slider-track{display:flex;transition:transform .55s cubic-bezier(.4,0,.2,1);will-change:transform}
+.nyo-slide{flex:0 0 100%;min-height:200px;padding:28px 18px;display:flex;align-items:center;justify-content:space-between;gap:16px;position:relative;overflow:hidden;box-sizing:border-box}
+@media(min-width:640px){.nyo-slide{min-height:240px;padding:36px 32px}}
+
+/* Slide backgrounds */
+.nyo-slide-1{background:linear-gradient(135deg,#0f0c29 0%,#1a1a2e 40%,#16213e 100%)}
+.nyo-slide-2{background:linear-gradient(135deg,#0d1117 0%,#161b22 40%,#0f2027 100%)}
+.nyo-slide-3{background:linear-gradient(135deg,#0a0015 0%,#1a0030 40%,#0d001a 100%)}
+
+/* Slide glow orbs */
+.nyo-slide::before{content:'';position:absolute;width:300px;height:300px;border-radius:50%;filter:blur(80px);opacity:.25;pointer-events:none;top:-60px;right:-60px}
+.nyo-slide-1::before{background:#c9922a}
+.nyo-slide-2::before{background:#0ea5e9}
+.nyo-slide-3::before{background:#a855f7}
+
+/* Text side */
+.nyo-slide-text{flex:1;min-width:0;z-index:1;position:relative}
+.nyo-slide-pill{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.7);font-size:.62rem;font-weight:700;padding:4px 10px;border-radius:20px;letter-spacing:.6px;text-transform:uppercase;margin-bottom:10px}
+.nyo-slide-h1{font-size:1.22rem;font-weight:900;color:#fff;line-height:1.25;margin:0 0 10px;font-family:serif}
+@media(min-width:640px){.nyo-slide-h1{font-size:1.65rem}}
+.nyo-slide-sub{font-size:.75rem;color:rgba(255,255,255,.6);line-height:1.6;margin:0 0 14px;max-width:380px}
+@media(min-width:640px){.nyo-slide-sub{font-size:.82rem}}
+.nyo-slide-cta{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:8px;font-size:.78rem;font-weight:700;cursor:pointer;border:none;transition:all .2s}
+.nyo-cta-gold{background:linear-gradient(135deg,#c9922a,#f5c842);color:#fff;box-shadow:0 4px 14px rgba(201,146,42,.35)}
+.nyo-cta-gold:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(201,146,42,.45)}
+.nyo-cta-blue{background:linear-gradient(135deg,#0ea5e9,#38bdf8);color:#fff;box-shadow:0 4px 14px rgba(14,165,233,.35)}
+.nyo-cta-blue:hover{transform:translateY(-1px)}
+.nyo-cta-purple{background:linear-gradient(135deg,#a855f7,#c084fc);color:#fff;box-shadow:0 4px 14px rgba(168,85,247,.35)}
+.nyo-cta-purple:hover{transform:translateY(-1px)}
+
+/* Visual side */
+.nyo-slide-visual{flex-shrink:0;z-index:1;position:relative}
+@media(max-width:479px){.nyo-slide-visual{display:none}}
+
+/* Slide 1 visual — lock/escrow */
+.nyo-vis-1{width:120px;height:120px;border-radius:20px;background:linear-gradient(135deg,rgba(201,146,42,.15),rgba(201,146,42,.05));border:1px solid rgba(201,146,42,.25);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+@media(min-width:640px){.nyo-vis-1{width:160px;height:160px}}
+.nyo-vis-1 .lock-icon{font-size:2.2rem}
+.nyo-vis-1 .lock-tag{font-size:.6rem;font-weight:700;color:rgba(201,146,42,.9);text-transform:uppercase;letter-spacing:.5px;background:rgba(201,146,42,.12);padding:3px 8px;border-radius:4px}
+.nyo-vis-1 .lock-row{display:flex;gap:5px;margin-top:4px}
+.nyo-vis-1 .lock-dot{width:6px;height:6px;border-radius:50%;background:rgba(201,146,42,.5)}
+.nyo-vis-1 .lock-dot.active{background:#c9922a;box-shadow:0 0 6px #c9922a}
+
+/* Slide 2 visual — product cards mini */
+.nyo-vis-2{display:flex;flex-direction:column;gap:5px;width:130px}
+@media(min-width:640px){.nyo-vis-2{width:170px}}
+.nyo-mini-card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:6px 10px;display:flex;align-items:center;gap:8px;transition:.2s}
+.nyo-mini-card:nth-child(1){border-color:rgba(14,165,233,.3);animation:slide-in .5s .1s both}
+.nyo-mini-card:nth-child(2){border-color:rgba(34,197,94,.3);animation:slide-in .5s .25s both}
+.nyo-mini-card:nth-child(3){border-color:rgba(168,85,247,.3);animation:slide-in .5s .4s both}
+@keyframes slide-in{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}
+.nyo-mini-icon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0}
+.nyo-mini-label{font-size:.65rem;color:rgba(255,255,255,.8);font-weight:600}
+.nyo-mini-sub{font-size:.55rem;color:rgba(255,255,255,.4)}
+
+/* Slide 3 visual — AI card */
+.nyo-vis-3{width:130px;background:linear-gradient(135deg,rgba(168,85,247,.12),rgba(168,85,247,.04));border:1px solid rgba(168,85,247,.25);border-radius:14px;padding:12px}
+@media(min-width:640px){.nyo-vis-3{width:168px;padding:16px}}
+.nyo-ai-header{display:flex;align-items:center;gap:6px;margin-bottom:10px}
+.nyo-ai-dot{width:8px;height:8px;border-radius:50%;background:#a855f7;box-shadow:0 0 8px #a855f7;animation:ai-pulse 1.5s infinite}
+@keyframes ai-pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.nyo-ai-title{font-size:.62rem;font-weight:700;color:rgba(168,85,247,.9);text-transform:uppercase;letter-spacing:.4px}
+.nyo-ai-row{background:rgba(255,255,255,.04);border-radius:5px;padding:5px 7px;margin-bottom:4px}
+.nyo-ai-bar{height:4px;border-radius:2px;background:linear-gradient(90deg,#a855f7,#c084fc);margin-top:3px;animation:bar-grow .8s cubic-bezier(.4,0,.2,1) both}
+@keyframes bar-grow{from{width:0}to{width:var(--w,70%)}}
+.nyo-ai-label{font-size:.55rem;color:rgba(255,255,255,.5);margin-bottom:2px}
+
+/* Dots indicator */
+.nyo-dots{display:flex;align-items:center;justify-content:center;gap:6px;padding:12px 0;background:#0a0a0f}
+.nyo-dot{height:3px;border-radius:2px;background:rgba(255,255,255,.2);transition:all .35s cubic-bezier(.4,0,.2,1);cursor:pointer}
+.nyo-dot.active{background:var(--gold);width:24px!important}
+.nyo-dot:not(.active){width:6px}
+
+/* Slide arrows */
+.nyo-arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:10;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.85rem;transition:.2s;backdrop-filter:blur(4px)}
+.nyo-arrow:hover{background:rgba(255,255,255,.15)}
+.nyo-arrow-prev{left:10px}
+.nyo-arrow-next{right:10px}
+@media(max-width:479px){.nyo-arrow{display:none}}
+/* ══════════════════════════════════════════════════════════════════════ */
 .hot-deals-section{background:linear-gradient(135deg,rgba(220,38,38,.08),rgba(201,146,42,.06));border:1px solid rgba(220,38,38,.2);border-radius:12px;padding:16px;margin-bottom:24px;}
 .hot-deals-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
 .hot-deals-header h2{margin:0;font-size:1.1rem;}
@@ -1526,6 +1616,104 @@ footer{background:var(--text);color:#fff;border-top:1px solid rgba(255,255,255,.
     </div>
   </div>
 
+  <!-- ═══ HERO SLIDER ════════════════════════════════════════════════════ -->
+  <div class="nyo-slider-wrap" id="nyo-slider-wrap">
+
+    <!-- Prev/Next arrows -->
+    <button class="nyo-arrow nyo-arrow-prev" onclick="nyoSlide(-1)" aria-label="Previous">&#8592;</button>
+    <button class="nyo-arrow nyo-arrow-next" onclick="nyoSlide(1)"  aria-label="Next">&#8594;</button>
+
+    <div class="nyo-slider-track" id="nyo-track">
+
+      <!-- SLIDE 1 — Trust & Security -->
+      <div class="nyo-slide nyo-slide-1">
+        <div class="nyo-slide-text">
+          <div class="nyo-slide-pill">🛡 Escrow Protected</div>
+          <h2 class="nyo-slide-h1">Trade with Absolute<br>Confidence.</h2>
+          <p class="nyo-slide-sub">With Neyo Market's integrated escrow protection, funds are safely held until the order is successfully delivered. Safe for buyers, secure for vendors.</p>
+          <button class="nyo-slide-cta nyo-cta-gold" onclick="go('market')">Browse Products →</button>
+        </div>
+        <div class="nyo-slide-visual">
+          <div class="nyo-vis-1">
+            <div class="lock-icon">🔐</div>
+            <div class="lock-tag">Escrow Active</div>
+            <div class="lock-row">
+              <div class="lock-dot active"></div>
+              <div class="lock-dot active"></div>
+              <div class="lock-dot active"></div>
+              <div class="lock-dot"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SLIDE 2 — Multi-Format Marketplace -->
+      <div class="nyo-slide nyo-slide-2">
+        <div class="nyo-slide-text">
+          <div class="nyo-slide-pill">📦 All Product Types</div>
+          <h2 class="nyo-slide-h1">Digital, Physical,<br>Courses. One Place.</h2>
+          <p class="nyo-slide-sub">Whether shipping premium physical goods locally or selling instant-download digital assets and educational courses, we automate the entire flow.</p>
+          <button class="nyo-slide-cta nyo-cta-blue" onclick="go('sell')">Start Selling →</button>
+        </div>
+        <div class="nyo-slide-visual">
+          <div class="nyo-vis-2">
+            <div class="nyo-mini-card">
+              <div class="nyo-mini-icon" style="background:rgba(14,165,233,.15)">📦</div>
+              <div><div class="nyo-mini-label">Physical</div><div class="nyo-mini-sub">Tracked delivery</div></div>
+            </div>
+            <div class="nyo-mini-card">
+              <div class="nyo-mini-icon" style="background:rgba(34,197,94,.15)">⚡</div>
+              <div><div class="nyo-mini-label">Digital</div><div class="nyo-mini-sub">Instant download</div></div>
+            </div>
+            <div class="nyo-mini-card">
+              <div class="nyo-mini-icon" style="background:rgba(168,85,247,.15)">🎬</div>
+              <div><div class="nyo-mini-label">Courses</div><div class="nyo-mini-sub">Video lessons</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SLIDE 3 — AI-Driven -->
+      <div class="nyo-slide nyo-slide-3">
+        <div class="nyo-slide-text">
+          <div class="nyo-slide-pill">✨ AI Powered</div>
+          <h2 class="nyo-slide-h1">Engineered for<br>High-Velocity Growth.</h2>
+          <p class="nyo-slide-sub">Leverage built-in AI optimization tools that instantly write high-converting copy and smart tags to help your products rank globally across modern search engines.</p>
+          <button class="nyo-slide-cta nyo-cta-purple" onclick="go('sell')">Try AI Optimizer →</button>
+        </div>
+        <div class="nyo-slide-visual">
+          <div class="nyo-vis-3">
+            <div class="nyo-ai-header">
+              <div class="nyo-ai-dot"></div>
+              <div class="nyo-ai-title">Neyo AI Insights</div>
+            </div>
+            <div class="nyo-ai-row">
+              <div class="nyo-ai-label">SEO Score</div>
+              <div class="nyo-ai-bar" style="--w:82%"></div>
+            </div>
+            <div class="nyo-ai-row">
+              <div class="nyo-ai-label">Conversion</div>
+              <div class="nyo-ai-bar" style="--w:74%;animation-delay:.15s"></div>
+            </div>
+            <div class="nyo-ai-row">
+              <div class="nyo-ai-label">Reach</div>
+              <div class="nyo-ai-bar" style="--w:91%;animation-delay:.3s"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /nyo-track -->
+
+    <!-- Dot indicators -->
+    <div class="nyo-dots" id="nyo-dots">
+      <div class="nyo-dot active" onclick="nyoGoTo(0)"></div>
+      <div class="nyo-dot"        onclick="nyoGoTo(1)"></div>
+      <div class="nyo-dot"        onclick="nyoGoTo(2)"></div>
+    </div>
+
+  </div><!-- /nyo-slider-wrap -->
+
   <div class="sec" style="padding-top:0">
     <div style="margin-bottom:28px">
       <div class="pb4">
@@ -1597,6 +1785,35 @@ footer{background:var(--text);color:#fff;border-top:1px solid rgba(255,255,255,.
 
     <!-- TRENDING NEAR YOU -->
     <!-- ═══ RECENTLY VIEWED ═══ -->
+    <!-- ═══ FEATURED SELLER OF THE WEEK ═══ -->
+    <div id="featured-seller-banner" style="display:none;margin-bottom:20px;border-radius:14px;overflow:hidden;background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);padding:18px 16px;position:relative">
+      <div style="position:absolute;top:0;right:0;bottom:0;width:40%;background:linear-gradient(135deg,rgba(201,146,42,.15),transparent);pointer-events:none"></div>
+      <div style="font-size:.62rem;font-weight:800;color:rgba(201,146,42,.8);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">⭐ Featured Seller of the Week</div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div id="fs-avatar" style="width:52px;height:52px;border-radius:12px;background:linear-gradient(135deg,#c9922a,#f5c842);display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:800;color:#fff;flex-shrink:0">S</div>
+        <div style="flex:1;min-width:0">
+          <div id="fs-name" style="font-size:1rem;font-weight:800;color:#fff;margin-bottom:2px"></div>
+          <div id="fs-bio" style="font-size:.76rem;color:rgba(255,255,255,.65);line-height:1.4"></div>
+          <div id="fs-stats" style="font-size:.7rem;color:rgba(201,146,42,.9);margin-top:4px;font-weight:600"></div>
+        </div>
+        <button id="fs-btn" style="background:var(--gold);color:#fff;border:none;padding:8px 14px;border-radius:8px;font-size:.76rem;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0">View Store</button>
+      </div>
+    </div>
+
+    <!-- ═══ TOP SELLERS LEADERBOARD ═══ -->
+    <div id="home-leaderboard" style="margin-bottom:22px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:1.1rem">🏆</span>
+          <h2 style="margin:0;font-size:1rem;font-weight:700">Top Sellers This Month</h2>
+        </div>
+        <span id="lb-updated" style="font-size:.65rem;color:var(--muted)"></span>
+      </div>
+      <div id="lb-grid" style="display:flex;flex-direction:column;gap:8px">
+        <div style="color:var(--muted);font-size:.82rem;padding:8px 0">Loading...</div>
+      </div>
+    </div>
+
     <div id="home-recently-viewed" style="margin-bottom:22px;display:none">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
         <span style="font-size:1.1rem">👁️</span>
@@ -2863,6 +3080,7 @@ footer{background:var(--text);color:#fff;border-top:1px solid rgba(255,255,255,.
       <button class="asb" onclick="aTab('awallet',this)">🏦 Admin Wallet</button>
       <button class="asb" onclick="aTab('dis',this)">⚖️ Disputes & Refunds</button>
       <div class="asl">System</div>
+      <button class="asb" onclick="aTab('featured',this)">⭐ Featured Seller</button>
       <button class="asb" onclick="aTab('ann',this)">📣 Announcements</button>
       <button class="asb" onclick="aTab('set',this)">⚙️ Settings</button>
       <div style="margin-top:14px;padding:0 3px">
@@ -3172,6 +3390,10 @@ function loadAll() {
   renderHomeRecentlyViewed();
   /* Check for price drops on recently viewed products */
   setTimeout(checkPriceDrops, 2000);
+  /* Render leaderboard after prods load */
+  setTimeout(renderLeaderboard, 1500);
+  /* Render featured seller */
+  setTimeout(renderFeaturedSeller, 800);
 
   /* Fetch live orders from Neon — always from DB, never from localStorage */
   if (CU) {
@@ -3786,6 +4008,59 @@ async function optimizeProduct() {
 }
 window.optimizeProduct = optimizeProduct;
 
+/* ═══ HERO SLIDER ════════════════════════════════════════════════════════
+   Vanilla JS — no library needed. Auto-plays every 5s, touch-swipe enabled.
+═══════════════════════════════════════════════════════════════════════════ */
+(function() {
+  var track    = null;
+  var dots     = null;
+  var total    = 3;
+  var current  = 0;
+  var timer    = null;
+  var touchStartX = 0;
+
+  function init() {
+    track = document.getElementById('nyo-track');
+    dots  = document.querySelectorAll('.nyo-dot');
+    if (!track) return;
+    goTo(0);
+    startAuto();
+
+    /* Touch swipe support */
+    var wrap = document.getElementById('nyo-slider-wrap');
+    if (wrap) {
+      wrap.addEventListener('touchstart', function(e){ touchStartX = e.touches[0].clientX; }, { passive: true });
+      wrap.addEventListener('touchend',   function(e){
+        var diff = touchStartX - e.changedTouches[0].clientX;
+        if (Math.abs(diff) > 40) slide(diff > 0 ? 1 : -1);
+      }, { passive: true });
+    }
+  }
+
+  function goTo(idx) {
+    current = (idx + total) % total;
+    if (track) track.style.transform = 'translateX(-' + (current * 100) + '%)';
+    if (dots) dots.forEach(function(d, i){ d.classList.toggle('active', i === current); });
+  }
+
+  function slide(dir) { goTo(current + dir); resetAuto(); }
+
+  function startAuto() { timer = setInterval(function(){ goTo(current + 1); }, 5000); }
+  function resetAuto()  { clearInterval(timer); startAuto(); }
+
+  /* Expose to onclick handlers */
+  window.nyoSlide  = slide;
+  window.nyoGoTo   = function(i){ goTo(i); resetAuto(); };
+
+  /* Init on DOM ready */
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    setTimeout(init, 100);
+  }
+})();
+
+
 /* ═══ CLOUDINARY FILE UPLOAD ════════════════════════════════════════════════
    Reads digital product file as base64 → sends to /api/products?action=upload
    Returns the Cloudinary secure_url to be saved in Neon (no base64 in DB).
@@ -4168,6 +4443,42 @@ function toggleFollow(sellerName, btn) {
 }
 window.toggleFollow = toggleFollow;
 
+/* ═══ NEW PRODUCT ALERTS for followed sellers ════════════════════════════
+   When products load, compare against last known products per followed seller.
+   If a followed seller has a new product → push notification.
+═══════════════════════════════════════════════════════════════════════════ */
+function checkFollowedSellerAlerts(newProds) {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  try {
+    var followed = lv('nm_followed') || [];
+    if (!followed.length) return;
+
+    var lastSnapshot = JSON.parse(localStorage.getItem('nm_seller_snap') || '{}');
+    var newSnapshot  = {};
+
+    followed.forEach(function(sellerName) {
+      var sellerProds = (newProds || []).filter(function(p){
+        return p.status === 'active' && p.seller === sellerName;
+      });
+      newSnapshot[sellerName] = sellerProds.map(function(p){ return String(p.id); });
+
+      var lastIds = lastSnapshot[sellerName] || [];
+      var newIds  = newSnapshot[sellerName].filter(function(id){ return lastIds.indexOf(id) === -1; });
+
+      if (lastIds.length > 0 && newIds.length > 0) {
+        sendLocalNotification(
+          '?? New from ' + sellerName + '!',
+          sellerName + ' just listed ' + newIds.length + ' new product' + (newIds.length > 1 ? 's' : '') + '. Check it out!',
+          ''
+        );
+      }
+    });
+
+    localStorage.setItem('nm_seller_snap', JSON.stringify(newSnapshot));
+  } catch(e) { console.warn('[follow alerts]', e.message); }
+}
+window.checkFollowedSellerAlerts = checkFollowedSellerAlerts;
+
 /* ═══════════════════════════════════════════════════════
    ORDER STATUS TRACKER
 ═══════════════════════════════════════════════════════ */
@@ -4263,6 +4574,105 @@ function loadAnnouncements() {
     .catch(function(){});
 }
 window.loadAnnouncements = loadAnnouncements;
+
+/* ═══ TOP SELLERS LEADERBOARD ════════════════════════════════════════════
+   Builds leaderboard from existing prods array — top 5 sellers by
+   number of active products and avg rating. No new API needed.
+═══════════════════════════════════════════════════════════════════════════ */
+function renderLeaderboard() {
+  var grid = document.getElementById('lb-grid');
+  var upd  = document.getElementById('lb-updated');
+  if (!grid) return;
+
+  var active = getActive();
+  if (!active.length) { grid.innerHTML = '<div style="color:var(--muted);font-size:.82rem;padding:8px 0">No sellers yet.</div>'; return; }
+
+  /* Group products by seller */
+  var sellers = {};
+  active.forEach(function(p) {
+    var name = p.seller || 'Unknown';
+    if (!sellers[name]) sellers[name] = { name: name, count: 0, totalRating: 0, ratedCount: 0, sellerId: p.sellerId || p.seller_id, verified: p.sellerVerified, trusted: p.badgeVerified };
+    sellers[name].count++;
+    if (p.rating > 0) { sellers[name].totalRating += parseFloat(p.rating); sellers[name].ratedCount++; }
+  });
+
+  /* Sort by product count then avg rating */
+  var sorted = Object.values(sellers).sort(function(a, b) {
+    var scoreA = a.count * 10 + (a.ratedCount ? a.totalRating / a.ratedCount : 0);
+    var scoreB = b.count * 10 + (b.ratedCount ? b.totalRating / b.ratedCount : 0);
+    return scoreB - scoreA;
+  }).slice(0, 5);
+
+  var rankClasses = ['gold', 'silver', 'bronze', 'other', 'other'];
+  var rankEmojis  = ['🥇', '🥈', '🥉', '4', '5'];
+
+  grid.innerHTML = sorted.map(function(s, i) {
+    var avgRating = s.ratedCount ? (s.totalRating / s.ratedCount).toFixed(1) : '—';
+    var verBadge  = s.verified ? '<span style="background:rgba(29,78,216,.9);color:#fff;font-size:.55rem;font-weight:700;padding:1px 5px;border-radius:3px;margin-left:4px">✓ KYC</span>' : '';
+    var truBadge  = s.trusted  ? '<span style="background:rgba(180,83,9,.9);color:#fff;font-size:.55rem;font-weight:700;padding:1px 5px;border-radius:3px;margin-left:4px">✓ TRUSTED</span>' : '';
+        return '<div class="leaderboard-card" data-sid="' + (s.sellerId||'') + '">'
+      + '<div class="lb-rank ' + rankClasses[i] + '">' + rankEmojis[i] + '</div>'
+      + '<div style="flex:1;min-width:0">'
+      + '<div style="font-size:.84rem;font-weight:700;color:var(--text)">' + s.name + verBadge + truBadge + '</div>'
+      + '<div style="font-size:.72rem;color:var(--muted)">' + s.count + ' product' + (s.count !== 1 ? 's' : '') + ' · ⭐ ' + avgRating + '</div>'
+      + '</div>'
+      + '<div style="font-size:.72rem;color:var(--gold);font-weight:700">View Store →</div>'
+      + '</div>';
+  }).join('');
+
+  if (upd) upd.textContent = 'Updated just now';
+}
+window.renderLeaderboard = renderLeaderboard;
+document.addEventListener('click', function(e){
+  var lc = e.target.closest('[data-sid]');
+  if (lc) { var sid = lc.getAttribute('data-sid'); if(sid) openStorefront(sid); }
+});
+
+/* ═══ FEATURED SELLER OF THE WEEK ════════════════════════════════════════
+   Admin sets featured seller via localStorage key 'nm_featured_seller'.
+   Value: { name, bio, sellerId } — set from admin panel.
+   Shows banner on home page above leaderboard.
+═══════════════════════════════════════════════════════════════════════════ */
+function renderFeaturedSeller() {
+  var banner = document.getElementById('featured-seller-banner');
+  if (!banner) return;
+  try {
+    var fs = JSON.parse(localStorage.getItem('nm_featured_seller') || 'null');
+    if (!fs || !fs.name) { banner.style.display = 'none'; return; }
+
+    /* Populate banner */
+    var avatarEl = document.getElementById('fs-avatar');
+    var nameEl   = document.getElementById('fs-name');
+    var bioEl    = document.getElementById('fs-bio');
+    var statsEl  = document.getElementById('fs-stats');
+    var btn      = document.getElementById('fs-btn');
+
+    if (avatarEl) avatarEl.textContent = fs.name.charAt(0).toUpperCase();
+    if (nameEl)   nameEl.textContent   = fs.name;
+    if (bioEl)    bioEl.textContent    = fs.bio || 'Top rated seller on NeyoMarket';
+    if (statsEl) {
+      var sellerProds = getActive().filter(function(p){ return p.seller === fs.name; });
+      statsEl.textContent = sellerProds.length + ' products · Verified Seller';
+    }
+    if (btn) btn.onclick = function() { openStorefront(fs.sellerId || fs.name); };
+
+    banner.style.display = 'block';
+  } catch(e) { console.warn('[featuredSeller]', e.message); }
+}
+window.renderFeaturedSeller = renderFeaturedSeller;
+
+/* Admin can set featured seller from console or admin panel */
+window.setFeaturedSeller = function(name, bio, sellerId) {
+  localStorage.setItem('nm_featured_seller', JSON.stringify({ name: name, bio: bio || '', sellerId: sellerId || '' }));
+  renderFeaturedSeller();
+  toast('⭐ Featured seller set: ' + name, 'ok');
+};
+window.clearFeaturedSeller = function() {
+  localStorage.removeItem('nm_featured_seller');
+  var b = document.getElementById('featured-seller-banner');
+  if (b) b.style.display = 'none';
+  toast('Featured seller cleared', 'ok');
+};
 
 /* ═══ SELLER STOREFRONT ════════════════════════════════════════════════════
    Opens a seller's store page showing only their active products.
@@ -4614,6 +5024,65 @@ function renderRecentlyViewed(currentId) {
 }
 window.renderRecentlyViewed = renderRecentlyViewed;
 
+/* ═══ PRICE HISTORY ════════════════════════════════════════════════════════
+   Stores price each time a product is viewed in localStorage.
+   Renders a simple bar chart inside the product detail modal.
+═══════════════════════════════════════════════════════════════════════════ */
+function recordPriceHistory(productId, price, currency) {
+  try {
+    var key  = 'nm_ph_' + productId;
+    var hist = JSON.parse(localStorage.getItem(key) || '[]');
+    var today = new Date().toLocaleDateString('en-NG', { day:'numeric', month:'short' });
+    /* Only record once per day */
+    if (!hist.length || hist[hist.length-1].date !== today) {
+      hist.push({ date: today, price: parseFloat(price) || 0 });
+      if (hist.length > 10) hist = hist.slice(-10); /* keep last 10 records */
+      localStorage.setItem(key, JSON.stringify(hist));
+    }
+  } catch(e) {}
+}
+window.recordPriceHistory = recordPriceHistory;
+
+function renderPriceHistory(productId, currency) {
+  var body = document.getElementById('pd-body');
+  if (!body) return;
+  try {
+    var hist = JSON.parse(localStorage.getItem('nm_ph_' + productId) || '[]');
+    if (hist.length < 2) return; /* need at least 2 data points */
+
+    var sym    = currency === 'USD' ? '$' : currency === 'GBP' ? '£' : '₦';
+    var prices = hist.map(function(h){ return h.price; });
+    var maxP   = Math.max.apply(null, prices);
+    var minP   = Math.min.apply(null, prices);
+    var range  = maxP - minP || 1;
+    var trend  = prices[prices.length-1] < prices[0] ? '↓ Price dropped' : prices[prices.length-1] > prices[0] ? '↑ Price increased' : '→ Stable price';
+    var trendColor = prices[prices.length-1] < prices[0] ? '#16a34a' : prices[prices.length-1] > prices[0] ? '#dc2626' : 'var(--muted)';
+
+    var bars = hist.map(function(h) {
+      var pct = Math.max(15, Math.round(((h.price - minP) / range) * 80) + 20);
+      return '<div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex:1">'
+        + '<div style="font-size:.58rem;color:var(--muted)">' + sym + Math.round(h.price).toLocaleString() + '</div>'
+        + '<div style="width:100%;height:' + pct + 'px;background:linear-gradient(180deg,#6366f1,#a855f7);border-radius:4px 4px 0 0;min-height:8px"></div>'
+        + '<div style="font-size:.55rem;color:var(--muted);white-space:nowrap">' + h.date + '</div>'
+        + '</div>';
+    }).join('');
+
+    var sec = document.createElement('div');
+    sec.id  = 'pd-price-hist';
+    sec.style.cssText = 'padding:14px 16px;border-top:1px solid var(--border)';
+    sec.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">'
+      + '<div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Price History</div>'
+      + '<div style="font-size:.7rem;font-weight:700;color:' + trendColor + '">' + trend + '</div>'
+      + '</div>'
+      + '<div style="display:flex;align-items:flex-end;gap:4px;height:100px;padding-bottom:4px">' + bars + '</div>';
+
+    var old = document.getElementById('pd-price-hist');
+    if (old) old.remove();
+    body.appendChild(sec);
+  } catch(e) { console.warn('[priceHistory]', e.message); }
+}
+window.renderPriceHistory = renderPriceHistory;
+
 /* Event delegation for course lesson clicks */
 document.addEventListener('click', function(e) {
   var el = e.target.closest('[data-vid]');
@@ -4927,6 +5396,8 @@ function opn(id) {
   loadReviews(p.id);
   renderRelatedProducts(p);
   renderRecentlyViewed(p.id);
+  recordPriceHistory(p.id, p.discountPrice || p.discount_price || p.price, p.currency);
+  setTimeout(function(){ renderPriceHistory(p.id, p.currency || 'NGN'); }, 200);
   /* Render course player if this is a course product */
   if (p.type === 'course' || p.cat === 'course' || p.cat === 'courses') {
     renderCoursePlayer(p);
@@ -5179,6 +5650,7 @@ function addCart(id) {
 window.addCart = addCart;
 
 function updBadge() {
+  if (typeof startCartAbandonTimer === 'function') startCartAbandonTimer();
   var el = document.getElementById('cart-badge');
   if (el) { var t = 0; cart.forEach(function (i) { t += (i.qty || 1); }); el.textContent = t; }
 }
@@ -8596,6 +9068,7 @@ function aTab(tab, btn) {
 
   /* Announcements tab — handle separately */
   if (tab === 'ann') { renderAdminAnnouncements(); return; }
+  if (tab === 'featured') { renderAdminFeaturedSeller(); return; }
 
   var c = document.getElementById('adm-c');
   if (!c) return;
@@ -9848,6 +10321,39 @@ function checkPriceDrops() {
 }
 window.checkPriceDrops = checkPriceDrops;
 
+/* ═══ ABANDONED CART RECOVERY (60 seconds) ═══════════════════════════════
+   When user adds to cart, starts a 60-second timer.
+   If cart still has items and checkout hasn't started → push notification.
+   Timer resets every time cart changes.
+═══════════════════════════════════════════════════════════════════════════ */
+var _cartAbandonTimer = null;
+
+function startCartAbandonTimer() {
+  /* Clear any existing timer */
+  if (_cartAbandonTimer) { clearTimeout(_cartAbandonTimer); _cartAbandonTimer = null; }
+  if (!cart || !cart.length) return;
+
+  _cartAbandonTimer = setTimeout(function() {
+    /* Only notify if cart still has items and page is not in checkout */
+    if (!cart || !cart.length) return;
+    var inCheckout = document.getElementById('m-checkout') && document.getElementById('m-checkout').classList.contains('open');
+    if (inCheckout) return;
+
+    var itemName = cart[0].name || 'your item';
+    var total    = cart.reduce(function(s, i){ return s + (parseFloat(i.price)||0) * (i.qty||1); }, 0);
+    var sym      = cart[0] && cart[0].currency === 'USD' ? '$' : '₦';
+
+    sendLocalNotification(
+      '?? You left something behind!',
+      itemName + (cart.length > 1 ? ' + ' + (cart.length-1) + ' more item' + (cart.length > 2 ? 's' : '') : '') + ' · ' + sym + Math.round(total).toLocaleString() + ' waiting in your cart.',
+      ''
+    );
+
+    _cartAbandonTimer = null;
+  }, 60000); /* 60 seconds */
+}
+window.startCartAbandonTimer = startCartAbandonTimer;
+
 /* ═══ NEW PRODUCT NOTIFICATIONS ═══════════════════════════════════════════
    When prods array loads, compare count to last known count.
    If more products → notify buyer new listings are available.
@@ -10647,6 +11153,7 @@ function tChat() {
           window.prods = d.products;
           prods = d.products;
           checkNewProducts(d.products);
+          if (typeof checkFollowedSellerAlerts === 'function') checkFollowedSellerAlerts(d.products);
         }
       })
       .catch(function(){});
@@ -11789,6 +12296,37 @@ function postAnnouncement() {
 }
 window.postAnnouncement = postAnnouncement;
 window.renderAdminAnnouncements = renderAdminAnnouncements;
+
+function renderAdminFeaturedSeller() {
+  var c = document.getElementById('adm-c');
+  if (!c) return;
+  var current = null;
+  try { current = JSON.parse(localStorage.getItem('nm_featured_seller') || 'null'); } catch(e){}
+
+  c.innerHTML = '<div style="max-width:500px">'
+    + '<h3 style="font-family:serif;font-size:1.1rem;margin-bottom:16px">⭐ Featured Seller of the Week</h3>'
+    + (current ? '<div style="background:rgba(201,146,42,.08);border:1px solid rgba(201,146,42,.2);border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:.84rem"><strong>Current:</strong> ' + current.name + '<br><span style="color:var(--muted)">' + (current.bio||'') + '</span></div>' : '')
+    + '<div style="display:flex;flex-direction:column;gap:10px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px">'
+    + '<input id="fs-inp-name" type="text" placeholder="Seller name (exact match)" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:.88rem;background:var(--bg3);color:var(--text);box-sizing:border-box">'
+    + '<input id="fs-inp-bio" type="text" placeholder="Short bio e.g. Top fashion seller since 2024" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:.88rem;background:var(--bg3);color:var(--text);box-sizing:border-box">'
+    + '<button onclick="adminSetFeatured()" style="background:var(--gold);color:#fff;border:none;padding:11px;border-radius:8px;font-weight:700;cursor:pointer">⭐ Set as Featured Seller</button>'
+    + '</div>'
+    + (current ? '<button onclick="clearFeaturedSeller();renderAdminFeaturedSeller()" style="width:100%;background:transparent;border:1px solid #dc2626;color:#dc2626;padding:10px;border-radius:8px;font-weight:600;cursor:pointer">??️ Remove Featured Seller</button>' : '')
+    + '</div>';
+}
+window.renderAdminFeaturedSeller = renderAdminFeaturedSeller;
+
+function adminSetFeatured() {
+  var name = (document.getElementById('fs-inp-name') || {}).value || '';
+  var bio  = (document.getElementById('fs-inp-bio')  || {}).value || '';
+  if (!name.trim()) { toast('Enter seller name', 'warn'); return; }
+  /* Find seller ID from prods */
+  var prod = getActive().find(function(p){ return p.seller.toLowerCase() === name.trim().toLowerCase(); });
+  var sid  = prod ? (prod.sellerId || prod.seller_id || '') : '';
+  setFeaturedSeller(name.trim(), bio.trim(), String(sid));
+  renderAdminFeaturedSeller();
+}
+window.adminSetFeatured = adminSetFeatured;
 window.loadAdminAnnouncements = loadAdminAnnouncements;
 
 window.loadAnalytics = loadAnalytics;
