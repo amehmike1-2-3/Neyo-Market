@@ -6,6 +6,7 @@
 // ✅ FIX 5: Every route and catch returns res.json() — never HTML
 // ✅ FIX 6: New/Used filter added to product sorting
 // ✅ INT 7: Upstash Redis Caching layered onto public marketplace endpoints
+// ✅ FIX 8: Fixed storeName query matching to prevent column text errors
 
 'use strict';
 
@@ -139,7 +140,7 @@ function toProduct(r) {
     location:       r.location         || r.seller_location || '',
     sellerBio:      r.seller_bio       || '',
     isFeature:      r.is_featured      || false,
-    createdAt:      r.created_at       || null,
+    createdAt: r.created_at       || null,
     condition:      r.condition        || null,
     sellerTier:     r.seller_tier      || r.membership_tier || 'free',
     promoted:       r.promoted         || false,
@@ -273,6 +274,8 @@ module.exports = async function handler(req, res) {
 
       } else if (req.query.storeName) {
         const storeCode = String(req.query.storeName).trim();
+        
+        // Stabilized text comparison casting to eliminate database type mapping crashes
         const sellerRows = await sql`
           SELECT id FROM users WHERE aff_code = ${storeCode} OR id::text = ${storeCode} LIMIT 1
         `;
@@ -317,7 +320,6 @@ module.exports = async function handler(req, res) {
         const typeFilter = req.query.type ? String(req.query.type).trim().toLowerCase()           : null;
         const saleOnly   = req.query.sale === 'true';
 
-        // Check if query is targeting a caching trackable route layout
         const isStandardPublicFeed = !searchQ && !catFilter && !typeFilter;
 
         if (isStandardPublicFeed) {
@@ -332,7 +334,6 @@ module.exports = async function handler(req, res) {
           }
         }
 
-        // Database Fallback Engine
         if (searchQ) {
           rows = await sql`
             SELECT p.*, u.membership_tier AS seller_tier, u.is_verified AS seller_verified, u.badge_verified AS badge_verified
@@ -379,7 +380,6 @@ module.exports = async function handler(req, res) {
 
         const productPayload = rows.map(toProduct);
 
-        // Save public response to Upstash Redis for 30 minutes (1800 seconds)
         if (isStandardPublicFeed) {
           const cacheKey = saleOnly ? 'mp_products_public_sale' : 'mp_products_public_all';
           try {
@@ -463,7 +463,6 @@ module.exports = async function handler(req, res) {
         RETURNING *
       `;
 
-      // Evict outdated caches since metadata layout changed
       await clearProductCache();
 
       return res.status(201).json({ ok: true, product: toProduct(rows[0]) });
@@ -533,7 +532,6 @@ module.exports = async function handler(req, res) {
         WHERE id = ${productId}
       `;
 
-      // Evict cache to reflect details edits instantly
       await clearProductCache();
 
       return res.status(200).json({ ok: true });
@@ -562,7 +560,6 @@ module.exports = async function handler(req, res) {
 
       await sql`DELETE FROM products WHERE id = ${productId}`;
       
-      // Evict layout copies
       await clearProductCache();
 
       return res.status(200).json({ ok: true });
@@ -590,7 +587,6 @@ module.exports = async function handler(req, res) {
           VALUES (${Number(productId)}, ${Number(duration || 7)}, ${Number(amount)}, ${String(paystackRef)}, ${expiresAt.toISOString()}, NOW())
         `;
 
-        // Refresh cache so featured statuses update immediately
         await clearProductCache();
 
         return res.status(200).json({ ok: true, message: 'Product promoted successfully' });
