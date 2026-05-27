@@ -272,12 +272,14 @@ module.exports = async function handler(req, res) {
         `;
 
       } else if (req.query.storeName) {
-        /* ── STOREFRONT: public active products by seller affCode (unique per seller) ── */
+        /* ── STOREFRONT FIX: Handles search parameters using aff_code, raw string matching, OR exact seller_id fallback ── */
         const storeCode = String(req.query.storeName).trim();
-        /* Look up seller id from aff_code first, then fallback to name match */
+        
+        /* Look up user metrics by aff_code or raw user matching */
         const sellerRows = await sql`
-          SELECT id FROM users WHERE aff_code = ${storeCode} LIMIT 1
+          SELECT id FROM users WHERE aff_code = ${storeCode} OR id::text = ${storeCode} LIMIT 1
         `;
+        
         if (sellerRows.length) {
           const sid = String(sellerRows[0].id);
           rows = await sql`
@@ -287,11 +289,11 @@ module.exports = async function handler(req, res) {
             FROM products p
             LEFT JOIN users u ON u.id::text = p.seller_id::text
             WHERE LOWER(p.status) IN ('active','approved','published')
-              AND p.seller_id::text = ${sid}
+              AND (p.seller_id::text = ${sid} OR p.seller_id::text = ${storeCode})
             ORDER BY p.created_at DESC
           `;
         } else {
-          /* Fallback: match by seller display name */
+          /* Final Fallback: Match text based display name or direct string ID logic */
           rows = await sql`
             SELECT p.*, u.membership_tier AS seller_tier,
                    u.is_verified AS seller_verified,
@@ -299,7 +301,7 @@ module.exports = async function handler(req, res) {
             FROM products p
             LEFT JOIN users u ON u.id::text = p.seller_id::text
             WHERE LOWER(p.status) IN ('active','approved','published')
-              AND LOWER(p.seller) = LOWER(${storeCode})
+              AND (LOWER(p.seller) = LOWER(${storeCode}) OR p.seller_id::text = ${storeCode})
             ORDER BY p.created_at DESC
           `;
         }
@@ -581,3 +583,4 @@ module.exports = async function handler(req, res) {
     return jsonErr(res, 500, 'Internal server error.', err.message);
   }
 };
+              
