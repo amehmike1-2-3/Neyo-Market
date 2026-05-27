@@ -1,28 +1,40 @@
-// /api/products.js — NeyoMarket Products API
+// /api/products.js — NeyoMarket Products API with Upstash Redis Caching
 // ✅ FIX 1: Share button now uses absolute URLs (https://neyomarket.com.ng)
 // ✅ FIX 2: Digital products MUST have a file_url — 400 returned if missing
 // ✅ FIX 3: GET with sellerId uses WHERE seller_id = $1 (authenticated session ID)
 // ✅ FIX 4: Condition field now included in PATCH UPDATE
 // ✅ FIX 5: Every route and catch returns res.json() — never HTML
 // ✅ FIX 6: New/Used filter added to product sorting
-// All ID lookups: Number() for product IDs, String() for user IDs
+// ✅ INT 7: Upstash Redis Caching layered onto public marketplace endpoints
 
 'use strict';
 
 const { neon } = require('@neondatabase/serverless');
-/* ═══ CLOUDINARY UPLOAD HANDLER ══════════════════════════════════════════
-   Handles POST /api/products?action=upload
-   Uses CLOUDINARY_URL env var — automatically parsed by cloudinary SDK.
-   resource_type:'auto' accepts images, PDFs, ZIPs, videos — everything.
-   Returns { url, secure_url, public_id } to frontend.
-═══════════════════════════════════════════════════════════════════════════ */
+const { Redis } = require('@upstash/redis');
 const cloudinary = require('cloudinary').v2;
 
-/* SDK auto-configures from CLOUDINARY_URL env var — no extra config needed */
+/* SDK auto-configures from CLOUDINARY_URL env var */
 cloudinary.config({ secure: true });
 
+/* Initialize Upstash Redis client using your environment variables */
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN,
+});
+
+/* Helper to clear cached public feeds whenever changes occur */
+async function clearProductCache() {
+  try {
+    // Evict all public marketplace listings caches
+    await redis.del('mp_products_public_all');
+    await redis.del('mp_products_public_sale');
+    console.log('[Redis] Public product cache successfully cleared.');
+  } catch (err) {
+    console.error('[Redis] Cache eviction error:', err.message);
+  }
+}
+
 async function _handleUpload(req, res) {
-  /* Auth check — only sellers/admins */
   try {
     const auth = req.headers['authorization'] || '';
     const tok  = auth.replace('Bearer ', '');
@@ -34,7 +46,6 @@ async function _handleUpload(req, res) {
     }
   } catch(e) {}
 
-  /* Expect base64 data in body: { data, fileName, fileType, folder } */
   const body     = req.body || {};
   const b64data  = body.data     || '';
   const fileName = body.fileName || body.name || 'upload';
@@ -45,14 +56,13 @@ async function _handleUpload(req, res) {
     return res.status(400).json({ ok: false, error: 'No file data provided.' });
   }
 
-  /* Build data URI if not already one */
   const dataUri = b64data.startsWith('data:')
     ? b64data
     : 'data:' + fileType + ';base64,' + b64data;
 
   try {
     const result = await cloudinary.uploader.upload(dataUri, {
-      resource_type: 'auto',      /* auto = images + raw files + videos */
+      resource_type: 'auto',
       folder:         folder,
       use_filename:   true,
       unique_filename: true,
@@ -85,7 +95,6 @@ function cors(res) {
   res.setHeader('X-Content-Type-Options',       'nosniff');
 }
 
-/* Always JSON — never let Express default to HTML error page */
 function jsonErr(res, status, msg, detail) {
   return res.status(status).json({ error: msg, ...(detail ? { detail } : {}) });
 }
@@ -145,17 +154,12 @@ module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
-
     if (req.query.action === 'upload') return _handleUpload(req, res);
 
-    /* ═══ AI PRODUCT OPTIMIZER ════════════════════════════════════════════
-       POST /api/products?action=optimize
-       Reuses exact same Groq setup as chat.js.
-       Returns: { optimized_title, key_selling_point, target_tags }
-    ═══════════════════════════════════════════════════════════════════════ */
+    /* AI PRODUCT OPTIMIZER */
     if (req.query.action === 'optimize' && req.method === 'POST') {
       const GROQ_KEY = process.env.GROQ_API_KEY;
-      if (!GROQ_KEY) return res.status(500).json({ ok: false, error: 'GROQ_API_KEY not set in Vercel env vars.' });
+      if (!GROQ_KEY) return res.status(500).json({ ok: false, error: 'GROQ_API_KEY not set in env vars.' });
 
       const body  = req.body || {};
       const title = String(body.title || '').trim();
@@ -226,7 +230,6 @@ module.exports = async function handler(req, res) {
       const reply = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
       if (!reply) return res.status(502).json({ ok: false, error: 'No response from AI.' });
 
-      /* Strip any accidental markdown fences */
       const clean = reply.trim().replace(/^```json?\s*/i, '').replace(/```\s*$/i, '').trim();
 
       let parsed;
@@ -237,7 +240,6 @@ module.exports = async function handler(req, res) {
         return res.status(502).json({ ok: false, error: 'AI returned invalid format. Try again.' });
       }
 
-      /* Validate required fields */
       if (!parsed.optimized_title || !parsed.key_selling_point || !Array.isArray(parsed.target_tags)) {
         return res.status(502).json({ ok: false, error: 'AI response missing required fields.' });
       }
@@ -263,8 +265,6 @@ module.exports = async function handler(req, res) {
       let rows;
 
       if (sellerId) {
-        /* FIX 3: strict WHERE seller_id = authenticated seller's ID (String type)
-           Never return other sellers' products — even if the query string is tampered */
         rows = await sql`
           SELECT * FROM products
           WHERE seller_id = ${String(sellerId)}
@@ -272,10 +272,7 @@ module.exports = async function handler(req, res) {
         `;
 
       } else if (req.query.storeName) {
-        /* ── STOREFRONT FIX: Handles search parameters using aff_code, raw string matching, OR exact seller_id fallback ── */
         const storeCode = String(req.query.storeName).trim();
-        
-        /* Look up user metrics by aff_code or raw user matching */
         const sellerRows = await sql`
           SELECT id FROM users WHERE aff_code = ${storeCode} OR id::text = ${storeCode} LIMIT 1
         `;
@@ -293,7 +290,6 @@ module.exports = async function handler(req, res) {
             ORDER BY p.created_at DESC
           `;
         } else {
-          /* Final Fallback: Match text based display name or direct string ID logic */
           rows = await sql`
             SELECT p.*, u.membership_tier AS seller_tier,
                    u.is_verified AS seller_verified,
@@ -307,7 +303,6 @@ module.exports = async function handler(req, res) {
         }
 
       } else if (admin === 'true') {
-        /* Admin: all products, optionally filtered by status */
         if (status && status !== 'all') {
           rows = await sql`
             SELECT * FROM products WHERE status = ${String(status)} ORDER BY created_at DESC
@@ -316,12 +311,28 @@ module.exports = async function handler(req, res) {
           rows = await sql`SELECT * FROM products ORDER BY created_at DESC`;
         }
       } else {
-        /* Public marketplace — active only, with seller tier + optional search/filter */
-        const searchQ    = req.query.q    ? '%' + String(req.query.q).trim().toLowerCase()    + '%' : null;
-        const catFilter  = req.query.cat  ? String(req.query.cat).trim().toLowerCase()               : null;
-        const typeFilter = req.query.type ? String(req.query.type).trim().toLowerCase()              : null;
+        /* Public marketplace feeds — Optimize via Redis Caching Layer */
+        const searchQ    = req.query.q    ? '%' + String(req.query.q).trim().toLowerCase() + '%' : null;
+        const catFilter  = req.query.cat  ? String(req.query.cat).trim().toLowerCase()            : null;
+        const typeFilter = req.query.type ? String(req.query.type).trim().toLowerCase()           : null;
         const saleOnly   = req.query.sale === 'true';
 
+        // Check if query is targeting a caching trackable route layout
+        const isStandardPublicFeed = !searchQ && !catFilter && !typeFilter;
+
+        if (isStandardPublicFeed) {
+          const cacheKey = saleOnly ? 'mp_products_public_sale' : 'mp_products_public_all';
+          try {
+            const cachedData = await redis.get(cacheKey);
+            if (cachedData) {
+              return res.status(200).json({ products: typeof cachedData === 'string' ? JSON.parse(cachedData) : cachedData });
+            }
+          } catch (cacheErr) {
+            console.error('[Redis Read Error]', cacheErr.message);
+          }
+        }
+
+        // Database Fallback Engine
         if (searchQ) {
           rows = await sql`
             SELECT p.*, u.membership_tier AS seller_tier, u.is_verified AS seller_verified, u.badge_verified AS badge_verified
@@ -365,6 +376,20 @@ module.exports = async function handler(req, res) {
             ORDER BY p.created_at DESC
           `;
         }
+
+        const productPayload = rows.map(toProduct);
+
+        // Save public response to Upstash Redis for 30 minutes (1800 seconds)
+        if (isStandardPublicFeed) {
+          const cacheKey = saleOnly ? 'mp_products_public_sale' : 'mp_products_public_all';
+          try {
+            await redis.set(cacheKey, JSON.stringify(productPayload), { ex: 1800 });
+          } catch (cacheSetErr) {
+            console.error('[Redis Write Error]', cacheSetErr.message);
+          }
+        }
+
+        return res.status(200).json({ products: productPayload });
       }
 
       return res.status(200).json({ products: rows.map(toProduct) });
@@ -372,7 +397,6 @@ module.exports = async function handler(req, res) {
 
     /* ════════════════════════════════════════════════
        POST — create product
-       FIX 2: Reject digital products without a file_url
     ════════════════════════════════════════════════ */
     if (req.method === 'POST') {
       const p = req.body || {};
@@ -380,10 +404,6 @@ module.exports = async function handler(req, res) {
       if (!p.name || !p.price)
         return jsonErr(res, 400, 'Product name and price are required.');
 
-      /* FIX 2: Hard-block digital/course uploads with no file_url ─────
-         The frontend uploads the file to ImgBB/S3 and passes back the
-         URL before calling this endpoint. If it's missing, the upload
-         failed — we must NOT create a broken product record in Neon. */
       const productType = p.type || 'digital';
       if ((productType === 'digital' || productType === 'course') && !p.fileUrl) {
         return jsonErr(res, 400,
@@ -392,7 +412,6 @@ module.exports = async function handler(req, res) {
         );
       }
 
-      /* Pre-compute all conditionals outside the sql template (Neon safety rule) */
       const id             = Number(p.id || Date.now());
       const discountPrice  = (p.discountPrice  != null) ? parseFloat(p.discountPrice)  : null;
       const isOnSale       = p.isOnSale   ? true : false;
@@ -404,7 +423,6 @@ module.exports = async function handler(req, res) {
       const escrow         = (p.escrow !== false);
       const fileExt        = p.fileExt  || null;
       const fileName       = p.fileName || null;
-      /* fileUrl accepted in any format */
       const fileUrl        = p.fileUrl  || null;
       const fileSize       = p.fileSize || null;
       const imgs           = JSON.stringify(p.imgs || []);
@@ -444,13 +462,15 @@ module.exports = async function handler(req, res) {
         )
         RETURNING *
       `;
+
+      // Evict outdated caches since metadata layout changed
+      await clearProductCache();
+
       return res.status(201).json({ ok: true, product: toProduct(rows[0]) });
     }
 
     /* ════════════════════════════════════════════════
        PATCH — update product fields
-       All conditionals pre-computed (Neon ternary rule)
-       FIX 4: condition field now included in UPDATE
     ════════════════════════════════════════════════ */
     if (req.method === 'PATCH') {
       const p = req.body || {};
@@ -512,21 +532,23 @@ module.exports = async function handler(req, res) {
           lessons         = COALESCE(${newLessons}::jsonb, lessons)
         WHERE id = ${productId}
       `;
+
+      // Evict cache to reflect details edits instantly
+      await clearProductCache();
+
       return res.status(200).json({ ok: true });
     }
 
     /* ════════════════════════════════════════════════
        DELETE — owner or admin only
-       FIX: server enforces ownership check correctly
     ════════════════════════════════════════════════ */
     if (req.method === 'DELETE') {
       const rawId      = req.query.id || (req.body && req.body.id);
-      const requesterId = req.body && req.body.requesterId;   /* caller must pass their userId */
+      const requesterId = req.body && req.body.requesterId;
       if (!rawId) return jsonErr(res, 400, 'Product id is required.');
 
       const productId = Number(rawId);
 
-      /* If requesterId provided, enforce ownership — never delete someone else's product */
       if (requesterId) {
         const owns = await sql`
           SELECT id FROM products
@@ -539,34 +561,37 @@ module.exports = async function handler(req, res) {
       }
 
       await sql`DELETE FROM products WHERE id = ${productId}`;
+      
+      // Evict layout copies
+      await clearProductCache();
+
       return res.status(200).json({ ok: true });
     }
 
     /* ════════════════════════════════════════════════
        POST ?action=promote
-       Mark product as featured (is_featured = true)
     ════════════════════════════════════════════════ */
     if (req.query.action === 'promote' && req.method === 'POST') {
       const { productId, duration, amount, paystackRef } = req.body || {};
       if (!productId || !paystackRef) return jsonErr(res, 400, 'productId and paystackRef required');
 
       try {
-        /* Calculate expiration date based on duration */
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + (duration || 7));
 
-        /* Update product to featured */
         await sql`
           UPDATE products 
           SET is_featured = true, featured_expires = ${expiresAt.toISOString()}
           WHERE id = ${Number(productId)}
         `;
 
-        /* Log promotion transaction */
         await sql`
           INSERT INTO promotions (product_id, duration_days, amount, paystack_ref, expires_at, created_at)
           VALUES (${Number(productId)}, ${Number(duration || 7)}, ${Number(amount)}, ${String(paystackRef)}, ${expiresAt.toISOString()}, NOW())
         `;
+
+        // Refresh cache so featured statuses update immediately
+        await clearProductCache();
 
         return res.status(200).json({ ok: true, message: 'Product promoted successfully' });
       } catch (err) {
@@ -578,9 +603,7 @@ module.exports = async function handler(req, res) {
     return jsonErr(res, 405, 'Method not allowed.');
 
   } catch (err) {
-    /* Always JSON, never HTML — stops 'Unexpected token T' errors */
     console.error('[products.js] ERROR:', err.message);
     return jsonErr(res, 500, 'Internal server error.', err.message);
   }
 };
-              
