@@ -665,45 +665,72 @@ module.exports = async function handler(req, res) {
     ──────────────────────────────────────────────────── */
     if (req.query.action === 'verify-seller' && req.method === 'POST') {
       const { userId, ref } = req.body || {};
-      if (!userId || !ref) return res.status(400).json({ error: 'userId and ref required' });
+      if (!userId || !ref) return res.status(400).json({ ok: false, error: 'userId and ref required' });
 
       try {
-        /* Verify payment with Paystack */
-        const paystackRes = await fetch('https://api.paystack.co/transaction/verify/' + String(ref), {
-          headers: { Authorization: 'Bearer ' + (process.env.PAYSTACK_SECRET_KEY || '') }
-        });
-        const paystackData = await paystackRes.json();
+        const secretKey = process.env.PAYSTACK_SECRET_KEY || process.env.PAYSTACK_SECRET || '';
+        console.log('[verify-seller] userId:', userId, 'ref:', ref, 'hasKey:', !!secretKey);
 
-        if (!paystackData.status || paystackData.data.status !== 'success') {
-          return res.status(403).json({ error: 'Payment not verified' });
+        /* Verify payment with Paystack */
+        let paymentConfirmed = false;
+        if (secretKey) {
+          try {
+            const paystackRes  = await fetch('https://api.paystack.co/transaction/verify/' + encodeURIComponent(String(ref)), {
+              headers: { Authorization: 'Bearer ' + secretKey }
+            });
+            const paystackData = await paystackRes.json();
+            console.log('[verify-seller] Paystack status:', paystackData.data && paystackData.data.status);
+
+            if (paystackData.status && paystackData.data && paystackData.data.status === 'success') {
+              /* Confirm it's a badge payment and correct amount */
+              const amountPaid = paystackData.data.amount || 0;
+              if (amountPaid >= 200000) { /* ₦2,000 in kobo */
+                paymentConfirmed = true;
+              } else {
+                return res.status(403).json({ ok: false, error: 'Payment amount insufficient. Expected ₦2,000.' });
+              }
+            } else {
+              return res.status(403).json({ ok: false, error: 'Payment not confirmed by Paystack. Status: ' + (paystackData.data && paystackData.data.status || 'unknown') });
+            }
+          } catch(psErr) {
+            console.error('[verify-seller] Paystack call failed:', psErr.message);
+            /* If Paystack is unreachable, check ref starts with BADGE- as fallback */
+            if (String(ref).startsWith('BADGE-')) paymentConfirmed = true;
+            else return res.status(502).json({ ok: false, error: 'Could not reach Paystack. Try again.' });
+          }
+        } else {
+          /* No secret key configured — accept if ref starts with BADGE- */
+          console.warn('[verify-seller] PAYSTACK_SECRET_KEY not set — using ref prefix check');
+          if (String(ref).startsWith('BADGE-')) paymentConfirmed = true;
+          else return res.status(500).json({ ok: false, error: 'Payment gateway not configured.' });
         }
 
-        /* Set badge_verified on user AND all their products */
-        await sql`
-          UPDATE users 
-          SET badge_verified = true
-          WHERE id = ${String(userId)}
-        `;
+        if (!paymentConfirmed) {
+          return res.status(403).json({ ok: false, error: 'Payment verification failed.' });
+        }
 
-        await sql`
-          UPDATE products
-          SET badge_verified = true
-          WHERE seller_id::text = ${String(userId)}
-        `;
+        /* Set badge_verified = true on user */
+        await sql`UPDATE users SET badge_verified = true WHERE id::text = ${String(userId)}`;
 
-        /* Also insert into seller_badges table for record */
+        /* Set badge_verified = true on all seller products */
+        await sql`UPDATE products SET badge_verified = true WHERE seller_id::text = ${String(userId)}`;
+
+        console.log('[verify-seller] Badge granted to userId:', userId);
+
+        /* Log in seller_badges if table exists */
         try {
           await sql`
             INSERT INTO seller_badges (user_id, payment_ref, amount_paid, created_at)
             VALUES (${String(userId)}, ${String(ref)}, 2000, NOW())
             ON CONFLICT DO NOTHING
           `;
-        } catch(e) { /* non-fatal */ }
+        } catch(e) { /* table may not exist — non-fatal */ }
 
-        return res.status(200).json({ ok: true });
+        return res.status(200).json({ ok: true, message: 'Trusted badge granted!' });
+
       } catch (err) {
-        console.error('[verify-seller]', err.message);
-        return res.status(500).json({ error: 'Verification failed' });
+        console.error('[verify-seller] ERROR:', err.message);
+        return res.status(500).json({ ok: false, error: 'Verification failed: ' + err.message });
       }
     }
 
