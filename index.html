@@ -1540,6 +1540,270 @@ footer{background:var(--text);color:#fff;border-top:1px solid rgba(255,255,255,.
 .an-tab.on{background:var(--gold);color:#fff}
 .an-loading{text-align:center;padding:48px 20px;color:var(--muted);font-size:.85rem}
 
+/* ══════════════════════════════════════
+   ABOUT PAGE
+══════════════════════════════════════ */
+.about-hero{
+  background:linear-gradient(135deg,#0f1117 0%,#1a1a2e 45%,#0f2027 100%);
+  padding:52px 20px 44px;text-align:center;position:relative;overflow:hidden;
+}
+.about-hero::before{
+  content:'';position:absolute;top:-80px;right:-80px;width:340px;height:340px;
+  border-radius:50%;background:radial-gradient(circle,rgba(201,146,42,.15),transparent 70%);
+  pointer-events:none;
+}
+.about-hero::after{
+  content:'';position:absolute;bottom:-60px;left:-60px;width:260px;height:260px;
+  border-radius:50%;background:radial-gradient(circle,rgba(37,99,235,.1),transparent 70%);
+  pointer-events:none;
+}
+.about-hero-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(201,146,42,.12);border:1px solid rgba(201,146,42,.3);
+  color:var(--gold);font-size:.65rem;font-weight:700;padding:5px 14px;
+  border-radius:20px;letter-spacing:.7px;text-transform:uppercase;margin-bottom:18px;
+}
+.about-hero h1{
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(1.9rem,6vw,3rem);font-weight:700;
+  color:#fff;line-height:1.2;margin-bottom:14px;
+}
+.about-hero h1 span{color:var(--gold)}
+.about-hero p{
+  color:rgba(255,255,255,.6);font-size:.88rem;line-height:1.75;
+  max-width:480px;margin:0 auto 26px;font-weight:300;
+}
+.about-hero-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.about-hero-btns .bg{padding:12px 24px;font-size:.84rem}
+.about-hero-btns .bo{
+  padding:12px 24px;font-size:.84rem;
+  background:transparent;border:1.5px solid rgba(255,255,255,.25);
+  color:rgba(255,255,255,.8);border-radius:6px;cursor:pointer;
+  font-weight:600;letter-spacing:.4px;text-transform:uppercase;transition:var(--tr);
+}
+.about-hero-btns .bo:hover{border-color:var(--gold);color:var(--gold)}
+
+/* Trust pillars grid */
+.about-pillars{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
+  gap:16px;margin-bottom:36px;
+}
+.about-pillar{
+  background:var(--bg2);border:1px solid var(--border);border-radius:14px;
+  padding:22px 20px;transition:var(--tr);position:relative;overflow:hidden;
+}
+.about-pillar::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--gold),rgba(201,146,42,.3));
+  border-radius:14px 14px 0 0;
+}
+.about-pillar:hover{border-color:var(--gold);box-shadow:0 6px 24px rgba(201,146,42,.1);transform:translateY(-2px)}
+.about-pillar-icon{font-size:1.8rem;margin-bottom:12px;display:block}
+.about-pillar h3{
+  font-family:'Cormorant Garamond',serif;font-size:1.08rem;
+  font-weight:600;color:var(--text);margin-bottom:7px;
+}
+.about-pillar p{font-size:.8rem;color:var(--muted);line-height:1.7;font-weight:300}
+
+/* How escrow works — step flow */
+.escrow-flow{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+  gap:0;background:var(--bg2);border:1px solid var(--border);
+  border-radius:14px;overflow:hidden;margin-bottom:36px;
+}
+.escrow-step{
+  padding:22px 18px;border-right:1px solid var(--border);
+  position:relative;
+}
+.escrow-step:last-child{border-right:none}
+@media(max-width:640px){
+  .escrow-flow{grid-template-columns:1fr}
+  .escrow-step{border-right:none;border-bottom:1px solid var(--border)}
+  .escrow-step:last-child{border-bottom:none}
+}
+.escrow-step-num{
+  width:32px;height:32px;border-radius:50%;
+  background:linear-gradient(135deg,var(--gold),var(--gold2));
+  color:#fff;font-size:.78rem;font-weight:800;
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:12px;
+}
+.escrow-step h4{font-size:.84rem;font-weight:700;color:var(--text);margin-bottom:6px}
+.escrow-step p{font-size:.76rem;color:var(--muted);line-height:1.65;font-weight:300}
+.escrow-step-arrow{
+  position:absolute;top:50%;right:-10px;
+  width:18px;height:18px;background:var(--gold);
+  border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:.6rem;color:#fff;z-index:2;transform:translateY(-50%);
+}
+@media(max-width:640px){.escrow-step-arrow{display:none}}
+
+/* Stats bar */
+.about-stats{
+  display:grid;grid-template-columns:repeat(2,1fr);
+  gap:1px;background:var(--border);border-radius:14px;
+  overflow:hidden;margin-bottom:36px;box-shadow:var(--shadow);
+}
+@media(min-width:480px){.about-stats{grid-template-columns:repeat(4,1fr)}}
+.about-stat{
+  background:var(--bg2);padding:20px 16px;text-align:center;
+}
+.about-stat-val{
+  font-family:'Cormorant Garamond',serif;font-size:2rem;
+  font-weight:700;color:var(--gold);line-height:1;
+}
+.about-stat-label{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-top:5px;font-weight:500}
+
+/* Mission strip */
+.about-mission{
+  background:linear-gradient(135deg,rgba(201,146,42,.06),rgba(37,99,235,.04));
+  border:1px solid rgba(201,146,42,.2);border-radius:14px;
+  padding:28px 24px;margin-bottom:36px;text-align:center;
+}
+.about-mission h2{
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(1.3rem,4vw,1.8rem);font-weight:600;
+  color:var(--text);margin-bottom:10px;
+}
+.about-mission p{
+  color:var(--muted);font-size:.84rem;line-height:1.8;
+  max-width:540px;margin:0 auto;font-weight:300;
+}
+
+/* Who we serve */
+.about-serve-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+  gap:12px;margin-bottom:36px;
+}
+.about-serve-card{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:12px;padding:18px 16px;display:flex;gap:12px;align-items:flex-start;
+  transition:var(--tr);
+}
+.about-serve-card:hover{border-color:var(--gold);background:var(--bg3)}
+.about-serve-icon{
+  width:38px;height:38px;border-radius:10px;
+  background:rgba(201,146,42,.1);display:flex;align-items:center;
+  justify-content:center;font-size:1.1rem;flex-shrink:0;
+}
+.about-serve-card h4{font-size:.84rem;font-weight:600;color:var(--text);margin-bottom:4px}
+.about-serve-card p{font-size:.76rem;color:var(--muted);line-height:1.6;font-weight:300}
+
+/* Dark mode about overrides */
+[data-theme="dark"] .about-pillar,[data-theme="dark"] .escrow-flow,
+[data-theme="dark"] .about-stat,[data-theme="dark"] .about-serve-card{
+  background:var(--bg2) !important;border-color:var(--border) !important;
+}
+[data-theme="dark"] .about-mission{
+  background:rgba(201,146,42,.06) !important;
+  border-color:rgba(201,146,42,.2) !important;
+}
+
+/* ══════════════════════════════════════
+   CONTACT PAGE
+══════════════════════════════════════ */
+.contact-wrap{max-width:700px;margin:0 auto;padding:0 14px 80px}
+
+/* Contact header */
+.contact-hero{
+  background:linear-gradient(135deg,#0f1117 0%,#0f2027 100%);
+  padding:44px 20px 36px;text-align:center;margin-bottom:0;
+  position:relative;overflow:hidden;
+}
+.contact-hero::before{
+  content:'';position:absolute;top:-40px;right:-40px;width:220px;height:220px;
+  border-radius:50%;background:radial-gradient(circle,rgba(37,99,235,.18),transparent 70%);
+  pointer-events:none;
+}
+.contact-hero-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(37,99,235,.15);border:1px solid rgba(37,99,235,.3);
+  color:var(--blue);font-size:.63rem;font-weight:700;padding:5px 14px;
+  border-radius:20px;letter-spacing:.7px;text-transform:uppercase;margin-bottom:16px;
+}
+.contact-hero h1{
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(1.7rem,5vw,2.4rem);font-weight:700;
+  color:#fff;margin-bottom:10px;
+}
+.contact-hero p{
+  color:rgba(255,255,255,.55);font-size:.84rem;
+  line-height:1.7;max-width:400px;margin:0 auto;font-weight:300;
+}
+
+/* Quick contact channels */
+.contact-channels{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+  gap:12px;margin-bottom:24px;
+}
+.contact-channel{
+  background:var(--bg2);border:1.5px solid var(--border);border-radius:12px;
+  padding:16px;display:flex;align-items:center;gap:12px;
+  cursor:pointer;transition:var(--tr);text-decoration:none;
+}
+.contact-channel:hover{transform:translateY(-2px);box-shadow:var(--shadow-md)}
+.contact-channel.wa:hover{border-color:#25d366;box-shadow:0 4px 16px rgba(37,211,102,.15)}
+.contact-channel.em:hover{border-color:var(--gold);box-shadow:0 4px 16px rgba(201,146,42,.12)}
+.contact-channel.wa2:hover{border-color:var(--blue);box-shadow:0 4px 16px rgba(37,99,235,.12)}
+.contact-ch-icon{
+  width:40px;height:40px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.15rem;flex-shrink:0;
+}
+.contact-ch-icon.wa-c{background:rgba(37,211,102,.12)}
+.contact-ch-icon.em-c{background:rgba(201,146,42,.1)}
+.contact-ch-icon.bl-c{background:rgba(37,99,235,.1)}
+.contact-ch-label{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:2px;font-weight:600}
+.contact-ch-value{font-size:.82rem;color:var(--text);font-weight:500}
+
+/* Contact form card */
+.contact-form-card{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:14px;padding:26px 22px;margin-bottom:20px;
+  box-shadow:var(--shadow);
+}
+.contact-form-card h2{
+  font-family:'Cormorant Garamond',serif;font-size:1.4rem;
+  font-weight:600;color:var(--text);margin-bottom:4px;
+}
+.contact-form-card .sub{
+  color:var(--muted);font-size:.8rem;margin-bottom:20px;line-height:1.6;font-weight:300;
+}
+.contact-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:500px){.contact-form-grid{grid-template-columns:1fr}}
+
+/* Response time banner */
+.contact-resp-banner{
+  background:rgba(5,150,105,.06);border:1px solid rgba(5,150,105,.2);
+  border-left:3px solid var(--green);border-radius:8px;
+  padding:12px 16px;margin-bottom:20px;
+  display:flex;align-items:flex-start;gap:10px;
+}
+.contact-resp-banner p{font-size:.8rem;color:var(--muted);line-height:1.65;font-weight:300}
+.contact-resp-banner strong{color:var(--text)}
+
+/* Success state */
+.contact-success{
+  display:none;text-align:center;padding:36px 20px;
+  background:var(--bg2);border:1px solid rgba(5,150,105,.3);
+  border-radius:14px;margin-bottom:20px;
+}
+.contact-success.show{display:block}
+.contact-success-icon{font-size:2.8rem;margin-bottom:14px}
+.contact-success h3{
+  font-family:'Cormorant Garamond',serif;font-size:1.4rem;
+  font-weight:600;color:var(--text);margin-bottom:8px;
+}
+.contact-success p{color:var(--muted);font-size:.82rem;line-height:1.7;max-width:340px;margin:0 auto}
+
+/* Dark mode contact overrides */
+[data-theme="dark"] .contact-form-card,
+[data-theme="dark"] .contact-channel{
+  background:var(--bg2) !important;border-color:var(--border) !important;
+}
+[data-theme="dark"] .contact-success{background:var(--bg2) !important}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
@@ -1621,7 +1885,9 @@ footer{background:var(--text);color:#fff;border-top:1px solid rgba(255,255,255,.
     <button onclick="hamGo('market')" style="display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:10px;border:none;background:none;color:var(--text);font-family:inherit;font-size:.88rem;font-weight:500;cursor:pointer;text-align:left;width:100%">🛒 Market</button>
     <button onclick="hamGo('sell')"   style="display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:10px;border:none;background:none;color:var(--text);font-family:inherit;font-size:.88rem;font-weight:500;cursor:pointer;text-align:left;width:100%">➕ Sell</button>
     <button onclick="hamGo('aff')"    style="display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:10px;border:none;background:none;color:var(--text);font-family:inherit;font-size:.88rem;font-weight:500;cursor:pointer;text-align:left;width:100%">💸 Affiliate</button>
-    <button onclick="hamGo('rules')"  style="display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:10px;border:none;background:none;color:var(--text);font-family:inherit;font-size:.88rem;font-weight:500;cursor:pointer;text-align:left;width:100%">📋 Rules</button>
+    <button onclick="hamGo('rules')"   style="display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:10px;border:none;background:none;color:var(--text);font-family:inherit;font-size:.88rem;font-weight:500;cursor:pointer;text-align:left;width:100%">📋 Rules</button>
+    <button onclick="hamGo('about')"   style="display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:10px;border:none;background:none;color:var(--text);font-family:inherit;font-size:.88rem;font-weight:500;cursor:pointer;text-align:left;width:100%">🏢 About Us</button>
+    <button onclick="hamGo('contact')" style="display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:10px;border:none;background:none;color:var(--text);font-family:inherit;font-size:.88rem;font-weight:500;cursor:pointer;text-align:left;width:100%">✉ Contact Us</button>
     <!-- Community -->
     <div style="margin:4px 14px;height:1px;background:var(--border)"></div>
     <a href="https://chat.whatsapp.com/FQxy9Zeb2ODIuPTtBxqNuD" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:10px;color:var(--text);font-family:inherit;font-size:.88rem;font-weight:500;cursor:pointer;text-align:left;width:100%;text-decoration:none;background:none">
@@ -2008,8 +2274,8 @@ footer{background:var(--text);color:#fff;border-top:1px solid rgba(255,255,255,.
         <p style="margin-top:3px;font-size:.76rem;color:var(--muted)">📞 +2349168321317</p>
       </div>
       <div class="fli"><h4>Marketplace</h4><a onclick="go('market')">Browse</a><a onclick="go('sell')">Sell</a><a onclick="go('aff')">Affiliate</a><a onclick="go('rules')">Rules</a></div>
-      <div class="fli"><h4>Company</h4><a>About</a><a>Blog</a><a>Press</a></div>
-      <div class="fli"><h4>Support</h4><a>Help</a><a>Disputes</a><a>Privacy</a><a onclick="oM('m-terms')">Terms</a></div>
+      <div class="fli"><h4>Company</h4><a onclick="go('about')">About Us</a><a onclick="go('contact')">Contact</a><a>Blog</a><a>Press</a></div>
+      <div class="fli"><h4>Support</h4><a onclick="go('contact')">Help Centre</a><a onclick="go('contact')">Disputes</a><a>Privacy</a><a onclick="oM('m-terms')">Terms</a></div>
       <div class="fli"><h4>Community</h4>
         <a href="https://chat.whatsapp.com/FQxy9Zeb2ODIuPTtBxqNuD" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:6px">💬 WhatsApp Group</a>
         <a href="https://whatsapp.com/channel/0029Vb8IrLkH5JLvjk897y3o/100" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:6px">📢 WhatsApp Channel</a>
@@ -3243,6 +3509,281 @@ footer{background:var(--text);color:#fff;border-top:1px solid rgba(255,255,255,.
     </div>
   </div>
 </div>
+
+<!-- ═══════════════════════════════════════
+     ABOUT PAGE
+═══════════════════════════════════════ -->
+<div class="page" id="page-about">
+
+  <!-- Hero Banner -->
+  <div class="about-hero">
+    <div class="about-hero-badge">🛡 Trusted Since 2024 · Made in Nigeria</div>
+    <h1>We Exist to End<br><span>Marketplace Scams.</span></h1>
+    <p>NeyoMarket was built because Nigerians deserve a place to buy and sell without fear — a marketplace where every naira is protected, every seller is verified, and every dispute is resolved fairly.</p>
+    <div class="about-hero-btns">
+      <button class="bg" onclick="go('market')">🛒 Start Shopping</button>
+      <button class="bo" onclick="go('contact')">✉ Contact Us</button>
+    </div>
+  </div>
+
+  <div class="sec" style="padding-top:36px">
+
+    <!-- Stats -->
+    <div class="about-stats">
+      <div class="about-stat">
+        <div class="about-stat-val">100%</div>
+        <div class="about-stat-label">Escrow Protected</div>
+      </div>
+      <div class="about-stat">
+        <div class="about-stat-val">24hr</div>
+        <div class="about-stat-label">Dispute Resolution</div>
+      </div>
+      <div class="about-stat">
+        <div class="about-stat-val">0</div>
+        <div class="about-stat-label">Scam Tolerance</div>
+      </div>
+      <div class="about-stat">
+        <div class="about-stat-val" id="about-prod-count">—</div>
+        <div class="about-stat-label">Products Listed</div>
+      </div>
+    </div>
+
+    <!-- Mission -->
+    <div class="about-mission">
+      <h2>Our Mission</h2>
+      <p>To build Nigeria's most trusted digital and physical marketplace — where buyers never lose a kobo to fraud, vendors always get paid for legitimate goods, and the entire experience works fast on any mobile network.</p>
+    </div>
+
+    <!-- Problem we solve — Trust pillars -->
+    <div class="shd"><h2>Why <span class="gld">NeyoMarket</span> Exists</h2><p>Every feature exists to solve one real problem Nigerian traders face every day.</p></div>
+    <div class="about-pillars">
+      <div class="about-pillar">
+        <span class="about-pillar-icon">🔐</span>
+        <h3>Escrow Kills Scams</h3>
+        <p>Every payment is held securely by Paystack — not the seller — until you confirm you've received exactly what was advertised. Sellers get paid only after delivery. Buyers are protected by default.</p>
+      </div>
+      <div class="about-pillar">
+        <span class="about-pillar-icon">🪪</span>
+        <h3>Verified Sellers Only</h3>
+        <p>Every seller on NeyoMarket completes KYC with a valid NIN or BVN before listing a single product. Fake vendors and ghost accounts have nowhere to hide. Real identity, real accountability.</p>
+      </div>
+      <div class="about-pillar">
+        <span class="about-pillar-icon">⚖️</span>
+        <h3>Fast, Fair Disputes</h3>
+        <p>Bought something that wasn't as described? Open a dispute in seconds. Our team reviews every case within 24 hours and issues a full refund if the seller is at fault. No runaround.</p>
+      </div>
+      <div class="about-pillar">
+        <span class="about-pillar-icon">📱</span>
+        <h3>Built for Mobile Networks</h3>
+        <p>NeyoMarket is engineered to load fast on 3G, 4G, and patchy connections across every state in Nigeria. No heavy apps to download. Pure web, always accessible, always snappy.</p>
+      </div>
+      <div class="about-pillar">
+        <span class="about-pillar-icon">💸</span>
+        <h3>Real Earning Opportunities</h3>
+        <p>Sell your products. Refer buyers with a unique affiliate link and earn 5–40% commission on every sale, deposited directly to your bank every Monday. No middlemen, no delays.</p>
+      </div>
+      <div class="about-pillar">
+        <span class="about-pillar-icon">🤖</span>
+        <h3>AI-Powered Support</h3>
+        <p>Neyo AI is available 24/7 to answer questions, help you track orders, resolve account issues, and guide you through every feature on the platform — in plain, simple language.</p>
+      </div>
+    </div>
+
+    <!-- How Escrow Works — Step Flow -->
+    <div class="shd"><h2>How <span class="gld">Escrow</span> Protects You</h2><p>Simple, automatic, and completely transparent from payment to delivery.</p></div>
+    <div class="escrow-flow">
+      <div class="escrow-step">
+        <div class="escrow-step-num">1</div>
+        <h4>You Pay</h4>
+        <p>Your payment is processed securely by Paystack and held in escrow — not given to the seller yet. You'll receive instant confirmation.</p>
+        <div class="escrow-step-arrow">→</div>
+      </div>
+      <div class="escrow-step">
+        <div class="escrow-step-num">2</div>
+        <h4>Seller Delivers</h4>
+        <p>The seller is notified and must deliver your item (physical) or provide instant access (digital/course) within the agreed timeframe.</p>
+        <div class="escrow-step-arrow">→</div>
+      </div>
+      <div class="escrow-step">
+        <div class="escrow-step-num">3</div>
+        <h4>You Confirm</h4>
+        <p>Once you've received your order and you're happy, you tap "Confirm Collection." This signals that everything is as described.</p>
+        <div class="escrow-step-arrow">→</div>
+      </div>
+      <div class="escrow-step">
+        <div class="escrow-step-num">4</div>
+        <h4>Seller Gets Paid</h4>
+        <p>90% of the payment is released instantly to the seller's verified bank account. NeyoMarket retains a 10% platform fee. No delays.</p>
+      </div>
+    </div>
+
+    <!-- Who We Serve -->
+    <div class="shd"><h2>Who We <span class="gld">Serve</span></h2><p>Built for every Nigerian who wants to trade with confidence.</p></div>
+    <div class="about-serve-grid">
+      <div class="about-serve-card">
+        <div class="about-serve-icon">🛍️</div>
+        <div>
+          <h4>Everyday Buyers</h4>
+          <p>Shop for physical goods, digital products, and courses with a zero-scam guarantee on every single transaction.</p>
+        </div>
+      </div>
+      <div class="about-serve-card">
+        <div class="about-serve-icon">🏪</div>
+        <div>
+          <h4>Local Vendors</h4>
+          <p>List your products, reach thousands of verified buyers nationwide, and get paid directly to your bank — safely and on time.</p>
+        </div>
+      </div>
+      <div class="about-serve-card">
+        <div class="about-serve-icon">📚</div>
+        <div>
+          <h4>Digital Creators</h4>
+          <p>Sell eBooks, templates, software, and online courses with automated delivery and instant payouts after buyer confirmation.</p>
+        </div>
+      </div>
+      <div class="about-serve-card">
+        <div class="about-serve-icon">🔗</div>
+        <div>
+          <h4>Affiliate Earners</h4>
+          <p>No product? No problem. Share links, earn commissions of up to 40% per sale, and withdraw every Monday with no minimum fuss.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- CTA Strip -->
+    <div style="text-align:center;background:linear-gradient(135deg,rgba(201,146,42,.07),rgba(37,99,235,.04));border:1px solid rgba(201,146,42,.2);border-radius:14px;padding:32px 20px">
+      <h2 style="font-family:'Cormorant Garamond',serif;font-size:clamp(1.3rem,4vw,1.9rem);font-weight:600;color:var(--text);margin-bottom:8px">Ready to trade with confidence?</h2>
+      <p style="color:var(--muted);font-size:.83rem;margin-bottom:20px;max-width:400px;margin-left:auto;margin-right:auto;line-height:1.7;font-weight:300">Join thousands of Nigerians buying, selling, and earning on the only marketplace with a real Zero Scam Guarantee.</p>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+        <button class="bg" style="padding:12px 26px" onclick="go('signup')">✨ Create Free Account</button>
+        <button onclick="go('market')" style="background:transparent;border:1.5px solid var(--gold);color:var(--gold);padding:12px 24px;border-radius:6px;font-weight:600;font-size:.84rem;cursor:pointer;letter-spacing:.4px;text-transform:uppercase;transition:var(--tr)">🛒 Browse Products</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     CONTACT PAGE
+═══════════════════════════════════════ -->
+<div class="page" id="page-contact">
+
+  <!-- Hero -->
+  <div class="contact-hero">
+    <div class="contact-hero-badge">💬 We Respond Within 24 Hours</div>
+    <h1>We're Here to Help</h1>
+    <p>Dispute, order issue, payment question, or just want to say hi — our support team is real, fast, and on your side.</p>
+  </div>
+
+  <div class="contact-wrap" style="margin-top:28px">
+
+    <!-- Response time notice -->
+    <div class="contact-resp-banner">
+      <span style="font-size:1.1rem;flex-shrink:0;margin-top:1px">⏱</span>
+      <p><strong>Typical response time: under 24 hours.</strong> For urgent order or payment issues, WhatsApp is the fastest channel. For formal complaints and partnerships, email is preferred.</p>
+    </div>
+
+    <!-- Quick channels -->
+    <div class="contact-channels">
+      <a class="contact-channel wa" href="https://wa.me/2349072212496?text=Hi%20NeyoMarket%20Support%2C%20I%20need%20help%20with%3A" target="_blank" rel="noopener noreferrer">
+        <div class="contact-ch-icon wa-c">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="#25d366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        </div>
+        <div>
+          <div class="contact-ch-label">WhatsApp Support</div>
+          <div class="contact-ch-value">+234 907 221 2496</div>
+        </div>
+      </a>
+      <a class="contact-channel em" href="mailto:support@neyomarket.com">
+        <div class="contact-ch-icon em-c">📧</div>
+        <div>
+          <div class="contact-ch-label">Support Email</div>
+          <div class="contact-ch-value">support@neyomarket.com</div>
+        </div>
+      </a>
+      <a class="contact-channel wa2" href="mailto:adminneyomarket@gmail.com">
+        <div class="contact-ch-icon bl-c">📩</div>
+        <div>
+          <div class="contact-ch-label">Admin / Business</div>
+          <div class="contact-ch-value">adminneyomarket@gmail.com</div>
+        </div>
+      </a>
+    </div>
+
+    <!-- Success state (shown after form submit) -->
+    <div class="contact-success" id="contact-success">
+      <div class="contact-success-icon">✅</div>
+      <h3>Message Received!</h3>
+      <p>Thank you for reaching out. Our support team will get back to you within 24 hours. For urgent issues, please also message us on WhatsApp.</p>
+      <button class="bg" style="margin-top:18px;padding:11px 26px" onclick="document.getElementById('contact-success').classList.remove('show');document.getElementById('contact-form-card').style.display='block'">Send Another Message</button>
+    </div>
+
+    <!-- Contact Form -->
+    <div class="contact-form-card" id="contact-form-card">
+      <h2>Send Us a Message</h2>
+      <p class="sub">Fill in the form below and we'll respond as quickly as possible. For order or payment issues, include your Order ID.</p>
+
+      <div class="contact-form-grid">
+        <div class="fg">
+          <label>Full Name <span class="rq">*</span></label>
+          <input class="fi" type="text" id="ct-name" placeholder="Your full name" autocomplete="name"/>
+        </div>
+        <div class="fg">
+          <label>Email or Phone <span class="rq">*</span></label>
+          <input class="fi" type="text" id="ct-contact" placeholder="email@example.com or 080XXXXXXXX" autocomplete="email"/>
+        </div>
+      </div>
+
+      <div class="fg">
+        <label>Category <span class="rq">*</span></label>
+        <select class="fi" id="ct-category">
+          <option value="">— What is this about? —</option>
+          <option value="Order / Delivery Issue">📦 Order / Delivery Issue</option>
+          <option value="Payment Problem">💳 Payment Problem</option>
+          <option value="Seller Dispute">⚖️ Seller Dispute</option>
+          <option value="Account Help">👤 Account Help</option>
+          <option value="Become a Seller">🏪 Become a Seller</option>
+          <option value="Partnership / Business">🤝 Partnership / Business</option>
+          <option value="Other">💬 Other</option>
+        </select>
+      </div>
+
+      <div class="fg">
+        <label>Message <span class="rq">*</span></label>
+        <textarea class="fi" id="ct-message" placeholder="Describe your issue or question in as much detail as possible. If it's an order issue, include your Order ID (e.g. NYO-12345)." style="min-height:120px"></textarea>
+      </div>
+
+      <div id="ct-err" style="color:var(--red);font-size:.78rem;margin-bottom:10px;min-height:14px"></div>
+
+      <button class="sbtn" id="ct-submit-btn" onclick="submitContactForm()">📨 Send Message</button>
+    </div>
+
+    <!-- FAQ quick links -->
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:22px 20px">
+      <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:600;color:var(--text);margin-bottom:14px">🙋 Quick Answers</h3>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <button onclick="go('rules')" style="display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:11px 14px;cursor:pointer;text-align:left;width:100%;font-family:inherit;color:var(--text);transition:var(--tr)" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border)'">
+          <span style="font-size:1rem">📜</span>
+          <div><div style="font-size:.82rem;font-weight:600">How does escrow work?</div><div style="font-size:.72rem;color:var(--muted);margin-top:1px">Read our full rules & payment policy</div></div>
+          <span style="margin-left:auto;color:var(--muted);font-size:.8rem">→</span>
+        </button>
+        <button onclick="go('aff')" style="display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:11px 14px;cursor:pointer;text-align:left;width:100%;font-family:inherit;color:var(--text);transition:var(--tr)" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border)'">
+          <span style="font-size:1rem">💸</span>
+          <div><div style="font-size:.82rem;font-weight:600">How do I earn as an affiliate?</div><div style="font-size:.72rem;color:var(--muted);margin-top:1px">View commission rates and payout schedule</div></div>
+          <span style="margin-left:auto;color:var(--muted);font-size:.8rem">→</span>
+        </button>
+        <a href="https://wa.me/2349072212496?text=Hi%20NeyoMarket%2C%20I%20want%20to%20report%20a%20dispute%3A" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:11px 14px;cursor:pointer;text-align:left;width:100%;font-family:inherit;color:var(--text);text-decoration:none;transition:var(--tr)" onmouseover="this.style.borderColor='#25d366'" onmouseout="this.style.borderColor='var(--border)'">
+          <span style="font-size:1rem">⚖️</span>
+          <div><div style="font-size:.82rem;font-weight:600">I need to raise a dispute urgently</div><div style="font-size:.72rem;color:var(--muted);margin-top:1px">Message us directly on WhatsApp now</div></div>
+          <span style="margin-left:auto;color:var(--muted);font-size:.8rem">→</span>
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
 
 <!-- ═══════════════════════════════════════
      MODALS
@@ -12436,6 +12977,74 @@ window.anCurrentTab = anCurrentTab;
     if (urlRef) { window.__refCode = urlRef; localStorage.setItem('nm_ref', urlRef); }
     else { window.__refCode = localStorage.getItem('nm_ref') || ''; }
   } catch(e) { window.__refCode = ''; }
+})();
+
+/* ═══════════════════════════════════════════════════
+   CONTACT FORM — submitContactForm()
+   Validates inputs, builds a pre-filled WhatsApp URL
+   and opens it. Falls back to mailto: on desktop.
+════════════════════════════════════════════════════ */
+function submitContactForm() {
+  var name     = (document.getElementById('ct-name')     || {}).value || '';
+  var contact  = (document.getElementById('ct-contact')  || {}).value || '';
+  var category = (document.getElementById('ct-category') || {}).value || '';
+  var message  = (document.getElementById('ct-message')  || {}).value || '';
+  var errEl    = document.getElementById('ct-err');
+  var btn      = document.getElementById('ct-submit-btn');
+
+  /* Clear previous error */
+  if (errEl) errEl.textContent = '';
+
+  /* Validate */
+  if (!name.trim())     { if (errEl) errEl.textContent = 'Please enter your full name.'; return; }
+  if (!contact.trim())  { if (errEl) errEl.textContent = 'Please enter your email or phone number.'; return; }
+  if (!category)        { if (errEl) errEl.textContent = 'Please select a category.'; return; }
+  if (message.trim().length < 10) { if (errEl) errEl.textContent = 'Please write a message (at least 10 characters).'; return; }
+
+  /* Disable button during processing */
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Sending…'; }
+
+  /* Build message text */
+  var msgText = 'Hello NeyoMarket Support 👋\n\n'
+    + '📋 *Category:* ' + category + '\n'
+    + '👤 *Name:* ' + name.trim() + '\n'
+    + '📞 *Contact:* ' + contact.trim() + '\n\n'
+    + '💬 *Message:*\n' + message.trim();
+
+  /* Open WhatsApp with pre-filled message */
+  var waUrl = 'https://wa.me/2349072212496?text=' + encodeURIComponent(msgText);
+  window.open(waUrl, '_blank', 'noopener,noreferrer');
+
+  /* Show success state */
+  setTimeout(function() {
+    var successEl = document.getElementById('contact-success');
+    var formCard  = document.getElementById('contact-form-card');
+    if (successEl) successEl.classList.add('show');
+    if (formCard)  formCard.style.display = 'none';
+    /* Reset form */
+    var fields = ['ct-name','ct-contact','ct-message'];
+    fields.forEach(function(id) { var el = document.getElementById(id); if (el) el.value = ''; });
+    var catEl = document.getElementById('ct-category');
+    if (catEl) catEl.value = '';
+    if (btn) { btn.disabled = false; btn.textContent = '📨 Send Message'; }
+  }, 600);
+}
+window.submitContactForm = submitContactForm;
+
+/* ═══════════════════════════════════════════════════
+   ABOUT PAGE — sync live product count into stat card
+════════════════════════════════════════════════════ */
+(function syncAboutCount() {
+  function setCount() {
+    var el = document.getElementById('about-prod-count');
+    if (!el) return;
+    var n = (typeof getActive === 'function') ? getActive().length : 0;
+    el.textContent = n > 0 ? n : '—';
+  }
+  /* Run immediately and again after products load */
+  setCount();
+  setTimeout(setCount, 2000);
+  setTimeout(setCount, 5000);
 })();
 
 </script>
