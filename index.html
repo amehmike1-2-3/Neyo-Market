@@ -14462,7 +14462,16 @@ function togglePRForm() {
   var card = document.getElementById('pr-write-card');
   if (!card) return;
   
-  // Removed the broken login check so the review form can open smoothly!
+  // Checks if the user is in the open review card view
+  if (!card.classList.contains('open')) {
+    // Corrected to use your system's global currentUser object
+    if (!window.currentUser || !window.currentUser.id) {
+      toast('Please sign in to leave a review', 'warn'); 
+      go('signin'); 
+      return;
+    }
+  }
+  
   card.classList.toggle('open');
   PR_SELECTED_STAR = 0;
   
@@ -14471,15 +14480,6 @@ function togglePRForm() {
   
   var errEl = document.getElementById('pr-form-err');
   if (errEl) errEl.textContent = '';
-}
-
-function setPRStar(val) {
-  PR_SELECTED_STAR = val;
-  var btns = document.querySelectorAll('.pr-star-btn');
-  btns.forEach(function(b) {
-    var v = parseInt(b.getAttribute('data-val'));
-    b.classList.toggle('active', v <= val);
-  });
 }
 
 function submitPlatformReview() {
