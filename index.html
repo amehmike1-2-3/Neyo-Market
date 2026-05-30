@@ -14483,31 +14483,30 @@ function togglePRForm() {
 }
 
 function submitPlatformReview() {
+  var btn = document.getElementById('pr-submit-btn');
   var errEl = document.getElementById('pr-form-err');
-  var btn = document.querySelector('#pr-write-card .sbtn');
-  var comment = (document.getElementById('pr-comment') || {}).value || '';
-
-  if (!window.CU || !window.CU.id) {
-    if (errEl) errEl.textContent = 'Please sign in first.'; return;
-  }
-  if (!PR_SELECTED_STAR) {
-    if (errEl) errEl.textContent = 'Please select a star rating.'; return;
-  }
-  if (comment.trim().length < 5) {
-    if (errEl) errEl.textContent = 'Please write at least a short comment.'; return;
-  }
-
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ Submitting…'; }
   if (errEl) errEl.textContent = '';
 
-  fetch('/api/reviews?type=platform', {
+  // Uses currentUser here to pass your logged-in info to the database
+  var CU = window.currentUser; 
+  var commentEl = document.getElementById('pr-comment');
+  var comment = commentEl ? commentEl.value.trim() : '';
+
+  if (!comment) {
+    toast('Please write a comment first.', 'warn');
+    return;
+  }
+
+  if (btn) { btn.disabled = true; btn.textContent = 'Submitting...'; }
+
+  fetch('/api/payment?action=platform-reviews', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      userId: window.CU.id,
-      userName: window.CU.name || window.CU.email || 'User',
-      rating: PR_SELECTED_STAR,
-      comment: comment.trim()
+      userId: CU ? String(CU.id) : null,
+      userName: CU ? CU.name : 'Anonymous User',
+      rating: window.PR_SELECTED_STAR || 5,
+      comment: comment
     })
   })
   .then(function(r) { return r.json(); })
@@ -14516,7 +14515,6 @@ function submitPlatformReview() {
     if (data.ok) {
       toast('✅ Review submitted! Thank you.', 'ok');
       togglePRForm();
-      var commentEl = document.getElementById('pr-comment');
       if (commentEl) commentEl.value = '';
       loadPlatformReviews();
     } else {
