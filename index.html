@@ -2132,11 +2132,263 @@ footer{background:var(--text);color:#fff;border-top:1px solid rgba(255,255,255,.
 [data-theme="dark"] .fact-sheet,
 [data-theme="dark"] .press-stat,
 [data-theme="dark"] .brand-swatch,
-[data-theme="dark"] .brand-logo-row{
+/* ══════════════════════════════════════
+   SVG ILLUSTRATED SCENES
+══════════════════════════════════════ */
+.hiw-illustrations{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+  gap:16px;margin-bottom:32px;
+}
+.hiw-illus-card{
+  background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:16px;padding:24px 20px;
+  display:flex;flex-direction:column;align-items:center;
+  text-align:center;gap:16px;
+  opacity:0;transform:translateY(20px);
+  transition:opacity .5s ease,transform .5s ease;
+}
+.hiw-illus-card.visible{opacity:1;transform:translateY(0)}
+.hiw-illus-card:nth-child(1){transition-delay:.1s}
+.hiw-illus-card:nth-child(2){transition-delay:.25s}
+.hiw-illus-card:nth-child(3){transition-delay:.4s}
+.hiw-illus-card:hover{
+  border-color:rgba(201,146,42,.3);
+  background:rgba(201,146,42,.04);
+  transform:translateY(-3px);
+}
+.hiw-illus-card h4{
+  font-family:'Cormorant Garamond',serif;
+  font-size:1.05rem;font-weight:600;color:#fff;
+}
+.hiw-illus-card p{
+  font-size:.75rem;color:rgba(255,255,255,.45);
+  line-height:1.7;font-weight:300;
+}
+
+/* SVG animation keyframes */
+@keyframes float-up{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-6px)}
+}
+@keyframes float-down{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(6px)}
+}
+@keyframes spin-slow{
+  from{transform:rotate(0deg)}
+  to{transform:rotate(360deg)}
+}
+@keyframes pulse-ring{
+  0%{r:18;opacity:.6}
+  100%{r:28;opacity:0}
+}
+@keyframes dash-flow{
+  to{stroke-dashoffset:-40}
+}
+@keyframes coin-drop{
+  0%{transform:translateY(-20px);opacity:0}
+  40%{opacity:1}
+  100%{transform:translateY(0);opacity:1}
+}
+@keyframes check-draw{
+  from{stroke-dashoffset:30}
+  to{stroke-dashoffset:0}
+}
+@keyframes shield-glow{
+  0%,100%{filter:drop-shadow(0 0 4px rgba(201,146,42,.4))}
+  50%{filter:drop-shadow(0 0 12px rgba(201,146,42,.8))}
+}
+@keyframes bounce-badge{
+  0%,100%{transform:scale(1)}
+  50%{transform:scale(1.08)}
+}
+
   background:var(--bg2) !important;border-color:var(--border) !important;
 }
 [data-theme="dark"] .fact-label{background:var(--bg3) !important;border-color:var(--border) !important}
 [data-theme="dark"] .press-contact-card{background:rgba(201,146,42,.06) !important;border-color:rgba(201,146,42,.2) !important}
+
+/* ══════════════════════════════════════
+   NOTIFICATION BAR
+══════════════════════════════════════ */
+.notif-bar{
+  position:relative;z-index:600;
+  background:linear-gradient(90deg,#0f3a7d,#c9922a,#0f3a7d);
+  background-size:200% 100%;
+  animation:notif-slide 4s linear infinite;
+  padding:9px 40px 9px 16px;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  flex-wrap:wrap;
+}
+@keyframes notif-slide{
+  0%{background-position:0% 50%}
+  100%{background-position:200% 50%}
+}
+.notif-bar-text{
+  color:#fff;font-size:.75rem;font-weight:600;
+  letter-spacing:.3px;text-align:center;line-height:1.5;
+}
+.notif-bar-text span{color:#ffd700;font-weight:800}
+.notif-bar-cta{
+  background:#fff;color:#0f3a7d;
+  border:none;padding:4px 12px;border-radius:20px;
+  font-size:.68rem;font-weight:800;cursor:pointer;
+  letter-spacing:.4px;text-transform:uppercase;
+  transition:.2s;flex-shrink:0;font-family:inherit;
+}
+.notif-bar-cta:hover{background:#ffd700;color:#0f3a7d}
+.notif-bar-close{
+  position:absolute;right:10px;top:50%;transform:translateY(-50%);
+  background:none;border:none;color:rgba(255,255,255,.7);
+  font-size:1rem;cursor:pointer;padding:4px 6px;line-height:1;
+}
+.notif-bar-close:hover{color:#fff}
+
+/* ══════════════════════════════════════
+   HOW NEYOMARKET WORKS — ANIMATED
+══════════════════════════════════════ */
+.hiw-section{
+  background:linear-gradient(135deg,#080a0f 0%,#0d1321 50%,#080a0f 100%);
+  padding:52px 0 56px;position:relative;overflow:hidden;
+}
+.hiw-section::before{
+  content:'';position:absolute;top:-100px;left:50%;transform:translateX(-50%);
+  width:600px;height:400px;border-radius:50%;
+  background:radial-gradient(circle,rgba(201,146,42,.08),transparent 70%);
+  pointer-events:none;
+}
+.hiw-inner{max-width:900px;margin:0 auto;padding:0 16px}
+.hiw-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(201,146,42,.1);border:1px solid rgba(201,146,42,.25);
+  color:var(--gold);font-size:.63rem;font-weight:700;
+  padding:5px 14px;border-radius:20px;
+  letter-spacing:.7px;text-transform:uppercase;margin-bottom:14px;
+}
+.hiw-title{
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(1.7rem,5vw,2.6rem);font-weight:700;
+  color:#fff;margin-bottom:8px;line-height:1.2;
+}
+.hiw-title span{color:var(--gold)}
+.hiw-sub{
+  color:rgba(255,255,255,.5);font-size:.84rem;
+  line-height:1.7;margin-bottom:40px;font-weight:300;
+  max-width:480px;
+}
+.hiw-flow{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+  gap:16px;position:relative;margin-bottom:32px;
+}
+.hiw-step{
+  display:flex;flex-direction:column;align-items:center;
+  text-align:center;padding:20px 12px;position:relative;
+  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);
+  border-radius:14px;
+  opacity:0;transform:translateY(24px);
+  transition:opacity .5s ease, transform .5s ease;
+}
+.hiw-step.visible{opacity:1;transform:translateY(0)}
+.hiw-step:nth-child(1){transition-delay:.1s}
+.hiw-step:nth-child(2){transition-delay:.25s}
+.hiw-step:nth-child(3){transition-delay:.4s}
+.hiw-step:nth-child(4){transition-delay:.55s}
+.hiw-step:nth-child(5){transition-delay:.7s}
+.hiw-icon-wrap{
+  width:60px;height:60px;border-radius:50%;
+  background:linear-gradient(135deg,rgba(201,146,42,.15),rgba(201,146,42,.05));
+  border:1.5px solid rgba(201,146,42,.3);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.5rem;margin-bottom:12px;position:relative;
+  animation:hiw-pulse 2s ease-in-out infinite;
+}
+.hiw-step:nth-child(2) .hiw-icon-wrap{animation-delay:.4s}
+.hiw-step:nth-child(3) .hiw-icon-wrap{animation-delay:.8s}
+.hiw-step:nth-child(4) .hiw-icon-wrap{animation-delay:1.2s}
+.hiw-step:nth-child(5) .hiw-icon-wrap{animation-delay:1.6s}
+@keyframes hiw-pulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(201,146,42,.25)}
+  50%{box-shadow:0 0 0 10px rgba(201,146,42,0)}
+}
+.hiw-step-num{
+  position:absolute;top:-8px;right:-8px;
+  width:22px;height:22px;border-radius:50%;
+  background:var(--gold);color:#fff;
+  font-size:.62rem;font-weight:800;
+  display:flex;align-items:center;justify-content:center;
+}
+.hiw-step h4{font-size:.8rem;font-weight:700;color:#fff;margin-bottom:5px;line-height:1.3}
+.hiw-step p{font-size:.7rem;color:rgba(255,255,255,.4);line-height:1.65;font-weight:300}
+
+/* Money flow animation */
+.hiw-money{
+  display:flex;align-items:center;justify-content:center;
+  gap:0;margin-bottom:28px;position:relative;
+  background:rgba(201,146,42,.04);
+  border:1px solid rgba(201,146,42,.12);
+  border-radius:14px;padding:20px 16px;overflow:hidden;
+}
+.hiw-money::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(201,146,42,.06),transparent);
+  animation:hiw-shimmer 2.5s linear infinite;
+}
+@keyframes hiw-shimmer{
+  0%{transform:translateX(-100%)}
+  100%{transform:translateX(100%)}
+}
+.hiw-actor{display:flex;flex-direction:column;align-items:center;gap:6px;z-index:1}
+.hiw-actor-icon{
+  width:48px;height:48px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;font-size:1.3rem;
+}
+.hiw-actor-icon.buyer{background:rgba(37,99,235,.15);border:1px solid rgba(37,99,235,.3)}
+.hiw-actor-icon.escrow{background:rgba(201,146,42,.15);border:1px solid rgba(201,146,42,.3)}
+.hiw-actor-icon.seller{background:rgba(5,150,105,.15);border:1px solid rgba(5,150,105,.3)}
+.hiw-actor span{font-size:.65rem;font-weight:600;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.5px}
+.hiw-arrow-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:0 8px;z-index:1}
+.hiw-arrow-line{width:100%;height:2px;position:relative;overflow:hidden;background:rgba(255,255,255,.06);border-radius:2px}
+.hiw-arrow-dot{position:absolute;top:50%;transform:translateY(-50%);width:10px;height:10px;border-radius:50%}
+.hiw-arrow-dot.pay{background:#3b82f6;animation:hiw-move-right 1.8s linear infinite}
+.hiw-arrow-dot.release{background:#10b981;animation:hiw-move-right 1.8s linear infinite;animation-delay:.9s}
+@keyframes hiw-move-right{
+  0%{left:-10px;opacity:0}
+  10%{opacity:1}
+  90%{opacity:1}
+  100%{left:100%;opacity:0}
+}
+.hiw-arrow-label{font-size:.6rem;color:rgba(255,255,255,.35);font-weight:500;text-align:center}
+
+/* Dispute section */
+.hiw-dispute{
+  background:rgba(220,38,38,.04);
+  border:1px solid rgba(220,38,38,.15);
+  border-radius:14px;padding:22px 18px;
+}
+.hiw-dispute-title{
+  font-family:'Cormorant Garamond',serif;
+  font-size:1.1rem;font-weight:600;color:#fff;
+  margin-bottom:16px;display:flex;align-items:center;gap:8px;
+}
+.hiw-dispute-steps{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap}
+.hiw-dstep{
+  display:flex;flex-direction:column;align-items:center;text-align:center;
+  gap:8px;background:rgba(255,255,255,.03);border-radius:10px;
+  padding:14px 10px;flex:1;min-width:100px;
+  opacity:0;transform:translateY(12px);
+  transition:opacity .4s ease,transform .4s ease;
+}
+.hiw-dstep.visible{opacity:1;transform:translateY(0)}
+.hiw-dstep:nth-child(1){transition-delay:.1s}
+.hiw-dstep:nth-child(2){transition-delay:.25s}
+.hiw-dstep:nth-child(3){transition-delay:.4s}
+.hiw-dstep:nth-child(4){transition-delay:.55s}
+.hiw-dstep-icon{font-size:1.4rem}
+.hiw-dstep h5{font-size:.72rem;font-weight:700;color:#fff;line-height:1.3}
+.hiw-dstep p{font-size:.65rem;color:rgba(255,255,255,.4);font-weight:300;line-height:1.5}
 
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
@@ -2167,6 +2419,17 @@ footer{background:var(--text);color:#fff;border-top:1px solid rgba(255,255,255,.
     <span class="bni">🔑</span>Login
   </button>
 </nav>
+
+<!-- ═══════════════════════════════════════
+     NOTIFICATION BAR
+═══════════════════════════════════════ -->
+<div class="notif-bar" id="notif-bar">
+  <div class="notif-bar-text">
+    🎉 <span>NeyoMarket is Live!</span> Nigeria's safest escrow marketplace — buy, sell & earn with zero scam guarantee 🛡️
+  </div>
+  <button class="notif-bar-cta" onclick="go('signup')">Join Free</button>
+  <button class="notif-bar-close" onclick="document.getElementById('notif-bar').style.display='none'" aria-label="Close">✕</button>
+</div>
 
 <!-- ═══════════════════════════════════════
      NAVBAR
@@ -2288,7 +2551,260 @@ footer{background:var(--text);color:#fff;border-top:1px solid rgba(255,255,255,.
         <div class="ti"><h3>24hr</h3><p>Dispute Resolution</p></div>
       </div>
     </div>
+  </div><!-- /hero -->
+
+  <!-- ═══ HOW NEYOMARKET WORKS ═══════════════════════════════════════════ -->
+  <div class="hiw-section">
+    <div class="hiw-inner">
+
+      <div class="hiw-badge">⚡ Simple. Secure. Fast.</div>
+      <h2 class="hiw-title">How <span>NeyoMarket</span> Works</h2>
+      <p class="hiw-sub">Every transaction on NeyoMarket is protected by escrow from the moment you pay to the moment you confirm delivery. Here is exactly how it works.</p>
+
+      <!-- ═══ SVG ILLUSTRATED SCENES ═══ -->
+      <div class="hiw-illustrations">
+
+        <!-- Scene 1: Escrow Protection -->
+        <div class="hiw-illus-card">
+          <svg width="160" height="140" viewBox="0 0 160 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Background glow -->
+            <circle cx="80" cy="70" r="55" fill="rgba(201,146,42,0.06)"/>
+            <!-- Animated pulse rings -->
+            <circle cx="80" cy="70" r="50" stroke="rgba(201,146,42,0.15)" stroke-width="1" fill="none">
+              <animate attributeName="r" values="42;56;42" dur="3s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" values="0.3;0;0.3" dur="3s" repeatCount="indefinite"/>
+            </circle>
+            <!-- Shield body -->
+            <g style="animation:shield-glow 2s ease-in-out infinite">
+              <path d="M80 20 L108 32 L108 68 C108 88 80 102 80 102 C80 102 52 88 52 68 L52 32 Z"
+                fill="rgba(15,58,125,0.9)" stroke="#c9922a" stroke-width="2"/>
+              <!-- Shield inner gradient -->
+              <path d="M80 28 L102 38 L102 68 C102 84 80 96 80 96 C80 96 58 84 58 68 L58 38 Z"
+                fill="rgba(201,146,42,0.12)"/>
+              <!-- Lock icon inside shield -->
+              <rect x="71" y="58" width="18" height="16" rx="3" fill="#c9922a"/>
+              <path d="M74 58 L74 53 C74 48.6 86 48.6 86 53 L86 58" stroke="#c9922a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+              <!-- Keyhole -->
+              <circle cx="80" cy="64" r="3" fill="rgba(15,58,125,0.9)"/>
+              <rect x="79" y="64" width="2" height="5" rx="1" fill="rgba(15,58,125,0.9)"/>
+            </g>
+            <!-- Floating coins -->
+            <g style="animation:float-up 2.5s ease-in-out infinite">
+              <circle cx="36" cy="55" r="10" fill="rgba(201,146,42,0.2)" stroke="#c9922a" stroke-width="1.5"/>
+              <text x="36" y="59" text-anchor="middle" font-size="9" fill="#c9922a" font-weight="bold">₦</text>
+            </g>
+            <g style="animation:float-down 2.5s ease-in-out infinite;animation-delay:.8s">
+              <circle cx="124" cy="50" r="8" fill="rgba(201,146,42,0.2)" stroke="#c9922a" stroke-width="1.5"/>
+              <text x="124" y="54" text-anchor="middle" font-size="7" fill="#c9922a" font-weight="bold">₦</text>
+            </g>
+            <g style="animation:float-up 3s ease-in-out infinite;animation-delay:1.2s">
+              <circle cx="42" cy="90" r="7" fill="rgba(201,146,42,0.15)" stroke="#c9922a" stroke-width="1"/>
+              <text x="42" y="94" text-anchor="middle" font-size="6" fill="#c9922a" font-weight="bold">₦</text>
+            </g>
+            <!-- Checkmark badge -->
+            <g style="animation:bounce-badge 2s ease-in-out infinite" transform-origin="118 28">
+              <circle cx="118" cy="28" r="12" fill="#059669"/>
+              <polyline points="113,28 117,33 124,22" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <animate attributeName="stroke-dasharray" values="0,30;30,0" dur="1s" begin="0.5s" fill="freeze"/>
+              </polyline>
+            </g>
+            <!-- Stars -->
+            <text x="22" y="35" font-size="8" fill="rgba(201,146,42,0.5)" style="animation:float-up 4s ease-in-out infinite">✦</text>
+            <text x="130" y="90" font-size="6" fill="rgba(201,146,42,0.4)" style="animation:float-down 3.5s ease-in-out infinite">✦</text>
+          </svg>
+          <h4>🔐 Escrow Protection</h4>
+          <p>Your money is locked safely by Paystack and only released when you confirm you've received exactly what you ordered.</p>
+        </div>
+
+        <!-- Scene 2: Verified Sellers -->
+        <div class="hiw-illus-card">
+          <svg width="160" height="140" viewBox="0 0 160 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Background -->
+            <circle cx="80" cy="65" r="50" fill="rgba(37,99,235,0.06)"/>
+            <!-- Phone frame -->
+            <rect x="50" y="18" width="60" height="100" rx="10" fill="rgba(15,58,125,0.8)" stroke="rgba(201,146,42,0.4)" stroke-width="1.5"/>
+            <rect x="54" y="26" width="52" height="78" rx="6" fill="rgba(8,12,20,0.9)"/>
+            <!-- Phone notch -->
+            <rect x="70" y="20" width="20" height="5" rx="2.5" fill="rgba(201,146,42,0.3)"/>
+            <!-- Screen content: profile -->
+            <circle cx="80" cy="48" r="12" fill="rgba(201,146,42,0.15)" stroke="rgba(201,146,42,0.4)" stroke-width="1.5"/>
+            <text x="80" y="52" text-anchor="middle" font-size="13">👤</text>
+            <!-- Verified badge on profile -->
+            <g style="animation:bounce-badge 2s ease-in-out infinite" transform-origin="88 38">
+              <circle cx="88" cy="38" r="8" fill="#059669"/>
+              <polyline points="84.5,38 87,41 92,34" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            </g>
+            <!-- Name bar -->
+            <rect x="62" y="64" width="36" height="4" rx="2" fill="rgba(255,255,255,0.2)"/>
+            <!-- KYC verified text -->
+            <rect x="64" y="72" width="32" height="3" rx="1.5" fill="rgba(5,150,105,0.4)"/>
+            <!-- Product cards on screen -->
+            <rect x="58" y="80" width="22" height="16" rx="4" fill="rgba(201,146,42,0.12)" stroke="rgba(201,146,42,0.2)" stroke-width="1"/>
+            <text x="69" y="91" text-anchor="middle" font-size="9">📦</text>
+            <rect x="84" y="80" width="22" height="16" rx="4" fill="rgba(37,99,235,0.12)" stroke="rgba(37,99,235,0.2)" stroke-width="1"/>
+            <text x="95" y="91" text-anchor="middle" font-size="9">💻</text>
+            <!-- Floating stars around phone -->
+            <text x="28" y="50" font-size="14" fill="rgba(201,146,42,0.6)" style="animation:float-up 2.5s ease-in-out infinite">★</text>
+            <text x="122" y="60" font-size="10" fill="rgba(201,146,42,0.4)" style="animation:float-down 3s ease-in-out infinite">★</text>
+            <text x="32" y="90" font-size="8" fill="rgba(201,146,42,0.3)" style="animation:float-up 3.5s ease-in-out infinite">★</text>
+            <!-- NIN badge -->
+            <rect x="18" y="65" width="28" height="14" rx="4" fill="rgba(15,58,125,0.8)" stroke="rgba(201,146,42,0.3)" stroke-width="1" style="animation:float-up 2s ease-in-out infinite"/>
+            <text x="32" y="75" text-anchor="middle" font-size="7" fill="#c9922a" font-weight="bold">NIN ✓</text>
+          </svg>
+          <h4>🪪 Verified Sellers</h4>
+          <p>Every seller completes KYC with a valid NIN or BVN before listing. Real identity, real accountability — no anonymous scammers.</p>
+        </div>
+
+        <!-- Scene 3: Instant Payout -->
+        <div class="hiw-illus-card">
+          <svg width="160" height="140" viewBox="0 0 160 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Background glow -->
+            <circle cx="80" cy="70" r="52" fill="rgba(5,150,105,0.06)"/>
+            <!-- Bank building -->
+            <rect x="45" y="75" width="70" height="45" rx="4" fill="rgba(15,58,125,0.8)" stroke="rgba(201,146,42,0.3)" stroke-width="1.5"/>
+            <!-- Bank roof -->
+            <polygon points="38,75 80,45 122,75" fill="rgba(15,58,125,0.9)" stroke="rgba(201,146,42,0.4)" stroke-width="1.5"/>
+            <!-- Bank columns -->
+            <rect x="54" y="80" width="6" height="35" rx="2" fill="rgba(201,146,42,0.15)"/>
+            <rect x="66" y="80" width="6" height="35" rx="2" fill="rgba(201,146,42,0.15)"/>
+            <rect x="88" y="80" width="6" height="35" rx="2" fill="rgba(201,146,42,0.15)"/>
+            <rect x="100" y="80" width="6" height="35" rx="2" fill="rgba(201,146,42,0.15)"/>
+            <!-- Door -->
+            <rect x="72" y="95" width="16" height="25" rx="3" fill="rgba(201,146,42,0.2)" stroke="rgba(201,146,42,0.4)" stroke-width="1"/>
+            <!-- Bank label -->
+            <text x="80" y="72" text-anchor="middle" font-size="7" fill="rgba(255,255,255,0.6)" font-weight="bold">YOUR BANK</text>
+            <!-- Animated money falling into bank -->
+            <g style="animation:coin-drop 1.5s ease-in-out infinite">
+              <circle cx="80" cy="30" r="10" fill="rgba(201,146,42,0.3)" stroke="#c9922a" stroke-width="2"/>
+              <text x="80" y="34" text-anchor="middle" font-size="9" fill="#c9922a" font-weight="bold">₦</text>
+            </g>
+            <g style="animation:coin-drop 1.5s ease-in-out infinite;animation-delay:.4s">
+              <circle cx="64" cy="25" r="8" fill="rgba(201,146,42,0.2)" stroke="#c9922a" stroke-width="1.5"/>
+              <text x="64" y="29" text-anchor="middle" font-size="7" fill="#c9922a" font-weight="bold">₦</text>
+            </g>
+            <g style="animation:coin-drop 1.5s ease-in-out infinite;animation-delay:.8s">
+              <circle cx="96" cy="28" r="7" fill="rgba(201,146,42,0.2)" stroke="#c9922a" stroke-width="1.5"/>
+              <text x="96" y="32" text-anchor="middle" font-size="6" fill="#c9922a" font-weight="bold">₦</text>
+            </g>
+            <!-- 90% label -->
+            <rect x="24" y="55" width="36" height="18" rx="6" fill="rgba(5,150,105,0.15)" stroke="rgba(5,150,105,0.4)" stroke-width="1.5" style="animation:bounce-badge 2.5s ease-in-out infinite"/>
+            <text x="42" y="67" text-anchor="middle" font-size="10" fill="#10b981" font-weight="bold">90%</text>
+            <!-- Instant label -->
+            <rect x="100" y="52" width="38" height="18" rx="6" fill="rgba(201,146,42,0.12)" stroke="rgba(201,146,42,0.3)" stroke-width="1" style="animation:float-up 2s ease-in-out infinite"/>
+            <text x="119" y="64" text-anchor="middle" font-size="8" fill="#c9922a" font-weight="bold">INSTANT</text>
+          </svg>
+          <h4>🏦 Instant Bank Payout</h4>
+          <p>Once a buyer confirms delivery, 90% of the payment hits your verified Nigerian bank account instantly. No delays, no fake transfers.</p>
+        </div>
+
+      </div>
+      <!-- ═══ /SVG ILLUSTRATED SCENES ═══ -->
+      <div class="hiw-flow" id="hiw-flow">
+        <div class="hiw-step">
+          <div class="hiw-icon-wrap">
+            🛒
+            <div class="hiw-step-num">1</div>
+          </div>
+          <h4>Browse & Buy</h4>
+          <p>Find a product you love from a verified seller and tap Buy Now.</p>
+        </div>
+        <div class="hiw-step">
+          <div class="hiw-icon-wrap">
+            💳
+            <div class="hiw-step-num">2</div>
+          </div>
+          <h4>Pay Securely</h4>
+          <p>Your payment is processed by Paystack and held safely in escrow — not given to the seller yet.</p>
+        </div>
+        <div class="hiw-step">
+          <div class="hiw-icon-wrap">
+            📦
+            <div class="hiw-step-num">3</div>
+          </div>
+          <h4>Seller Delivers</h4>
+          <p>The seller is notified and delivers your product — physical shipping or instant digital access.</p>
+        </div>
+        <div class="hiw-step">
+          <div class="hiw-icon-wrap">
+            ✅
+            <div class="hiw-step-num">4</div>
+          </div>
+          <h4>You Confirm</h4>
+          <p>Once happy with your order, tap Confirm Collection inside your orders tab.</p>
+        </div>
+        <div class="hiw-step">
+          <div class="hiw-icon-wrap">
+            🏦
+            <div class="hiw-step-num">5</div>
+          </div>
+          <h4>Seller Gets Paid</h4>
+          <p>90% of the payment is released instantly to the seller's verified bank account.</p>
+        </div>
+      </div>
+
+      <!-- Animated money flow -->
+      <div class="hiw-money">
+        <div class="hiw-actor">
+          <div class="hiw-actor-icon buyer">🧑</div>
+          <span>Buyer</span>
+        </div>
+        <div class="hiw-arrow-wrap">
+          <div class="hiw-arrow-line">
+            <div class="hiw-arrow-dot pay"></div>
+          </div>
+          <div class="hiw-arrow-label">💳 Payment sent to escrow</div>
+        </div>
+        <div class="hiw-actor">
+          <div class="hiw-actor-icon escrow">🔐</div>
+          <span>Escrow</span>
+        </div>
+        <div class="hiw-arrow-wrap">
+          <div class="hiw-arrow-line">
+            <div class="hiw-arrow-dot release"></div>
+          </div>
+          <div class="hiw-arrow-label">✅ Released after confirmation</div>
+        </div>
+        <div class="hiw-actor">
+          <div class="hiw-actor-icon seller">🏪</div>
+          <span>Seller</span>
+        </div>
+      </div>
+
+      <!-- Dispute flow -->
+      <div class="hiw-dispute">
+        <div class="hiw-dispute-title">⚖️ How Disputes Are Resolved</div>
+        <div class="hiw-dispute-steps" id="hiw-dispute-steps">
+          <div class="hiw-dstep">
+            <div class="hiw-dstep-icon">🚨</div>
+            <h5>Buyer Opens Dispute</h5>
+            <p>Item not received or not as described — tap Open Dispute in your orders.</p>
+          </div>
+          <div class="hiw-dstep">
+            <div class="hiw-dstep-icon">📋</div>
+            <h5>Admin Reviews</h5>
+            <p>NeyoMarket team reviews the case within 24 hours fairly and transparently.</p>
+          </div>
+          <div class="hiw-dstep">
+            <div class="hiw-dstep-icon">🔍</div>
+            <h5>Evidence Checked</h5>
+            <p>Both buyer and seller can submit evidence — photos, messages, tracking info.</p>
+          </div>
+          <div class="hiw-dstep">
+            <div class="hiw-dstep-icon">💸</div>
+            <h5>Full Refund Issued</h5>
+            <p>If seller is at fault, buyer receives a full refund from escrow. Zero runaround.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- CTA -->
+      <div style="text-align:center;margin-top:32px">
+        <button class="bg" style="padding:13px 28px;font-size:.88rem" onclick="go('signup')">✨ Join Free — Start Trading Safely</button>
+      </div>
+
+    </div>
   </div>
+  <!-- ═══ /HOW NEYOMARKET WORKS ═══════════════════════════════════════════ -->
 
   <!-- ═══ HERO SLIDER ════════════════════════════════════════════════════ -->
   <div class="nyo-slider-wrap" id="nyo-slider-wrap">
@@ -13739,10 +14255,33 @@ window.submitContactForm = submitContactForm;
     var n = (typeof getActive === 'function') ? getActive().length : 0;
     el.textContent = n > 0 ? n : '—';
   }
-  /* Run immediately and again after products load */
   setCount();
   setTimeout(setCount, 2000);
   setTimeout(setCount, 5000);
+})();
+
+/* ═══════════════════════════════════════════════════
+   HOW IT WORKS — scroll-triggered step animations
+════════════════════════════════════════════════════ */
+(function initHIW() {
+  function run() {
+    var steps = document.querySelectorAll('.hiw-step, .hiw-dstep, .hiw-illus-card');
+    if (!steps.length) return;
+    var io = new IntersectionObserver(function(entries) {
+      entries.forEach(function(e) {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          io.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.15 });
+    steps.forEach(function(s) { io.observe(s); });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', run);
+  } else {
+    run();
+  }
 })();
 
 </script>
