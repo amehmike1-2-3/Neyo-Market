@@ -2390,6 +2390,46 @@ footer{background:var(--text);color:#fff;border-top:1px solid rgba(255,255,255,.
 .hiw-dstep h5{font-size:.72rem;font-weight:700;color:#fff;line-height:1.3}
 .hiw-dstep p{font-size:.65rem;color:rgba(255,255,255,.4);font-weight:300;line-height:1.5}
 
+/* ══════════════════════════════════════
+   PLATFORM REVIEWS SECTION
+══════════════════════════════════════ */
+.pr-section{background:var(--bg);padding:52px 0 56px;position:relative;overflow:hidden}
+.pr-inner{max-width:900px;margin:0 auto;padding:0 16px}
+.pr-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(201,146,42,.1);border:1px solid rgba(201,146,42,.25);color:var(--gold);font-size:.63rem;font-weight:700;padding:5px 14px;border-radius:20px;letter-spacing:.7px;text-transform:uppercase;margin-bottom:14px}
+.pr-title{font-family:'Cormorant Garamond',serif;font-size:clamp(1.7rem,5vw,2.4rem);font-weight:700;color:var(--text);margin-bottom:8px;line-height:1.2}
+.pr-title span{color:var(--gold)}
+.pr-sub{color:var(--muted);font-size:.84rem;line-height:1.7;margin-bottom:28px;font-weight:300;max-width:480px}
+.pr-overall{display:flex;align-items:center;gap:20px;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px 22px;margin-bottom:28px;flex-wrap:wrap}
+.pr-overall-score{font-family:'Cormorant Garamond',serif;font-size:3.5rem;font-weight:700;color:var(--gold);line-height:1;flex-shrink:0}
+.pr-overall-stars{font-size:1.2rem;margin-bottom:4px}
+.pr-overall-count{font-size:.75rem;color:var(--muted);font-weight:400}
+.pr-overall-bars{flex:1;min-width:160px;display:flex;flex-direction:column;gap:6px}
+.pr-bar-row{display:flex;align-items:center;gap:8px}
+.pr-bar-label{font-size:.68rem;color:var(--muted);width:32px;flex-shrink:0;font-weight:500}
+.pr-bar-track{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.pr-bar-fill{height:100%;border-radius:3px;background:var(--gold);transition:width .8s ease}
+.pr-bar-pct{font-size:.65rem;color:var(--muted);width:28px;text-align:right;flex-shrink:0}
+.pr-write-wrap{margin-bottom:24px}
+.pr-write-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:22px;display:none;margin-top:14px}
+.pr-write-card.open{display:block}
+.pr-stars-select{display:flex;gap:6px;margin-bottom:14px}
+.pr-star-btn{font-size:1.6rem;cursor:pointer;background:none;border:none;padding:2px;transition:.15s;line-height:1;filter:grayscale(1);opacity:.4}
+.pr-star-btn.active{filter:grayscale(0);opacity:1;transform:scale(1.1)}
+.pr-star-btn:hover{filter:grayscale(0);opacity:.8}
+.pr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-bottom:20px}
+.pr-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px 16px;opacity:0;transform:translateY(16px);transition:opacity .4s ease,transform .4s ease}
+.pr-card.visible{opacity:1;transform:translateY(0)}
+.pr-card:hover{border-color:rgba(201,146,42,.3)}
+.pr-card-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.pr-avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold2));display:flex;align-items:center;justify-content:center;font-size:.88rem;font-weight:700;color:#fff;flex-shrink:0}
+.pr-name{font-size:.82rem;font-weight:600;color:var(--text);margin-bottom:2px}
+.pr-date{font-size:.65rem;color:var(--muted2)}
+.pr-stars{font-size:.85rem;margin-bottom:8px}
+.pr-comment{font-size:.78rem;color:var(--muted);line-height:1.7;font-weight:300}
+.pr-empty{text-align:center;padding:36px 20px;color:var(--muted);font-size:.82rem}
+.pr-load-more{display:block;width:100%;padding:12px;background:transparent;border:1.5px solid var(--border);border-radius:8px;color:var(--muted);font-family:inherit;font-size:.82rem;font-weight:600;cursor:pointer;transition:var(--tr);margin-top:4px}
+.pr-load-more:hover{border-color:var(--gold);color:var(--gold)}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
 </head>
@@ -2805,6 +2845,61 @@ footer{background:var(--text);color:#fff;border-top:1px solid rgba(255,255,255,.
     </div>
   </div>
   <!-- ═══ /HOW NEYOMARKET WORKS ═══════════════════════════════════════════ -->
+
+  <!-- ═══ PLATFORM REVIEWS ══════════════════════════════════════════════ -->
+  <div class="pr-section">
+    <div class="pr-inner">
+
+      <div class="pr-badge">⭐ Verified User Reviews</div>
+      <h2 class="pr-title">What People Say About <span>NeyoMarket</span></h2>
+      <p class="pr-sub">Real reviews from real buyers, sellers, and affiliates who use NeyoMarket every day.</p>
+
+      <!-- Overall rating -->
+      <div class="pr-overall">
+        <div>
+          <div class="pr-overall-score" id="pr-score">—</div>
+          <div class="pr-overall-stars" id="pr-stars">☆☆☆☆☆</div>
+          <div class="pr-overall-count" id="pr-count">No reviews yet</div>
+        </div>
+        <div class="pr-overall-bars" id="pr-bars">
+          <div class="pr-bar-row"><span class="pr-bar-label">5 ⭐</span><div class="pr-bar-track"><div class="pr-bar-fill" id="pr-b5" style="width:0%"></div></div><span class="pr-bar-pct" id="pr-p5">0%</span></div>
+          <div class="pr-bar-row"><span class="pr-bar-label">4 ⭐</span><div class="pr-bar-track"><div class="pr-bar-fill" id="pr-b4" style="width:0%"></div></div><span class="pr-bar-pct" id="pr-p4">0%</span></div>
+          <div class="pr-bar-row"><span class="pr-bar-label">3 ⭐</span><div class="pr-bar-track"><div class="pr-bar-fill" id="pr-b3" style="width:0%"></div></div><span class="pr-bar-pct" id="pr-p3">0%</span></div>
+          <div class="pr-bar-row"><span class="pr-bar-label">2 ⭐</span><div class="pr-bar-track"><div class="pr-bar-fill" id="pr-b2" style="width:0%"></div></div><span class="pr-bar-pct" id="pr-p2">0%</span></div>
+          <div class="pr-bar-row"><span class="pr-bar-label">1 ⭐</span><div class="pr-bar-track"><div class="pr-bar-fill" id="pr-b1" style="width:0%"></div></div><span class="pr-bar-pct" id="pr-p1">0%</span></div>
+        </div>
+      </div>
+
+      <!-- Write review -->
+      <div class="pr-write-wrap">
+        <button class="bg" style="padding:11px 24px;font-size:.82rem" onclick="togglePRForm()">✍️ Leave a Review</button>
+        <div class="pr-write-card" id="pr-write-card">
+          <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:600;color:var(--text);margin-bottom:14px">Rate NeyoMarket</h3>
+          <div class="pr-stars-select" id="pr-stars-select">
+            <button class="pr-star-btn" data-val="1" onclick="setPRStar(1)">⭐</button>
+            <button class="pr-star-btn" data-val="2" onclick="setPRStar(2)">⭐</button>
+            <button class="pr-star-btn" data-val="3" onclick="setPRStar(3)">⭐</button>
+            <button class="pr-star-btn" data-val="4" onclick="setPRStar(4)">⭐</button>
+            <button class="pr-star-btn" data-val="5" onclick="setPRStar(5)">⭐</button>
+          </div>
+          <textarea class="fi" id="pr-comment" placeholder="Share your experience with NeyoMarket — what did you love? What helped you?" style="min-height:90px;margin-bottom:12px"></textarea>
+          <div id="pr-form-err" style="color:var(--red);font-size:.76rem;margin-bottom:8px;min-height:14px"></div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="sbtn" style="padding:10px 22px;font-size:.82rem" onclick="submitPlatformReview()">📨 Submit Review</button>
+            <button onclick="togglePRForm()" style="background:transparent;border:1.5px solid var(--border);color:var(--muted);padding:10px 18px;border-radius:6px;font-size:.82rem;cursor:pointer;font-family:inherit">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reviews grid -->
+      <div class="pr-grid" id="pr-grid">
+        <div class="pr-empty">⏳ Loading reviews…</div>
+      </div>
+      <button class="pr-load-more" id="pr-load-more" style="display:none" onclick="loadMorePR()">Load More Reviews</button>
+
+    </div>
+  </div>
+  <!-- ═══ /PLATFORM REVIEWS ══════════════════════════════════════════════ -->
 
   <!-- ═══ HERO SLIDER ════════════════════════════════════════════════════ -->
   <div class="nyo-slider-wrap" id="nyo-slider-wrap">
@@ -14261,8 +14356,191 @@ window.submitContactForm = submitContactForm;
 })();
 
 /* ═══════════════════════════════════════════════════
-   HOW IT WORKS — scroll-triggered step animations
+   PLATFORM REVIEWS — frontend logic
 ════════════════════════════════════════════════════ */
+var PR_PAGE = 0;
+var PR_LIMIT = 6;
+var PR_TOTAL = 0;
+var PR_SELECTED_STAR = 0;
+var PR_ALL = [];
+
+function starsHTML(r) {
+  var s = '';
+  for (var i = 1; i <= 5; i++) s += i <= r ? '⭐' : '☆';
+  return s;
+}
+
+function timeAgo(dateStr) {
+  var diff = (Date.now() - new Date(dateStr)) / 1000;
+  if (diff < 60) return 'Just now';
+  if (diff < 3600) return Math.floor(diff/60) + 'm ago';
+  if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
+  if (diff < 2592000) return Math.floor(diff/86400) + 'd ago';
+  return new Date(dateStr).toLocaleDateString('en-NG', {day:'numeric',month:'short',year:'numeric'});
+}
+
+function initials(name) {
+  var parts = (name || 'A').trim().split(' ');
+  return (parts[0][0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
+}
+
+function renderPRCards(reviews, append) {
+  var grid = document.getElementById('pr-grid');
+  if (!grid) return;
+  if (!append) grid.innerHTML = '';
+  if (!reviews.length && !append) {
+    grid.innerHTML = '<div class="pr-empty">💬 No reviews yet. Be the first to review NeyoMarket!</div>';
+    return;
+  }
+  reviews.forEach(function(r, i) {
+    var card = document.createElement('div');
+    card.className = 'pr-card';
+    card.style.transitionDelay = (i * 0.08) + 's';
+    card.innerHTML = '<div class="pr-card-top">'
+      + '<div class="pr-avatar">' + initials(r.user_name) + '</div>'
+      + '<div><div class="pr-name">' + (r.user_name || 'Anonymous') + '</div>'
+      + '<div class="pr-date">' + timeAgo(r.created_at) + '</div></div></div>'
+      + '<div class="pr-stars">' + starsHTML(r.rating) + '</div>'
+      + (r.comment ? '<div class="pr-comment">' + r.comment.replace(/</g,'&lt;') + '</div>' : '');
+    grid.appendChild(card);
+    setTimeout(function() { card.classList.add('visible'); }, 50);
+  });
+}
+
+function updatePROverall(reviews) {
+  if (!reviews.length) return;
+  var total = reviews.length;
+  var sum = reviews.reduce(function(a, r) { return a + r.rating; }, 0);
+  var avg = (sum / total).toFixed(1);
+  var counts = {1:0,2:0,3:0,4:0,5:0};
+  reviews.forEach(function(r) { counts[r.rating] = (counts[r.rating]||0) + 1; });
+
+  var scoreEl = document.getElementById('pr-score');
+  var starsEl = document.getElementById('pr-stars');
+  var countEl = document.getElementById('pr-count');
+  if (scoreEl) scoreEl.textContent = avg;
+  if (starsEl) starsEl.textContent = starsHTML(Math.round(avg));
+  if (countEl) countEl.textContent = total + ' review' + (total !== 1 ? 's' : '');
+
+  for (var s = 1; s <= 5; s++) {
+    var pct = total ? Math.round((counts[s]/total)*100) : 0;
+    var bEl = document.getElementById('pr-b'+s);
+    var pEl = document.getElementById('pr-p'+s);
+    if (bEl) bEl.style.width = pct + '%';
+    if (pEl) pEl.textContent = pct + '%';
+  }
+}
+
+function loadPlatformReviews() {
+  fetch('/api/reviews?type=platform')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      PR_ALL = data.reviews || [];
+      PR_TOTAL = PR_ALL.length;
+      updatePROverall(PR_ALL);
+      var first = PR_ALL.slice(0, PR_LIMIT);
+      renderPRCards(first, false);
+      PR_PAGE = 1;
+      var lm = document.getElementById('pr-load-more');
+      if (lm) lm.style.display = PR_TOTAL > PR_LIMIT ? 'block' : 'none';
+    })
+    .catch(function() {
+      var grid = document.getElementById('pr-grid');
+      if (grid) grid.innerHTML = '<div class="pr-empty">💬 Be the first to review NeyoMarket!</div>';
+    });
+}
+
+function loadMorePR() {
+  var next = PR_ALL.slice(PR_PAGE * PR_LIMIT, (PR_PAGE + 1) * PR_LIMIT);
+  renderPRCards(next, true);
+  PR_PAGE++;
+  var lm = document.getElementById('pr-load-more');
+  if (lm && PR_PAGE * PR_LIMIT >= PR_TOTAL) lm.style.display = 'none';
+}
+
+function togglePRForm() {
+  var card = document.getElementById('pr-write-card');
+  if (!card) return;
+  if (!card.classList.contains('open')) {
+    if (!window.CU || !window.CU.id) {
+      showToast('Please sign in to leave a review'); go('signin'); return;
+    }
+  }
+  card.classList.toggle('open');
+  PR_SELECTED_STAR = 0;
+  var btns = document.querySelectorAll('.pr-star-btn');
+  btns.forEach(function(b) { b.classList.remove('active'); });
+  var errEl = document.getElementById('pr-form-err');
+  if (errEl) errEl.textContent = '';
+}
+
+function setPRStar(val) {
+  PR_SELECTED_STAR = val;
+  var btns = document.querySelectorAll('.pr-star-btn');
+  btns.forEach(function(b) {
+    var v = parseInt(b.getAttribute('data-val'));
+    b.classList.toggle('active', v <= val);
+  });
+}
+
+function submitPlatformReview() {
+  var errEl = document.getElementById('pr-form-err');
+  var btn = document.querySelector('#pr-write-card .sbtn');
+  var comment = (document.getElementById('pr-comment') || {}).value || '';
+
+  if (!window.CU || !window.CU.id) {
+    if (errEl) errEl.textContent = 'Please sign in first.'; return;
+  }
+  if (!PR_SELECTED_STAR) {
+    if (errEl) errEl.textContent = 'Please select a star rating.'; return;
+  }
+  if (comment.trim().length < 5) {
+    if (errEl) errEl.textContent = 'Please write at least a short comment.'; return;
+  }
+
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Submitting…'; }
+  if (errEl) errEl.textContent = '';
+
+  fetch('/api/reviews?type=platform', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      userId: window.CU.id,
+      userName: window.CU.name || window.CU.email || 'User',
+      rating: PR_SELECTED_STAR,
+      comment: comment.trim()
+    })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (btn) { btn.disabled = false; btn.textContent = '📨 Submit Review'; }
+    if (data.ok) {
+      showToast('✅ Review submitted! Thank you.');
+      togglePRForm();
+      var commentEl = document.getElementById('pr-comment');
+      if (commentEl) commentEl.value = '';
+      loadPlatformReviews();
+    } else {
+      if (errEl) errEl.textContent = data.error || 'Could not submit review.';
+    }
+  })
+  .catch(function() {
+    if (btn) { btn.disabled = false; btn.textContent = '📨 Submit Review'; }
+    if (errEl) errEl.textContent = 'Network error. Please try again.';
+  });
+}
+window.togglePRForm = togglePRForm;
+window.setPRStar = setPRStar;
+window.submitPlatformReview = submitPlatformReview;
+window.loadMorePR = loadMorePR;
+
+/* Load reviews on page ready */
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', loadPlatformReviews);
+} else {
+  loadPlatformReviews();
+}
+
 (function initHIW() {
   function run() {
     var steps = document.querySelectorAll('.hiw-step, .hiw-dstep, .hiw-illus-card');
