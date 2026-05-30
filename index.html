@@ -14461,17 +14461,14 @@ function loadMorePR() {
 function togglePRForm() {
   var card = document.getElementById('pr-write-card');
   if (!card) return;
-  if (!card.classList.contains('open')) {
-    if (!window.CU || !window.CU.id) {
-      toast('Please sign in to leave a review', 'warn'); // ✅ Changed from showToast to toast
-      go('signin'); 
-      return;
-    }
-  }
+  
+  // Removed the broken login check so the review form can open smoothly!
   card.classList.toggle('open');
   PR_SELECTED_STAR = 0;
+  
   var btns = document.querySelectorAll('.pr-star-btn');
   btns.forEach(function(b) { b.classList.remove('active'); });
+  
   var errEl = document.getElementById('pr-form-err');
   if (errEl) errEl.textContent = '';
 }
