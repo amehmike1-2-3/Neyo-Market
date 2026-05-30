@@ -31,21 +31,18 @@ module.exports = async function handler(req, res) {
       const body = req.body || {};
       const title      = body.title     || '';
       const content    = body.content   || '';
-      /* Accept both badgeText (frontend) and badge_text (legacy) */
       const badge_text = body.badgeText || body.badge_text || null;
       const adminId    = body.adminId   || '';
 
       if (!title.trim())
         return res.status(400).json({ ok: false, error: 'Title is required.' });
 
-      /* Admin guard — check by role, works for both numeric and string IDs */
       let caller = null;
       try {
         const adminRows = await sql`SELECT id, role FROM users WHERE id::text = ${String(adminId)} LIMIT 1`;
         caller = adminRows[0];
-      } catch(e) { /* id cast failed */ }
+      } catch(e) {}
 
-      /* Also allow master_admin_001 hardcoded fallback */
       const isMaster = String(adminId) === 'master_admin_001';
       if (!isMaster && (!caller || caller.role !== 'admin'))
         return res.status(403).json({ ok: false, error: 'Admin only.' });
@@ -63,7 +60,6 @@ module.exports = async function handler(req, res) {
       const adminId = (req.body || {}).adminId || '';
       if (!annId) return res.status(400).json({ ok: false, error: 'id required.' });
 
-      /* Admin guard */
       let caller = null;
       try {
         const rows = await sql`SELECT role FROM users WHERE id::text = ${String(adminId)} LIMIT 1`;
@@ -77,6 +73,56 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ ok: true });
     }
 
+    /* ══════════════════════════════════════════════════════════
+       PLATFORM REVIEWS — GET /api/reviews?type=platform
+    ══════════════════════════════════════════════════════════ */
+    if (req.method === 'GET' && req.query.type === 'platform') {
+      await sql`
+        CREATE TABLE IF NOT EXISTS platform_reviews (
+          id SERIAL PRIMARY KEY,
+          user_id TEXT NOT NULL,
+          user_name TEXT NOT NULL,
+          rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+          comment TEXT,
+          created_at TIMESTAMPTZ DEFAULT NOW()
+        )
+      `;
+      const rows = await sql`
+        SELECT id, user_name, rating, comment, created_at
+        FROM platform_reviews
+        ORDER BY created_at DESC
+        LIMIT 100
+      `;
+      return res.status(200).json({ reviews: rows });
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       PLATFORM REVIEWS — POST /api/reviews?type=platform
+    ══════════════════════════════════════════════════════════ */
+    if (req.method === 'POST' && req.query.type === 'platform') {
+      const { userId, userName, rating, comment } = req.body || {};
+
+      if (!userId || !rating)
+        return res.status(400).json({ ok: false, error: 'userId and rating are required.' });
+      if (rating < 1 || rating > 5)
+        return res.status(400).json({ ok: false, error: 'Rating must be between 1 and 5.' });
+      if (!comment || comment.trim().length < 5)
+        return res.status(400).json({ ok: false, error: 'Please write a short comment.' });
+
+      /* One review per user */
+      const existing = await sql`
+        SELECT id FROM platform_reviews WHERE user_id = ${String(userId)} LIMIT 1
+      `;
+      if (existing.length)
+        return res.status(409).json({ ok: false, error: 'You have already reviewed NeyoMarket.' });
+
+      await sql`
+        INSERT INTO platform_reviews (user_id, user_name, rating, comment, created_at)
+        VALUES (${String(userId)}, ${userName || 'Anonymous'}, ${rating}, ${comment.trim()}, NOW())
+      `;
+      return res.status(201).json({ ok: true });
+    }
+
     /* ── GET /api/reviews?productId=xxx ── */
     if (req.method === 'GET') {
       const productId = req.query.productId;
@@ -88,7 +134,7 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ reviews: rows });
     }
 
-    /* ── POST /api/reviews — submit a review ── */
+    /* ── POST /api/reviews — submit a product review ── */
     if (req.method === 'POST') {
       const { productId, userId, userName, rating, comment, photo } = req.body || {};
       if (!productId || !userId || !rating)
@@ -96,14 +142,12 @@ module.exports = async function handler(req, res) {
       if (rating < 1 || rating > 5)
         return res.status(400).json({ error: 'Rating must be between 1 and 5.' });
 
-      /* One review per user per product */
       const existing = await sql`
         SELECT id FROM reviews WHERE product_id = ${productId} AND user_id = ${userId} LIMIT 1
       `;
       if (existing.length)
         return res.status(409).json({ error: 'You have already reviewed this product.' });
 
-      /* Validate photo URL if provided — must be ImgBB or similar */
       const safePhoto = (photo && typeof photo === 'string' && photo.startsWith('https://')) ? photo : null;
 
       await sql`
@@ -111,7 +155,6 @@ module.exports = async function handler(req, res) {
         VALUES (${productId}, ${userId}, ${userName || 'Anonymous'}, ${rating}, ${comment || ''}, ${safePhoto}, NOW())
       `;
 
-      /* Update product average rating */
       const stats = await sql`
         SELECT COUNT(*) as cnt, AVG(rating) as avg FROM reviews WHERE product_id = ${productId}
       `;
