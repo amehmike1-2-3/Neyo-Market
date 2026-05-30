@@ -14461,60 +14461,63 @@ function loadMorePR() {
 function togglePRForm() {
   var card = document.getElementById('pr-write-card');
   if (!card) return;
-  
-  // Checks if the user is in the open review card view
   if (!card.classList.contains('open')) {
-    // Corrected to use your system's global currentUser object
-    if (!window.currentUser || !window.currentUser.id) {
-      toast('Please sign in to leave a review', 'warn'); 
-      go('signin'); 
-      return;
+    if (!window.CU || !window.CU.id) {
+      showToast('Please sign in to leave a review'); go('signin'); return;
     }
   }
-  
   card.classList.toggle('open');
   PR_SELECTED_STAR = 0;
-  
   var btns = document.querySelectorAll('.pr-star-btn');
   btns.forEach(function(b) { b.classList.remove('active'); });
-  
   var errEl = document.getElementById('pr-form-err');
   if (errEl) errEl.textContent = '';
 }
 
+function setPRStar(val) {
+  PR_SELECTED_STAR = val;
+  var btns = document.querySelectorAll('.pr-star-btn');
+  btns.forEach(function(b) {
+    var v = parseInt(b.getAttribute('data-val'));
+    b.classList.toggle('active', v <= val);
+  });
+}
+
 function submitPlatformReview() {
-  var btn = document.getElementById('pr-submit-btn');
   var errEl = document.getElementById('pr-form-err');
-  if (errEl) errEl.textContent = '';
+  var btn = document.querySelector('#pr-write-card .sbtn');
+  var comment = (document.getElementById('pr-comment') || {}).value || '';
 
-  // Uses currentUser here to pass your logged-in info to the database
-  var CU = window.currentUser; 
-  var commentEl = document.getElementById('pr-comment');
-  var comment = commentEl ? commentEl.value.trim() : '';
-
-  if (!comment) {
-    toast('Please write a comment first.', 'warn');
-    return;
+  if (!window.CU || !window.CU.id) {
+    if (errEl) errEl.textContent = 'Please sign in first.'; return;
+  }
+  if (!PR_SELECTED_STAR) {
+    if (errEl) errEl.textContent = 'Please select a star rating.'; return;
+  }
+  if (comment.trim().length < 5) {
+    if (errEl) errEl.textContent = 'Please write at least a short comment.'; return;
   }
 
-  if (btn) { btn.disabled = true; btn.textContent = 'Submitting...'; }
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Submitting…'; }
+  if (errEl) errEl.textContent = '';
 
-  fetch('/api/payment?action=platform-reviews', {
+  fetch('/api/reviews?type=platform', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      userId: CU ? String(CU.id) : null,
-      userName: CU ? CU.name : 'Anonymous User',
-      rating: window.PR_SELECTED_STAR || 5,
-      comment: comment
+      userId: window.CU.id,
+      userName: window.CU.name || window.CU.email || 'User',
+      rating: PR_SELECTED_STAR,
+      comment: comment.trim()
     })
   })
   .then(function(r) { return r.json(); })
   .then(function(data) {
     if (btn) { btn.disabled = false; btn.textContent = '📨 Submit Review'; }
     if (data.ok) {
-      toast('✅ Review submitted! Thank you.', 'ok');
+      showToast('✅ Review submitted! Thank you.');
       togglePRForm();
+      var commentEl = document.getElementById('pr-comment');
       if (commentEl) commentEl.value = '';
       loadPlatformReviews();
     } else {
