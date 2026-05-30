@@ -14463,7 +14463,9 @@ function togglePRForm() {
   if (!card) return;
   if (!card.classList.contains('open')) {
     if (!window.CU || !window.CU.id) {
-      showToast('Please sign in to leave a review'); go('signin'); return;
+      toast('Please sign in to leave a review', 'warn'); // ✅ Changed from showToast to toast
+      go('signin'); 
+      return;
     }
   }
   card.classList.toggle('open');
