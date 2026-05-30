@@ -14515,7 +14515,7 @@ function submitPlatformReview() {
   .then(function(data) {
     if (btn) { btn.disabled = false; btn.textContent = '📨 Submit Review'; }
     if (data.ok) {
-      showToast('✅ Review submitted! Thank you.');
+      toast('✅ Review submitted! Thank you.', 'ok');
       togglePRForm();
       var commentEl = document.getElementById('pr-comment');
       if (commentEl) commentEl.value = '';
