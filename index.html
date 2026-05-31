@@ -7879,9 +7879,8 @@ function processPaystack(mode) {
           mode:         mode,
           date:         new Date().toLocaleDateString(),
           collected:    false,
-          /* FIX: copy fileUrl from server response OR from the cart item's product
-             so the Download button shows immediately without a page refresh */
-          fileUrl:      data.fileUrl || (orderPayload.items[0] && (orderPayload.items[0].fileUrl || orderPayload.items[0].file_url)) || null
+          /* Use secure expiring downloadUrl if returned, else fall back to raw fileUrl */
+          fileUrl:      data.downloadUrl || data.fileUrl || (orderPayload.items[0] && (orderPayload.items[0].fileUrl || orderPayload.items[0].file_url)) || null
         };
         ords.push(order);
         /* Decrement local stock so card shows updated count immediately */
