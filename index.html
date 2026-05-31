@@ -14506,12 +14506,19 @@ function togglePRForm() {
   var card = document.getElementById('pr-write-card');
   if (!card) return;
 
-  /* Check login state fresh every time */
-  var isLoggedIn = window.CU && (window.CU.id || window.CU.email);
+  /* Read login state from all possible sources */
+  var cu = window.CU;
+  if (!cu || !cu.id) {
+    try {
+      var s = localStorage.getItem('nm_current_user') || sessionStorage.getItem('nm_session');
+      if (s) cu = JSON.parse(s);
+    } catch(e) {}
+  }
+
+  var isLoggedIn = cu && (cu.id || cu.email);
 
   if (!card.classList.contains('open')) {
     if (!isLoggedIn) {
-      /* Save intent so after login we can open the form */
       window.__pendingPRForm = true;
       if (typeof showToast === 'function') showToast('Please sign in to leave a review');
       else alert('Please sign in to leave a review');
@@ -14542,7 +14549,16 @@ function submitPlatformReview() {
   var btn = document.querySelector('#pr-write-card .sbtn');
   var comment = (document.getElementById('pr-comment') || {}).value || '';
 
-  if (!window.CU || !window.CU.id) {
+  /* Read CU from all sources */
+  var cu = window.CU;
+  if (!cu || !cu.id) {
+    try {
+      var s = localStorage.getItem('nm_current_user') || sessionStorage.getItem('nm_session');
+      if (s) cu = JSON.parse(s);
+    } catch(e) {}
+  }
+
+  if (!cu || !cu.id) {
     if (errEl) errEl.textContent = 'Please sign in first.'; return;
   }
   if (!PR_SELECTED_STAR) {
@@ -14559,8 +14575,8 @@ function submitPlatformReview() {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      userId: window.CU.id,
-      userName: window.CU.name || window.CU.email || 'User',
+      userId: cu.id,
+      userName: cu.name || cu.email || 'User',
       rating: PR_SELECTED_STAR,
       comment: comment.trim()
     })
