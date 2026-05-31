@@ -28,7 +28,7 @@ module.exports = async function handler(req, res) {
 
     /* ── POST /api/reviews?type=announcements  (admin only) ── */
     if (req.method === 'POST' && req.query.type === 'announcements') {
-      const body = req.body || {};
+      const body       = req.body || {};
       const title      = body.title     || '';
       const content    = body.content   || '';
       const badge_text = body.badgeText || body.badge_text || null;
@@ -37,15 +37,18 @@ module.exports = async function handler(req, res) {
       if (!title.trim())
         return res.status(400).json({ ok: false, error: 'Title is required.' });
 
-      let caller = null;
-      try {
-        const adminRows = await sql`SELECT id, role FROM users WHERE id::text = ${String(adminId)} LIMIT 1`;
-        caller = adminRows[0];
-      } catch(e) {}
-
+      /* Master admin always passes */
       const isMaster = String(adminId) === 'master_admin_001';
-      if (!isMaster && (!caller || caller.role !== 'admin'))
-        return res.status(403).json({ ok: false, error: 'Admin only.' });
+
+      if (!isMaster) {
+        let caller = null;
+        try {
+          const adminRows = await sql`SELECT id, role FROM users WHERE id::text = ${String(adminId)} LIMIT 1`;
+          caller = adminRows[0];
+        } catch(e) {}
+        if (!caller || caller.role !== 'admin')
+          return res.status(403).json({ ok: false, error: 'Admin only.' });
+      }
 
       await sql`
         INSERT INTO announcements (title, content, badge_text, created_at)
@@ -56,18 +59,27 @@ module.exports = async function handler(req, res) {
 
     /* ── DELETE /api/reviews?type=announcements&id=X  (admin only) ── */
     if (req.method === 'DELETE' && req.query.type === 'announcements') {
-      const annId   = parseInt(req.query.id);
-      const adminId = (req.body || {}).adminId || '';
+      const annId = parseInt(req.query.id);
+
+      /* adminId can come from query string OR body — support both */
+      const adminId = req.query.adminId
+        || (req.body && req.body.adminId)
+        || '';
+
       if (!annId) return res.status(400).json({ ok: false, error: 'id required.' });
 
-      let caller = null;
-      try {
-        const rows = await sql`SELECT role FROM users WHERE id::text = ${String(adminId)} LIMIT 1`;
-        caller = rows[0];
-      } catch(e) {}
+      /* Master admin always passes */
       const isMaster = String(adminId) === 'master_admin_001';
-      if (!isMaster && (!caller || caller.role !== 'admin'))
-        return res.status(403).json({ ok: false, error: 'Admin only.' });
+
+      if (!isMaster) {
+        let caller = null;
+        try {
+          const rows = await sql`SELECT role FROM users WHERE id::text = ${String(adminId)} LIMIT 1`;
+          caller = rows[0];
+        } catch(e) {}
+        if (!caller || caller.role !== 'admin')
+          return res.status(403).json({ ok: false, error: 'Admin only.' });
+      }
 
       await sql`DELETE FROM announcements WHERE id = ${annId}`;
       return res.status(200).json({ ok: true });
