@@ -960,7 +960,35 @@ module.exports = async function handler(req, res) {
         } catch(vErr) { console.error('[payment/confirm] vendor email hook failure:', vErr.message); }
       }
 
-      return res.status(200).json({ ok: true, orderId, status: orderStatus, deliveryCode });
+      /* ── Generate expiring download token for digital orders ── */
+      let downloadUrl = null;
+      if (isAllDigital && topFileUrl) {
+        try {
+          await sql`
+            CREATE TABLE IF NOT EXISTS download_tokens (
+              token TEXT PRIMARY KEY, order_id TEXT NOT NULL, user_id TEXT,
+              file_url TEXT NOT NULL, file_name TEXT,
+              expires_at TIMESTAMPTZ NOT NULL, used_count INTEGER DEFAULT 0,
+              created_at TIMESTAMPTZ DEFAULT NOW()
+            )
+          `;
+          const dlToken   = crypto.randomBytes(32).toString('hex');
+          const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000);
+          const dlFileName = (itemList[0] && (itemList[0].fileName || itemList[0].file_name || itemList[0].name)) || 'download';
+          await sql`
+            INSERT INTO download_tokens (token, order_id, user_id, file_url, file_name, expires_at)
+            VALUES (${dlToken}, ${String(orderId)}, ${String(userId || '')}, ${topFileUrl}, ${String(dlFileName)}, ${expiresAt.toISOString()})
+          `;
+          const SITE_URL = process.env.SITE_URL || 'https://neyomarket.com.ng';
+          downloadUrl = SITE_URL + '/api/payment?action=download&token=' + dlToken;
+          console.log('[payment/confirm] download token generated:', orderId);
+        } catch(tokErr) {
+          console.warn('[payment/confirm] token gen (non-fatal):', tokErr.message);
+          downloadUrl = topFileUrl;
+        }
+      }
+
+      return res.status(200).json({ ok: true, orderId, status: orderStatus, deliveryCode, downloadUrl });
     } catch (err) {
       console.error('[payment/confirm] fatal loop error:', err.message);
       return jsonErr(res, 500, 'Payment confirmation crashed.', err.message);
@@ -1072,5 +1100,96 @@ module.exports = async function handler(req, res) {
     }
   }
 
+  /* ══════════════════════════════════════════════════════════════════
+     DOWNLOAD — GET ?action=download&token=xxx
+     Validates expiring token and redirects to actual file URL.
+     Token generated at payment confirm for digital orders (48hr expiry).
+  ══════════════════════════════════════════════════════════════════ */
+  if (action === 'download' && req.method === 'GET') {
+    const token = (req.query.token || '').trim();
+
+    if (!token || token.length < 32 || !/^[a-f0-9]+$/i.test(token)) {
+      return res.status(400).send(dlErrorPage('Invalid Download Link', 'This download link is invalid. Please go back to your orders and try again.'));
+    }
+
+    try {
+      await sql`
+        CREATE TABLE IF NOT EXISTS download_tokens (
+          token       TEXT PRIMARY KEY,
+          order_id    TEXT NOT NULL,
+          user_id     TEXT,
+          file_url    TEXT NOT NULL,
+          file_name   TEXT,
+          expires_at  TIMESTAMPTZ NOT NULL,
+          used_count  INTEGER DEFAULT 0,
+          created_at  TIMESTAMPTZ DEFAULT NOW()
+        )
+      `;
+
+      const rows = await sql`
+        SELECT token, order_id, file_url, file_name, expires_at, used_count
+        FROM download_tokens WHERE token = ${token} LIMIT 1
+      `;
+
+      if (!rows.length) {
+        return res.status(404).send(dlErrorPage('Link Not Found', 'This download link does not exist. Go to your orders page to get a fresh link.'));
+      }
+
+      const rec = rows[0];
+
+      if (new Date() > new Date(rec.expires_at)) {
+        return res.status(410).send(dlErrorPage('⏰ Link Expired', 'This link expired 48 hours after purchase. Contact support@neyomarket.com with Order ID: <strong>' + rec.order_id + '</strong>'));
+      }
+
+      if (parseInt(rec.used_count || 0) >= 10) {
+        return res.status(429).send(dlErrorPage('Download Limit Reached', 'This link has been used too many times. Contact support@neyomarket.com with Order ID: <strong>' + rec.order_id + '</strong>'));
+      }
+
+      /* Increment use count — non-blocking */
+      sql`UPDATE download_tokens SET used_count = used_count + 1 WHERE token = ${token}`.catch(function(){});
+
+      const fileUrl = rec.file_url || '';
+      if (!fileUrl || !fileUrl.startsWith('http')) {
+        return res.status(500).send(dlErrorPage('File Not Available', 'Contact support@neyomarket.com with Order ID: <strong>' + rec.order_id + '</strong>'));
+      }
+
+      /* Force browser download for Cloudinary files */
+      let finalUrl = fileUrl;
+      if (fileUrl.includes('cloudinary.com') && fileUrl.includes('/upload/')) {
+        finalUrl = fileUrl.replace('/upload/', '/upload/fl_attachment/');
+      }
+
+      res.setHeader('Cache-Control', 'no-store');
+      console.log('[download] token used — order:', rec.order_id, '| use #' + (parseInt(rec.used_count || 0) + 1));
+      return res.redirect(302, finalUrl);
+
+    } catch(err) {
+      console.error('[download] error:', err.message);
+      return res.status(500).send(dlErrorPage('Server Error', 'Something went wrong. Contact support@neyomarket.com'));
+    }
+  }
+
   return jsonErr(res, 404, 'Payment API action action endpoint fallback not matched.');
 };
+
+/* ── Clean error page for expired/invalid download links ── */
+function dlErrorPage(title, message) {
+  return '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/>'
+    + '<meta name="viewport" content="width=device-width,initial-scale=1"/>'
+    + '<title>' + title + ' — NeyoMarket</title>'
+    + '<style>*{box-sizing:border-box;margin:0;padding:0}'
+    + 'body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#0a0c10;color:#fff;'
+    + 'min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}'
+    + '.card{background:#111827;border:1px solid #1f2937;border-radius:16px;padding:36px 28px;'
+    + 'max-width:440px;width:100%;text-align:center}'
+    + '.icon{font-size:3rem;margin-bottom:16px}'
+    + 'h1{font-size:1.3rem;font-weight:700;color:#fff;margin-bottom:10px}'
+    + 'p{font-size:.88rem;color:#9ca3af;line-height:1.7;margin-bottom:24px}'
+    + 'a{display:inline-block;background:#c9922a;color:#fff;padding:12px 26px;'
+    + 'border-radius:8px;font-weight:700;font-size:.84rem;text-decoration:none}'
+    + '</style></head><body>'
+    + '<div class="card"><div class="icon">📦</div>'
+    + '<h1>' + title + '</h1><p>' + message + '</p>'
+    + '<a href="https://neyomarket.com.ng">Go to NeyoMarket</a>'
+    + '</div></body></html>';
+}
