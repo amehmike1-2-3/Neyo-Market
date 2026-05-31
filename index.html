@@ -8705,7 +8705,19 @@ function doSignIn() {
       restoreBtn();
       updNav();
       toast('Welcome back, ' + u.name.split(' ')[0] + '! 👋', 'ok');
-      go(u.role === 'admin' ? 'admin' : 'home');
+      var dest = u.role === 'admin' ? 'admin' : 'home';
+      go(dest);
+      /* Auto-open review form if user was trying to leave a review */
+      if (window.__pendingPRForm && dest === 'home') {
+        setTimeout(function() {
+          var card = document.getElementById('pr-write-card');
+          if (card) {
+            card.classList.add('open');
+            window.__pendingPRForm = false;
+            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 600);
+      }
       /* Request push notification permission */
       setTimeout(requestPushPermission, 5000);
     })
@@ -8839,7 +8851,21 @@ function doSignUp() {
       updNav();
       toast('Welcome to NeyoMarket! 🎉', 'ok');
       if (role === 'seller') { toast('Your seller dashboard is ready 🏪', 'ok'); go('seller'); }
-      else go('home');
+      else {
+        go('home');
+        /* Auto-open review form if user was trying to leave a review */
+        if (window.__pendingPRForm) {
+          setTimeout(function() {
+            var card = document.getElementById('pr-write-card');
+            if (card) {
+              card.classList.add('open');
+              window.__pendingPRForm = false;
+              /* Scroll to review form */
+              card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }, 600);
+        }
+      }
     })
     .catch(function (e) {
       if (err) err.textContent = e.message || 'Something went wrong. Please try again.';
@@ -14479,11 +14505,18 @@ function loadMorePR() {
 function togglePRForm() {
   var card = document.getElementById('pr-write-card');
   if (!card) return;
+
+  /* Check login state fresh every time */
+  var isLoggedIn = window.CU && (window.CU.id || window.CU.email);
+
   if (!card.classList.contains('open')) {
-    if (!window.CU || !window.CU.id) {
+    if (!isLoggedIn) {
+      /* Save intent so after login we can open the form */
+      window.__pendingPRForm = true;
       if (typeof showToast === 'function') showToast('Please sign in to leave a review');
       else alert('Please sign in to leave a review');
-      go('signin'); return;
+      go('signin');
+      return;
     }
   }
   card.classList.toggle('open');
@@ -14492,6 +14525,7 @@ function togglePRForm() {
   btns.forEach(function(b) { b.classList.remove('active'); });
   var errEl = document.getElementById('pr-form-err');
   if (errEl) errEl.textContent = '';
+  window.__pendingPRForm = false;
 }
 
 function setPRStar(val) {
