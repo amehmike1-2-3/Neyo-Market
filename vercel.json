@@ -5,6 +5,18 @@
       "destination": "/api/auth?action=og&id=:id"
     }
   ],
+  "redirects": [
+    { "source": "/blog",    "destination": "/#blog",    "permanent": false },
+    { "source": "/about",   "destination": "/#about",   "permanent": false },
+    { "source": "/contact", "destination": "/#contact", "permanent": false },
+    { "source": "/market",  "destination": "/#market",  "permanent": false },
+    { "source": "/press",   "destination": "/#press",   "permanent": false },
+    { "source": "/sell",    "destination": "/#sell",    "permanent": false },
+    { "source": "/signup",  "destination": "/#signup",  "permanent": false },
+    { "source": "/signin",  "destination": "/#signin",  "permanent": false },
+    { "source": "/aff",     "destination": "/#aff",     "permanent": false },
+    { "source": "/rules",   "destination": "/#rules",   "permanent": false }
+  ],
   "headers": [
     {
       "source": "/(.*)",
