@@ -14,7 +14,7 @@
 
   <!-- MARKETPLACE -->
   <url>
-    <loc>https://neyomarket.com.ng/#market</loc>
+    <loc>https://neyomarket.com.ng/market</loc>
     <lastmod>2026-05-29</lastmod>
     <changefreq>hourly</changefreq>
     <priority>0.9</priority>
@@ -22,7 +22,7 @@
 
   <!-- SELL -->
   <url>
-    <loc>https://neyomarket.com.ng/#sell</loc>
+    <loc>https://neyomarket.com.ng/sell</loc>
     <lastmod>2026-05-29</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
@@ -30,7 +30,7 @@
 
   <!-- AFFILIATE -->
   <url>
-    <loc>https://neyomarket.com.ng/#aff</loc>
+    <loc>https://neyomarket.com.ng/aff</loc>
     <lastmod>2026-05-29</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
@@ -38,7 +38,7 @@
 
   <!-- RULES -->
   <url>
-    <loc>https://neyomarket.com.ng/#rules</loc>
+    <loc>https://neyomarket.com.ng/rules</loc>
     <lastmod>2026-05-29</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
@@ -46,7 +46,7 @@
 
   <!-- ABOUT -->
   <url>
-    <loc>https://neyomarket.com.ng/#about</loc>
+    <loc>https://neyomarket.com.ng/about</loc>
     <lastmod>2026-05-29</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -54,7 +54,7 @@
 
   <!-- CONTACT -->
   <url>
-    <loc>https://neyomarket.com.ng/#contact</loc>
+    <loc>https://neyomarket.com.ng/contact</loc>
     <lastmod>2026-05-29</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -62,7 +62,7 @@
 
   <!-- BLOG -->
   <url>
-    <loc>https://neyomarket.com.ng/#blog</loc>
+    <loc>https://neyomarket.com.ng/blog</loc>
     <lastmod>2026-05-29</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
@@ -70,7 +70,7 @@
 
   <!-- PRESS -->
   <url>
-    <loc>https://neyomarket.com.ng/#press</loc>
+    <loc>https://neyomarket.com.ng/press</loc>
     <lastmod>2026-05-29</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
@@ -78,7 +78,7 @@
 
   <!-- SIGN UP -->
   <url>
-    <loc>https://neyomarket.com.ng/#signup</loc>
+    <loc>https://neyomarket.com.ng/signup</loc>
     <lastmod>2026-05-29</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -86,7 +86,7 @@
 
   <!-- SIGN IN -->
   <url>
-    <loc>https://neyomarket.com.ng/#signin</loc>
+    <loc>https://neyomarket.com.ng/signin</loc>
     <lastmod>2026-05-29</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
