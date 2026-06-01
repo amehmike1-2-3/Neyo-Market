@@ -14655,22 +14655,4 @@ window.loadMorePR = loadMorePR;
   }
 })();
 
-  // Automatically scroll to the right section based on the clean URL path
-  window.addEventListener('DOMContentLoaded', () => {
-    const path = window.location.pathname; // Gets '/about', '/market', etc.
-    
-    if (path && path !== '/') {
-      // Remove the leading slash to match your section IDs (e.g., '/about' becomes 'about')
-      const targetId = path.substring(1);
-      const targetSection = document.getElementById(targetId);
-      
-      if (targetSection) {
-        // Smoothly scroll down to the target section
-        setTimeout(() => {
-          targetSection.scrollIntoView({ behavior: 'smooth' });
-        }, 300); // Small timeout to ensure the DOM is fully ready
-      }
-    }
-  });
-  
 </script>
