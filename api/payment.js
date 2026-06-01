@@ -1145,8 +1145,12 @@ module.exports = async function handler(req, res) {
         return res.status(429).send(dlErrorPage('Download Limit Reached', 'This link has been used too many times. Contact support@neyomarket.com with Order ID: <strong>' + rec.order_id + '</strong>'));
       }
 
-      /* Increment use count — non-blocking */
-      sql`UPDATE download_tokens SET used_count = used_count + 1 WHERE token = ${token}`.catch(function(){});
+      /* Increment use count — properly awaited */
+      try {
+        await sql`UPDATE download_tokens SET used_count = used_count + 1 WHERE token = ${token}`;
+      } catch(updateErr) {
+        console.warn('[download] used_count update failed (non-fatal):', updateErr.message);
+      }
 
       const fileUrl = rec.file_url || '';
       if (!fileUrl || !fileUrl.startsWith('http')) {
