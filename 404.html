@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Page Not Found — NeyoMarket</title>
+  <link rel="icon" href="/neyomarket-logo.webp"/>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{
+      font-family:'Outfit',sans-serif;
+      background:#080a0f;color:#fff;
+      min-height:100vh;
+      display:flex;flex-direction:column;
+      align-items:center;justify-content:center;
+      padding:24px;text-align:center;
+    }
+    .logo{
+      display:flex;align-items:center;gap:10px;
+      margin-bottom:40px;text-decoration:none;
+    }
+    .logo img{width:42px;height:42px;border-radius:8px;object-fit:contain}
+    .logo span{
+      font-family:'Cormorant Garamond',serif;
+      font-size:1.4rem;font-weight:700;color:#fff;
+    }
+    .card{
+      background:#111827;border:1px solid #1f2937;
+      border-radius:20px;padding:44px 32px;
+      max-width:420px;width:100%;
+    }
+    .error-code{
+      font-family:'Cormorant Garamond',serif;
+      font-size:5rem;font-weight:700;
+      color:#c9922a;line-height:1;margin-bottom:8px;
+    }
+    .error-title{
+      font-size:1.3rem;font-weight:600;
+      color:#fff;margin-bottom:12px;
+    }
+    .error-msg{
+      font-size:.86rem;color:#6b7280;
+      line-height:1.7;font-weight:300;
+      margin-bottom:28px;
+    }
+    .btn-primary{
+      display:inline-flex;align-items:center;gap:8px;
+      background:linear-gradient(135deg,#c9922a,#a87820);
+      color:#fff;padding:13px 28px;border-radius:8px;
+      font-weight:700;font-size:.86rem;text-decoration:none;
+      letter-spacing:.4px;text-transform:uppercase;
+      transition:.2s;margin-bottom:12px;width:100%;
+      justify-content:center;
+    }
+    .btn-primary:hover{opacity:.9;transform:translateY(-1px)}
+    .btn-secondary{
+      display:inline-flex;align-items:center;gap:8px;
+      background:transparent;border:1.5px solid #1f2937;
+      color:#9ca3af;padding:12px 28px;border-radius:8px;
+      font-weight:600;font-size:.84rem;text-decoration:none;
+      letter-spacing:.4px;text-transform:uppercase;
+      transition:.2s;width:100%;justify-content:center;
+    }
+    .btn-secondary:hover{border-color:#c9922a;color:#c9922a}
+    .divider{
+      border:none;border-top:1px solid #1f2937;
+      margin:24px 0;
+    }
+    .help{font-size:.76rem;color:#4b5563;line-height:1.6}
+    .help a{color:#c9922a;text-decoration:none}
+    .help a:hover{text-decoration:underline}
+    .quick-links{
+      display:flex;flex-wrap:wrap;gap:8px;
+      justify-content:center;margin-top:20px;
+    }
+    .quick-link{
+      background:#1f2937;border:1px solid #374151;
+      color:#9ca3af;padding:6px 14px;border-radius:20px;
+      font-size:.72rem;font-weight:500;text-decoration:none;
+      transition:.2s;
+    }
+    .quick-link:hover{background:#c9922a;color:#fff;border-color:#c9922a}
+  </style>
+</head>
+<body>
+
+  <a class="logo" href="/">
+    <img src="/neyomarket-logo.webp" alt="NeyoMarket"/>
+    <span>NeyoMarket</span>
+  </a>
+
+  <div class="card">
+    <div class="error-code">404</div>
+    <div class="error-title">Page Not Found</div>
+    <p class="error-msg">
+      The page you're looking for doesn't exist or has been moved. 
+      Head back to the marketplace and keep exploring.
+    </p>
+
+    <a class="btn-primary" href="/">🛒 Go to Marketplace</a>
+    <a class="btn-secondary" href="/#market">Browse Products</a>
+
+    <hr class="divider"/>
+
+    <p class="help">
+      Need help? Contact us at 
+      <a href="mailto:support@neyomarket.com">support@neyomarket.com</a>
+      or <a href="https://wa.me/2349072212496">WhatsApp</a>
+    </p>
+
+    <div class="quick-links">
+      <a class="quick-link" href="/#about">About</a>
+      <a class="quick-link" href="/#sell">Sell</a>
+      <a class="quick-link" href="/#aff">Affiliate</a>
+      <a class="quick-link" href="/#blog">Blog</a>
+      <a class="quick-link" href="/#contact">Contact</a>
+    </div>
+  </div>
+
+</body>
+</html>
