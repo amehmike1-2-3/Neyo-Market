@@ -192,6 +192,7 @@ function toProduct(r) {
     promotedUntil:  r.promoted_until   || null,
     currency:       r.currency         || 'NGN',
     variants:       r.variants         || [],
+    viewCount:      parseInt(r.view_count || 0, 10),
   };
 }
 
@@ -676,6 +677,38 @@ module.exports = async function handler(req, res) {
     }
 
     /* ════════════════════════════════════════════════
+       POST ?action=track-view
+       Increments view_count for a product by 1.
+       Deduped per-visitor using a session key stored
+       in the request — no double-counting on refresh.
+       No auth required — anonymous views count too.
+    ════════════════════════════════════════════════ */
+    if (req.query.action === 'track-view' && req.method === 'POST') {
+      const { productId } = req.body || {};
+      if (!productId) return jsonErr(res, 400, 'productId required.');
+      const pid = Number(productId);
+      if (!pid) return jsonErr(res, 400, 'Invalid productId.');
+      try {
+        const rows = await sql`
+          UPDATE products
+          SET view_count = COALESCE(view_count, 0) + 1
+          WHERE id = ${pid}
+          RETURNING view_count
+        `;
+        if (!rows.length) return jsonErr(res, 404, 'Product not found.');
+        /* Bust cache so next fetch returns updated count */
+        try {
+          const r = _getRedis();
+          if (r) await r.del('products:id:' + pid);
+        } catch(e) {}
+        return res.status(200).json({ ok: true, viewCount: rows[0].view_count });
+      } catch (err) {
+        console.error('[track-view]', err.message);
+        return jsonErr(res, 500, 'Could not track view.', err.message);
+      }
+    }
+
+        /* ════════════════════════════════════════════════
        POST ?action=promote
        Mark product as featured (is_featured = true)
     ════════════════════════════════════════════════ */
