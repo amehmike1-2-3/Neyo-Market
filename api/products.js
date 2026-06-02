@@ -679,15 +679,16 @@ module.exports = async function handler(req, res) {
     /* ════════════════════════════════════════════════
        POST ?action=track-view
        Increments view_count for a product by 1.
-       Deduped per-visitor using a session key stored
-       in the request — no double-counting on refresh.
-       No auth required — anonymous views count too.
     ════════════════════════════════════════════════ */
     if (req.query.action === 'track-view' && req.method === 'POST') {
-      const { productId } = req.body || {};
-      if (!productId) return jsonErr(res, 400, 'productId required.');
-      const pid = Number(productId);
-      if (!pid) return jsonErr(res, 400, 'Invalid productId.');
+      const body = req.body || {};
+      const incomingId = body.productId || body.id || body.product_id; 
+      
+      if (!incomingId) return jsonErr(res, 400, 'productId required.');
+      
+      const pid = Number(incomingId);
+      if (!pid || isNaN(pid)) return jsonErr(res, 400, 'Invalid productId format.');
+
       try {
         const rows = await sql`
           UPDATE products
@@ -695,20 +696,31 @@ module.exports = async function handler(req, res) {
           WHERE id = ${pid}
           RETURNING view_count
         `;
-        if (!rows.length) return jsonErr(res, 404, 'Product not found.');
-        /* Bust cache so next fetch returns updated count */
+
+        if (!rows.length) return jsonErr(res, 404, 'Product not found in database.');
+
+        /* Bust all related caches so updates reflect immediately everywhere */
         try {
           const r = _getRedis();
-          if (r) await r.del('products:id:' + pid);
-        } catch(e) {}
-        return res.status(200).json({ ok: true, viewCount: rows[0].view_count });
+          if (r) {
+            await Promise.all([
+              r.del('products:id:' + pid),
+              r.del('products:public')
+            ]);
+            console.log(`[redis] Cache busted for product ${pid} and public feed`);
+          }
+        } catch(cacheErr) {
+          console.warn('[redis] Failed to bust cache on view track:', cacheErr.message);
+        }
+
+        return res.status(200).json({ ok: true, viewCount: parseInt(rows[0].view_count, 10) });
       } catch (err) {
-        console.error('[track-view]', err.message);
+        console.error('[track-view] DB Error:', err.message);
         return jsonErr(res, 500, 'Could not track view.', err.message);
       }
     }
 
-        /* ════════════════════════════════════════════════
+    /* ════════════════════════════════════════════════
        POST ?action=promote
        Mark product as featured (is_featured = true)
     ════════════════════════════════════════════════ */
