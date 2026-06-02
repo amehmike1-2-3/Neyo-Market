@@ -8051,7 +8051,7 @@ function processPaystack(mode) {
   }
 
   try {
-    PaystackPop.setup(cfg).openIframe();
+    (new PaystackPop()).newTransaction(cfg);
   } catch (err) {
     toast('Paystack error: ' + (err.message || 'Unknown') + '. Please refresh and try again.', 'fail');
   }
@@ -8702,7 +8702,7 @@ function payVerifFee() {
     toast('Paystack did not load. Check connection and refresh.', 'fail'); return;
   }
 
-  var handler = PaystackPop.setup({
+  var handler = new PaystackPop(); handler.newTransaction({
     key:      pubKey,
     email:    CU.email,
     amount:   200000,
@@ -8730,7 +8730,7 @@ function payVerifFee() {
     },
     onClose: function() { toast('Payment cancelled.', 'warn'); }
   });
-  handler.openIframe();
+  handler.open();
 }
 window.payVerifFee = payVerifFee;
 
@@ -9297,7 +9297,7 @@ function buyTier(tierId, price) {
   var pubKey = window.PK || 'pk_live_aaf3faacd1ff2cb720a5f1afaf79112c3fc322ca';
   if (typeof PaystackPop === 'undefined') { toast('Paystack did not load. Refresh and try again.', 'fail'); return; }
 
-  var handler = PaystackPop.setup({
+  var handler = new PaystackPop(); handler.newTransaction({
     key:      pubKey,
     email:    CU.email,
     amount:   price * 100,
@@ -9320,7 +9320,7 @@ function buyTier(tierId, price) {
     },
     onClose: function() { toast('Upgrade cancelled.', 'warn'); }
   });
-  handler.openIframe();
+  handler.open();
 }
 window.buyTier = buyTier;
 
@@ -9378,7 +9378,7 @@ function promoteProduct(productId, days, price) {
   var pubKey = window.PK || 'pk_live_aaf3faacd1ff2cb720a5f1afaf79112c3fc322ca';
   if (typeof PaystackPop === 'undefined') { toast('Paystack did not load. Refresh and try again.', 'fail'); return; }
 
-  var handler = PaystackPop.setup({
+  var handler = new PaystackPop(); handler.newTransaction({
     key:      pubKey,
     email:    CU.email,
     amount:   price * 100,
@@ -9409,7 +9409,7 @@ function promoteProduct(productId, days, price) {
     },
     onClose: function() { toast('Promotion cancelled.', 'warn'); }
   });
-  handler.openIframe();
+  handler.open();
 }
 window.promoteProduct = promoteProduct;
 
@@ -9621,7 +9621,7 @@ function confirmWalletTopup() {
   var pubKey = window.PK || 'pk_live_aaf3faacd1ff2cb720a5f1afaf79112c3fc322ca';
   if (typeof PaystackPop === 'undefined') { toast('Paystack not loaded. Refresh and try again.', 'fail'); return; }
 
-  var handler = PaystackPop.setup({
+  var handler = new PaystackPop(); handler.newTransaction({
     key: pubKey, email: CU.email, amount: amount * 100, currency: 'NGN',
     ref: 'WALLET-TOPUP-' + CU.id + '-' + Date.now(),
     metadata: { type: 'wallet_topup', userId: String(CU.id) },
@@ -9649,7 +9649,7 @@ function confirmWalletTopup() {
       toast('Top up cancelled.', 'warn');
     }
   });
-  handler.openIframe();
+  handler.open();
 }
 window.confirmWalletTopup = confirmWalletTopup;
 
@@ -10397,7 +10397,7 @@ function confirmAdminWalletTopup() {
   var pubKey = window.PK || 'pk_live_aaf3faacd1ff2cb720a5f1afaf79112c3fc322ca';
   if (typeof PaystackPop === 'undefined') { toast('Paystack not loaded. Refresh.', 'fail'); return; }
 
-  var handler = PaystackPop.setup({
+  var handler = new PaystackPop(); handler.newTransaction({
     key: pubKey, email: CU.email, amount: amount * 100, currency: 'NGN',
     ref: 'ADMIN-WALLET-' + Date.now(),
     metadata: { type: 'admin_wallet_topup', adminId: String(CU.id) },
@@ -10418,7 +10418,7 @@ function confirmAdminWalletTopup() {
     },
     onClose: function() { toast('Top up cancelled.', 'warn'); }
   });
-  handler.openIframe();
+  handler.open();
 }
 window.confirmAdminWalletTopup = confirmAdminWalletTopup;
 
@@ -12716,7 +12716,7 @@ function promoteProductModal() {
   var feeMap = { 7: 500, 14: 850, 30: 1500 };
   var fee = feeMap[duration] || 500;
   
-  var handler = PaystackPop.setup({
+  var handler = new PaystackPop(); handler.newTransaction({
     key: PKS,
     email: CU.email,
     amount: fee * 100,
@@ -12758,7 +12758,7 @@ function promoteProductModal() {
       });
     }
   });
-  handler.openIframe();
+  handler.open();
 }
 window.promoteProductModal = promoteProductModal;
 
