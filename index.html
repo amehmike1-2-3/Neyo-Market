@@ -7153,6 +7153,7 @@ function opn(id) {
   var pdQty      = (p.quantity !== undefined && p.quantity !== null) ? parseInt(p.quantity, 10) : null;
   var pdLocation = p.location || p.seller_location || '';
   var pdBio      = p.sellerBio || p.seller_bio || '';
+  var pdViews    = parseInt(p.viewCount || p.view_count || 0, 10) + 1; /* +1 counts current view */
   var pdStock    = pdQty !== null
     ? (pdQty <= 0
       ? '<span style="background:#fee2e2;color:#dc2626;padding:2px 8px;border-radius:12px;font-size:.7rem;font-weight:700">OUT OF STOCK</span>'
@@ -7189,6 +7190,7 @@ function opn(id) {
     + '<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">'
     + '<span style="background:#f3f4f6;color:var(--text);padding:3px 8px;border-radius:16px;font-size:.65rem;font-weight:600">' + (p.type==='digital'?'⚡ Digital':p.type==='course'?'🎓 Course':'📦 Physical') + '</span>'
     + (p.reviews > 0 ? '<span style="background:rgba(201,146,42,.15);color:var(--gold);padding:3px 8px;border-radius:16px;font-size:.65rem;font-weight:600">⭐ ' + p.rating + '</span>' : '<span style="background:#f3f4f6;color:var(--muted);padding:3px 8px;border-radius:16px;font-size:.65rem;font-weight:600">New</span>')
+    + '<span id="pd-views-' + p.id + '" style="background:#f3f4f6;color:var(--muted);padding:3px 8px;border-radius:16px;font-size:.65rem;font-weight:600">👁 ' + pdViews.toLocaleString() + ' views</span>'
     + '</div>'
     + '</div>'
     
@@ -7323,6 +7325,32 @@ function opn(id) {
   /* Store carousel state */
   window.carouselState = window.carouselState || {};
   window.carouselState[p.id] = { current: 0, max: gi.length };
+
+  /* ═══ TRACK PRODUCT VIEW ═══
+     Fire-and-forget — deduped per product per session so refreshing
+     the same product page doesn't keep adding counts. */
+  (function trackView(productId) {
+    var sessionKey = 'nm_viewed_' + productId;
+    if (sessionStorage.getItem(sessionKey)) return; /* already counted this session */
+    sessionStorage.setItem(sessionKey, '1');
+    fetch('/api/products?action=track-view', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ productId: productId })
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(data) {
+      if (data.ok) {
+        /* Update the badge live with the server-confirmed count */
+        var badge = document.getElementById('pd-views-' + productId);
+        if (badge) badge.textContent = '👁 ' + Number(data.viewCount).toLocaleString() + ' views';
+        /* Update local product cache so re-opens show correct count */
+        var prod = prods.find(function(x){ return Number(x.id) === Number(productId); });
+        if (prod) prod.viewCount = data.viewCount;
+      }
+    })
+    .catch(function() {}); /* silent fail — never break product view */
+  })(p.id);
 }
 
 /* Carousel controls */
