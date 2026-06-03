@@ -455,161 +455,6 @@
 body.ub-active .nav-top{top:44px!important}
 body.ub-active{padding-top:44px}
 @media(max-width:480px){.ub-text{font-size:.72rem}.ub-btn{padding:5px 11px;font-size:.72rem}}
-/* ═══ ONBOARDING TOUR ═══ */
-(function() {
-  var TOUR_STEPS = [
-    {
-      targetId: 'bnb-home',
-      label:    'Step 1 of 6',
-      title:    '🏠 Welcome to NeyoMarket!',
-      desc:     'This is your home feed. Discover trending products, flash sales, and announcements from sellers across Nigeria.',
-      position: 'top'
-    },
-    {
-      targetId: 'bnb-market',
-      label:    'Step 2 of 6',
-      title:    '🛒 Browse the Marketplace',
-      desc:     'Shop thousands of digital and physical products. Every order is escrow-protected — your money is safe.',
-      position: 'top'
-    },
-    {
-      targetId: 'bnb-sell',
-      label:    'Step 3 of 6',
-      title:    '💰 Start Selling',
-      desc:     'List your products and reach buyers across Nigeria. Upgrade your plan to unlock lower commissions and more listings.',
-      position: 'top'
-    },
-    {
-      targetId: 'bnb-aff',
-      label:    'Step 4 of 6',
-      title:    '🔗 Earn with Affiliates',
-      desc:     'Share product links and earn commission on every sale you refer. No selling required.',
-      position: 'top'
-    },
-    {
-      targetId: 'bnb-profile',
-      label:    'Step 5 of 6',
-      title:    '👤 Your Profile & Wallet',
-      desc:     'Manage your orders, wallet balance, loyalty points, and account settings all in one place.',
-      position: 'top'
-    },
-    {
-      targetId: 'upgrade-banner',
-      label:    'Step 6 of 6',
-      title:    '⚡ Upgrade Your Plan',
-      desc:     'You're on the Free plan. Upgrade to Starter, Pro or Business to unlock lower commissions, more listings, and priority placement.',
-      position: 'bottom',
-      isLast:   true
-    }
-  ];
-
-  var currentStep = 0;
-
-  function getRect(id) {
-    var el = document.getElementById(id);
-    if (!el) return null;
-    var r = el.getBoundingClientRect();
-    return { top: r.top, left: r.left, width: r.width, height: r.height };
-  }
-
-  function positionSpotlight(rect) {
-    var pad = 6;
-    var sp = document.getElementById('tour-spotlight');
-    sp.style.top    = (rect.top  - pad) + 'px';
-    sp.style.left   = (rect.left - pad) + 'px';
-    sp.style.width  = (rect.width  + pad * 2) + 'px';
-    sp.style.height = (rect.height + pad * 2) + 'px';
-  }
-
-  function positionTooltip(rect, position) {
-    var tt   = document.getElementById('tour-tooltip');
-    var ttH  = 160;
-    var ttW  = 270;
-    var vw   = window.innerWidth;
-    var vh   = window.innerHeight;
-    var top, left;
-
-    if (position === 'bottom') {
-      top = rect.top + rect.height + 16;
-    } else {
-      top = rect.top - ttH - 16;
-      if (top < 10) top = rect.top + rect.height + 16;
-    }
-
-    left = rect.left + rect.width / 2 - ttW / 2;
-    if (left < 10) left = 10;
-    if (left + ttW > vw - 10) left = vw - ttW - 10;
-    if (top + ttH > vh - 10) top = vh - ttH - 10;
-    if (top < 10) top = 10;
-
-    tt.style.top  = top + 'px';
-    tt.style.left = left + 'px';
-  }
-
-  function renderDots(total, current) {
-    var dots = document.getElementById('tour-dots');
-    if (!dots) return;
-    dots.innerHTML = '';
-    for (var i = 0; i < total; i++) {
-      var d = document.createElement('div');
-      d.className = 'tour-dot' + (i === current ? ' active' : '');
-      dots.appendChild(d);
-    }
-  }
-
-  function showStep(index) {
-    var step = TOUR_STEPS[index];
-    var rect = getRect(step.targetId);
-
-    /* Skip step if element not visible (e.g. profile button hidden before login) */
-    if (!rect || rect.width === 0) {
-      if (index < TOUR_STEPS.length - 1) { showStep(index + 1); return; }
-      else { endTour(); return; }
-    }
-
-    document.getElementById('tour-label').textContent = step.label;
-    document.getElementById('tour-title').textContent  = step.title;
-    document.getElementById('tour-desc').textContent   = step.desc;
-    document.getElementById('tour-next-btn').textContent = step.isLast ? 'Get Started 🚀' : 'Next →';
-
-    renderDots(TOUR_STEPS.length, index);
-    positionSpotlight(rect);
-    positionTooltip(rect, step.position || 'top');
-  }
-
-  window.startTour = function() {
-    var overlay = document.getElementById('tour-overlay');
-    if (!overlay) return;
-    currentStep = 0;
-    overlay.classList.add('active');
-    showStep(0);
-  };
-
-  window.tourNext = function() {
-    currentStep++;
-    if (currentStep >= TOUR_STEPS.length) { endTour(); return; }
-    showStep(currentStep);
-  };
-
-  window.endTour = function() {
-    var overlay = document.getElementById('tour-overlay');
-    if (overlay) overlay.classList.remove('active');
-    /* Mark as seen permanently */
-    if (typeof CU !== 'undefined' && CU) {
-      localStorage.setItem('nm_tour_done_' + (CU.id || CU.email), '1');
-    }
-  };
-
-  window.maybeStartTour = function() {
-    if (!CU) return;
-    var tier = (CU.membershipTier || 'free').toLowerCase();
-    if (tier !== 'free' && tier !== 'starter') return;
-    var key  = 'nm_tour_done_' + (CU.id || CU.email);
-    if (localStorage.getItem(key)) return; /* already seen */
-    setTimeout(window.startTour, 2500);
-  };
-})();
-
 /* ═══ PLAN POPUP MODAL ═══ */
 #plan-popup-overlay{position:fixed;inset:0;z-index:10000;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.85);backdrop-filter:blur(4px);padding:16px}
 #plan-popup-overlay.visible{display:flex}
@@ -635,24 +480,6 @@ body.ub-active{padding-top:44px}
 .pp-free-btn{width:100%;background:transparent;border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.4);border-radius:10px;padding:10px;font-size:.75rem;cursor:pointer;transition:border-color .2s,color .2s;font-family:'Outfit',sans-serif}
 .pp-free-btn:hover{border-color:rgba(255,255,255,.25);color:rgba(255,255,255,.6)}
 .pp-secured{text-align:center;font-size:.65rem;color:rgba(255,255,255,.25);margin-top:12px}
-/* ═══ ONBOARDING TOUR ═══ */
-#tour-overlay{position:fixed;inset:0;z-index:19999;pointer-events:none;display:none}
-#tour-overlay.active{display:block}
-#tour-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.75);transition:opacity .3s}
-#tour-spotlight{position:fixed;border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,.75);transition:all .35s cubic-bezier(.4,0,.2,1);pointer-events:none;z-index:20000;border:2px solid rgba(201,146,42,.7)}
-#tour-tooltip{position:fixed;z-index:20001;background:#111;border:1px solid rgba(201,146,42,.4);border-radius:16px;padding:18px 18px 14px;width:270px;box-shadow:0 8px 32px rgba(0,0,0,.5);transition:all .35s cubic-bezier(.4,0,.2,1);pointer-events:all}
-.tour-step-label{font-size:.6rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#c9922a;margin-bottom:6px}
-.tour-title{font-size:1rem;font-weight:800;color:#fff;margin-bottom:6px}
-.tour-desc{font-size:.78rem;color:rgba(255,255,255,.65);line-height:1.5;margin-bottom:14px}
-.tour-actions{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.tour-dots{display:flex;gap:5px}
-.tour-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.2);transition:background .2s}
-.tour-dot.active{background:#c9922a}
-.tour-btn-skip{background:transparent;border:none;color:rgba(255,255,255,.35);font-size:.72rem;cursor:pointer;padding:0;font-family:'Outfit',sans-serif}
-.tour-btn-skip:hover{color:rgba(255,255,255,.6)}
-.tour-btn-next{background:linear-gradient(135deg,#c9922a,#f5c842);color:#111;border:none;border-radius:8px;padding:7px 18px;font-size:.78rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;transition:transform .12s}
-.tour-btn-next:hover{transform:translateY(-1px)}
-#tour-overlay *{box-sizing:border-box}
 .accordion-section{border:1px solid var(--border);border-radius:10px;margin-bottom:12px;overflow:hidden;background:var(--card);}
 .accordion-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer;user-select:none;transition:background .2s;background:var(--bg3);}
 .accordion-header:hover{background:var(--bg2);}
@@ -2706,22 +2533,6 @@ footer{background:var(--text);color:#fff;border-top:1px solid rgba(255,255,255,.
     </div>
     <button class="pp-free-btn" onclick="closePlanPopup()">Continue with Free plan</button>
     <div class="pp-secured">🔒 Secured by Paystack &nbsp;⚡ Instant Access</div>
-  </div>
-</div>
-
-
-<!-- ═══ ONBOARDING TOUR ═══ -->
-<div id="tour-overlay" aria-live="polite">
-  <div id="tour-spotlight"></div>
-  <div id="tour-tooltip">
-    <div class="tour-step-label" id="tour-label"></div>
-    <div class="tour-title" id="tour-title"></div>
-    <div class="tour-desc" id="tour-desc"></div>
-    <div class="tour-actions">
-      <button class="tour-btn-skip" onclick="endTour()">Skip tour</button>
-      <div class="tour-dots" id="tour-dots"></div>
-      <button class="tour-btn-next" id="tour-next-btn" onclick="tourNext()">Next →</button>
-    </div>
   </div>
 </div>
 
@@ -5506,8 +5317,6 @@ function loadAll() {
   setTimeout(showUpgradeBanner, 800);
   /* Show plan popup for free/starter users */
   setTimeout(showPlanPopup, 1800);
-  /* Onboarding tour — first time only */
-  setTimeout(window.maybeStartTour, 3500);
   /* Render leaderboard after prods load */
   setTimeout(renderLeaderboard, 1500);
   /* Render featured seller */
@@ -5549,22 +5358,17 @@ function showPlanPopup() {
 
   var list = document.getElementById('pp-plans-list');
   if (!list) return;
-  /* Build cards using DOM — avoids quote escaping issues */
-  list.innerHTML = '';
-  plans.forEach(function(pl) {
-    var card = document.createElement('div');
-    card.className = 'pp-plan' + (pl.popular ? ' pp-popular' : '');
-    card.setAttribute('onclick', 'selectPlanPopup("' + pl.id + '")');
-    var badge = pl.popular ? '<span class="pp-plan-badge" style="background:rgba(201,146,42,.2);color:#c9922a">&#11088; Most Popular</span>' : '';
-    card.innerHTML = '<div class="pp-plan-left">'
-      + badge
-      + '<div class="pp-plan-name" style="color:' + pl.color + '">' + pl.name + '</div>'
-      + '<div class="pp-plan-comm">' + pl.comm + '</div>'
-      + '<div class="pp-plan-perks">' + pl.perks + '</div>'
+  list.innerHTML = plans.map(function(p) {
+    return '<div class="pp-plan' + (p.popular ? ' pp-popular' : '') + '" onclick="selectPlanPopup(\'' + p.id + '\')">'
+      + '<div class="pp-plan-left">'
+      + (p.popular ? '<span class="pp-plan-badge" style="background:rgba(201,146,42,.2);color:#c9922a">⭐ Most Popular</span>' : '')
+      + '<div class="pp-plan-name" style="color:' + p.color + '">' + p.name + '</div>'
+      + '<div class="pp-plan-comm">' + p.comm + '</div>'
+      + '<div class="pp-plan-perks">' + p.perks + '</div>'
       + '</div>'
-      + '<div class="pp-plan-price">&#8358;' + pl.price.toLocaleString() + '<span>/mo</span></div>';
-    list.appendChild(card);
-  });
+      + '<div class="pp-plan-price">₦' + p.price.toLocaleString() + '<span>/mo</span></div>'
+      + '</div>';
+  }).join('');
 
   var overlay = document.getElementById('plan-popup-overlay');
   if (overlay) overlay.classList.add('visible');
@@ -5609,9 +5413,7 @@ function showUpgradeBanner() {
   if (!CU) return;
   var tier = (CU.membershipTier || 'free').toLowerCase();
   if (tier !== 'free' && tier !== 'starter') return; /* pro/business → no banner */
-  var key = 'nm_upgrade_banner_' + (CU.id || CU.email);
-  var dismissed = localStorage.getItem(key);
-  if (dismissed && Date.now() < Number(dismissed)) return; /* still within 48-hr cooldown */
+  /* No cooldown — banner shows on every refresh for free/starter users */
   var banner = document.getElementById('upgrade-banner');
   if (!banner) return;
   banner.classList.add('visible');
@@ -5626,10 +5428,7 @@ function dismissUpgradeBanner(goUpgrade) {
     banner.classList.remove('visible', 'hiding');
     document.body.classList.remove('ub-active');
   }, 260);
-  if (CU) {
-    var key = 'nm_upgrade_banner_' + (CU.id || CU.email);
-    localStorage.setItem(key, String(Date.now() + 48 * 60 * 60 * 1000)); /* 48 hours */
-  }
+  /* No cooldown saved — banner will show again on next refresh */
   if (goUpgrade) {
     go('profile');
     setTimeout(function() { switchDashTab('settings', document.getElementById('tab-settings')); }, 350);
@@ -9147,7 +8946,6 @@ function doSignIn() {
       /* Show upgrade banner for free/starter users after login */
       setTimeout(showUpgradeBanner, 900);
       setTimeout(showPlanPopup, 2000);
-      setTimeout(window.maybeStartTour, 3500);
       /* Auto-open review form if user was trying to leave a review */
       if (window.__pendingPRForm && dest === 'home') {
         setTimeout(function() {
