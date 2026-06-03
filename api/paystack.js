@@ -1,117 +1,200 @@
-// /api/paystack.js — NeyoMarket Paystack KYC + Withdrawal API
-// FIX 4: dvc-release affiliate credit gated on valid aff_code
-// FIX 5: all errors return res.json() — never HTML
+// ╔══════════════════════════════════════════════════════════════════════╗
+// ║  /api/paystack.js — NeyoMarket Paystack API Handler                 ║
+// ║  Handles: KYC, withdrawals, payouts, DVC release, refunds           ║
+// ║  Production-hardened — all errors return JSON, never HTML           ║
+// ╚══════════════════════════════════════════════════════════════════════╝
 'use strict';
 
+// ─── Dependencies ────────────────────────────────────────────────────────────
 const { neon } = require('@neondatabase/serverless');
 
+// ─── Environment ─────────────────────────────────────────────────────────────
 const sql = neon(process.env.DATABASE_URL);
 const PSK = process.env.PAYSTACK_SECRET_KEY;
 
-function cors(res) {
+// ─── Commission Tiers ────────────────────────────────────────────────────────
+// digital rate / physical rate per membership tier
+const TIER_RATES = {
+  free:     { digital: 0.10, physical: 0.05 },
+  starter:  { digital: 0.08, physical: 0.04 },
+  pro:      { digital: 0.06, physical: 0.03 },
+  business: { digital: 0.04, physical: 0.02 },
+};
+
+const AFFILIATE_RATE    = 0.05;   // 5% affiliate cut when aff_code present
+const AFFILIATE_FEE_ADJ = 0.02;   // platform rate reduced by 2% if affiliate present
+const WITHDRAWAL_MIN    = 2000;   // ₦2,000 minimum withdrawal
+const PAYOUT_FLAT_FEE   = 100;    // ₦100 platform fee on each approved payout
+const LOYALTY_PTS_SALE  = 20;     // loyalty points awarded per completed sale
+
+// ─── Logger ──────────────────────────────────────────────────────────────────
+const log = {
+  info:  (...a) => console.log ('[NeyoMarket][paystack]', ...a),
+  warn:  (...a) => console.warn('[NeyoMarket][paystack]', ...a),
+  error: (...a) => console.error('[NeyoMarket][paystack]', ...a),
+};
+
+// ─── CORS Headers ────────────────────────────────────────────────────────────
+function setCors(res) {
   res.setHeader('Access-Control-Allow-Origin',  '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  res.setHeader('X-Content-Type-Options',       'nosniff'); /* FIX 5: prevent MIME sniff to HTML */
+  res.setHeader('X-Content-Type-Options',       'nosniff'); // prevent MIME sniff to HTML
 }
 
+// ─── Uniform JSON Error Response ─────────────────────────────────────────────
 function jsonErr(res, status, msg, detail) {
-  return res.status(status).json({ error: msg, ...(detail ? { detail } : {}) });
+  return res.status(status).json({
+    ok:    false,
+    error: msg,
+    ...(detail ? { detail } : {}),
+  });
 }
 
-async function paystackAPI(path, method, body) {
+// ─── Paystack API Helper ──────────────────────────────────────────────────────
+// All Paystack calls go through here.
+// Accepts an optional override key (used by approve-payout master key flow).
+async function callPaystack(path, method = 'GET', body = null, keyOverride = null) {
+  const key = keyOverride || PSK;
   try {
     const opts = {
-      method: method || 'GET',
+      method,
       headers: {
-        'Authorization': 'Bearer ' + PSK,
-        'Content-Type': 'application/json'
-      }
+        Authorization:  'Bearer ' + key,
+        'Content-Type': 'application/json',
+      },
     };
     if (body) opts.body = JSON.stringify(body);
-    const res = await fetch('https://api.paystack.co' + path, opts);
-    
-    /* Zero-response fix — check if response has content */
-    const text = await res.text();
+
+    const r    = await fetch('https://api.paystack.co' + path, opts);
+    const text = await r.text();
+
     if (!text || text.trim() === '') {
       return { status: false, message: 'Empty response from Paystack' };
     }
     try {
       return JSON.parse(text);
-    } catch(e) {
-      return { status: false, message: 'Invalid response from Paystack: ' + text.substring(0, 100) };
+    } catch (_) {
+      return { status: false, message: 'Invalid JSON from Paystack: ' + text.substring(0, 120) };
     }
-  } catch(err) {
+  } catch (err) {
     return { status: false, message: 'Paystack unreachable: ' + err.message };
   }
 }
 
+// ─── Input Validators ─────────────────────────────────────────────────────────
+function requireFields(obj, fields) {
+  // Returns the name of the first missing/falsy field, or null if all present
+  return fields.find(f => !obj[f]) || null;
+}
+
+function isValidPaystackKey(key) {
+  return typeof key === 'string' &&
+    (key.startsWith('sk_live_') || key.startsWith('sk_test_'));
+}
+
+// ─── Shared: Create Paystack Transfer Recipient ───────────────────────────────
+async function createRecipient(user, key) {
+  return callPaystack('/transferrecipient', 'POST', {
+    type:           'nuban',
+    name:           user.payout_aname || user.name,
+    account_number: user.payout_acct,
+    bank_code:      user.payout_bank,
+    currency:       'NGN',
+  }, key);
+}
+
+// ─── Shared: Execute Paystack Transfer ───────────────────────────────────────
+async function executeTransfer(recipientCode, amountNaira, reason, key) {
+  return callPaystack('/transfer', 'POST', {
+    source:    'balance',
+    amount:    Math.floor(amountNaira * 100), // naira → kobo
+    recipient: recipientCode,
+    reason,
+  }, key);
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// MAIN HANDLER
+// ══════════════════════════════════════════════════════════════════════════════
 module.exports = async function handler(req, res) {
-  cors(res);
+  setCors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   const action = req.query.action;
+  log.info(`→ ${req.method} ?action=${action}`);
 
   try {
 
-    /* RESOLVE ACCOUNT — looks up account name from bank code + account number */
+    // ──────────────────────────────────────────────────────────────────────────
+    // RESOLVE ACCOUNT
+    // GET ?action=resolve-account&accountNumber=...&bankCode=...
+    // Looks up account name from Paystack given bank code + account number.
+    // ──────────────────────────────────────────────────────────────────────────
     if (action === 'resolve-account') {
-      const accountNumber = req.query.accountNumber;
-      const bankCode      = req.query.bankCode;
+      const { accountNumber, bankCode } = req.query;
+
       if (!accountNumber || !bankCode)
-        return res.status(400).json({ error: 'accountNumber and bankCode required.' });
+        return jsonErr(res, 400, 'accountNumber and bankCode are required.');
       if (!PSK)
         return res.status(200).json({ error: 'Paystack key not configured — enter name manually.' });
 
-      const result = await paystackAPI('/bank/resolve?account_number=' + accountNumber + '&bank_code=' + bankCode);
-      if (result.status && result.data) {
+      const result = await callPaystack(
+        `/bank/resolve?account_number=${accountNumber}&bank_code=${bankCode}`
+      );
+
+      if (result.status && result.data)
         return res.status(200).json({ accountName: result.data.account_name });
-      }
+
       return res.status(200).json({ error: result.message || 'Account not found.' });
     }
 
-    /* KYC — Validate NIN/BVN */
+    // ──────────────────────────────────────────────────────────────────────────
+    // KYC — Validate NIN / BVN via Paystack customer validation
+    // POST ?action=kyc  { userId, kycType, kycNumber }
+    // ──────────────────────────────────────────────────────────────────────────
     if (action === 'kyc') {
-      if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-      const { userId, kycType, kycNumber } = req.body || {};
+      if (req.method !== 'POST') return jsonErr(res, 405, 'POST only.');
 
-      if (!userId || !kycType || !kycNumber)
-        return res.status(400).json({ error: 'userId, kycType and kycNumber are required.' });
-      if (kycNumber.length < 10)
-        return res.status(400).json({ error: 'Invalid ' + kycType.toUpperCase() + ' — must be at least 10 digits.' });
+      const { userId, kycType, kycNumber } = req.body || {};
+      const missing = requireFields({ userId, kycType, kycNumber }, ['userId', 'kycType', 'kycNumber']);
+      if (missing) return jsonErr(res, 400, `${missing} is required.`);
+
+      if (String(kycNumber).length < 10)
+        return jsonErr(res, 400, `Invalid ${kycType.toUpperCase()} — must be at least 10 digits.`);
       if (!PSK)
-        return res.status(500).json({ error: 'Paystack key not configured. Contact admin.' });
+        return jsonErr(res, 500, 'Paystack key not configured. Contact admin.');
 
       const users = await sql`SELECT * FROM users WHERE id = ${userId} LIMIT 1`;
-      if (!users.length) return res.status(404).json({ error: 'User not found.' });
+      if (!users.length) return jsonErr(res, 404, 'User not found.');
       const user = users[0];
 
-      /* Call Paystack */
-      const paystackRes = await paystackAPI('/customer/validate', 'POST', {
+      // Submit to Paystack customer validation endpoint
+      const paystackRes = await callPaystack('/customer/validate', 'POST', {
         email:      user.email,
         first_name: user.name.split(' ')[0],
         last_name:  user.name.split(' ').slice(1).join(' ') || user.name,
         type:       kycType,
         value:      kycNumber,
-        country:    'NG'
+        country:    'NG',
       });
 
-      /* Check for warming up / empty response */
+      // Service warming up or empty response — treat as pending
       if (!paystackRes || paystackRes.message === 'Empty response from Paystack') {
         return res.status(200).json({
-          ok: true,
+          ok:        true,
           kycStatus: 'pending',
-          message: 'Verification service is warming up, please try again in a moment.'
+          message:   'Verification service warming up — please retry in a moment.',
         });
       }
 
-      /* Determine status */
+      // Determine final KYC status from Paystack response
       let kycStatus = 'pending';
       if (paystackRes.status === true) {
         kycStatus = 'verified';
-      } else if (paystackRes.data && paystackRes.data.identification) {
-        kycStatus = paystackRes.data.identification.status === 'success' ? 'verified' : 'pending';
-      } else if (paystackRes.message && paystackRes.message.toLowerCase().includes('success')) {
+      } else if (paystackRes.data?.identification?.status === 'success') {
+        kycStatus = 'verified';
+      } else if (paystackRes.message?.toLowerCase().includes('success')) {
         kycStatus = 'verified';
       }
 
@@ -123,260 +206,383 @@ module.exports = async function handler(req, res) {
         WHERE id = ${userId}
       `;
 
+      log.info(`KYC ${kycStatus} for user ${userId} (${kycType})`);
+
       return res.status(200).json({
         ok:        true,
-        kycStatus: kycStatus,
+        kycStatus,
         message:   kycStatus === 'verified'
           ? 'Identity verified! You can now list products.'
-          : 'Submitted! Under review — usually takes a few minutes.'
+          : 'Submitted! Under review — usually takes a few minutes.',
       });
     }
 
-    /* GET BALANCE */
+    // ──────────────────────────────────────────────────────────────────────────
+    // SELLER BALANCE
+    // GET ?action=balance&userId=...
+    // Returns seller's Paystack subaccount balance.
+    // ──────────────────────────────────────────────────────────────────────────
     if (action === 'balance') {
-      const userId = req.query.userId;
-      if (!userId) return res.status(400).json({ error: 'userId required.' });
+      const { userId } = req.query;
+      if (!userId) return jsonErr(res, 400, 'userId is required.');
 
       const users = await sql`SELECT * FROM users WHERE id = ${userId} LIMIT 1`;
-      if (!users.length) return res.status(404).json({ error: 'User not found.' });
+      if (!users.length) return jsonErr(res, 404, 'User not found.');
       const user = users[0];
 
       if (!user.subaccount_code)
         return res.status(200).json({ balance: 0, message: 'No subaccount yet.' });
 
-      const paystackRes = await paystackAPI('/subaccount/' + user.subaccount_code);
-      const balance = (paystackRes.data && paystackRes.data.account_balance)
-        ? paystackRes.data.account_balance / 100 : 0;
+      const result  = await callPaystack('/subaccount/' + user.subaccount_code);
+      const balance = result.data?.account_balance
+        ? result.data.account_balance / 100
+        : 0;
 
-      return res.status(200).json({ balance: balance });
+      return res.status(200).json({ balance });
     }
 
-    /* REQUEST WITHDRAWAL — saves to DB, admin processes later */
+    // ──────────────────────────────────────────────────────────────────────────
+    // REQUEST WITHDRAWAL — seller requests, admin approves later
+    // POST ?action=request-withdraw  { userId, amount }
+    // ──────────────────────────────────────────────────────────────────────────
     if (action === 'request-withdraw') {
-      if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+      if (req.method !== 'POST') return jsonErr(res, 405, 'POST only.');
+
       const { userId, amount } = req.body || {};
-      if (!userId || !amount) return res.status(400).json({ error: 'userId and amount required.' });
+      if (!userId || !amount) return jsonErr(res, 400, 'userId and amount are required.');
+
+      const amountNum = parseFloat(amount);
+      if (isNaN(amountNum) || amountNum < WITHDRAWAL_MIN)
+        return jsonErr(res, 400, `Minimum withdrawal is ₦${WITHDRAWAL_MIN.toLocaleString()}.`);
 
       const users = await sql`SELECT * FROM users WHERE id = ${userId} LIMIT 1`;
-      if (!users.length) return res.status(404).json({ error: 'User not found.' });
+      if (!users.length) return jsonErr(res, 404, 'User not found.');
       const user = users[0];
 
       if (user.kyc_status !== 'verified')
-        return res.status(403).json({ error: 'KYC verification required.' });
+        return jsonErr(res, 403, 'KYC verification required before withdrawals.');
       if (!user.payout_acct || !user.payout_bank)
-        return res.status(400).json({ error: 'Add bank details in Payout Settings first.' });
-      if (amount < 2000)
-        return res.status(400).json({ error: 'Minimum withdrawal is ₦2,000.' });
+        return jsonErr(res, 400, 'Add bank details in Payout Settings first.');
 
       const bal = parseFloat(user.seller_balance || 0);
-      if (amount > bal)
-        return res.status(400).json({ error: 'Amount exceeds your available balance of ₦' + bal.toLocaleString() + '.' });
+      if (amountNum > bal)
+        return jsonErr(res, 400, `Amount exceeds available balance of ₦${bal.toLocaleString()}.`);
 
-      /* Save withdrawal request — status 'pending' until admin approves */
       await sql`
         INSERT INTO withdrawals (user_id, amount, status, reference, created_at)
-        VALUES (${userId}, ${amount}, ${'pending'}, ${''}, NOW())
+        VALUES (${userId}, ${amountNum}, 'pending', '', NOW())
       `;
 
+      log.info(`Withdrawal request submitted — user ${userId} ₦${amountNum}`);
       return res.status(201).json({ ok: true, message: 'Withdrawal request submitted! Admin will process it shortly.' });
     }
 
-    /* ══════════════════════════════════════════════════════
-       APPROVE PAYOUT — admin clicks 'Approve' on a pending request
-       1. Creates Paystack transfer recipient
-       2. Triggers Paystack Transfer API
-       3. Deducts amount from seller_balance in Neon
-       4. Marks withdrawal as 'success' in withdrawals table
-    ══════════════════════════════════════════════════════ */
+    // ──────────────────────────────────────────────────────────────────────────
+    // APPROVE PAYOUT — admin approves a single pending withdrawal
+    // POST ?action=approve-payout
+    // { withdrawalId, userId, amount, flatFee?, netAmount?, masterKey? }
+    // Flow: create recipient → transfer → deduct balance → mark success
+    // ──────────────────────────────────────────────────────────────────────────
     if (action === 'approve-payout') {
-      if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+      if (req.method !== 'POST') return jsonErr(res, 405, 'POST only.');
+
       const { withdrawalId, userId, amount, flatFee, netAmount, masterKey } = req.body || {};
       if (!withdrawalId || !userId || !amount)
-        return res.status(400).json({ error: 'withdrawalId, userId and amount required.' });
+        return jsonErr(res, 400, 'withdrawalId, userId and amount are required.');
 
-      /* ── PHASE 2: Master Key gate ─────────────────────────────────────
-         The frontend sends the sessionStorage master key so server-side
-         Paystack calls use the key the admin physically injected.
-         Fall back to env PSK if masterKey not supplied (legacy calls).
-      ────────────────────────────────────────────────────────────────── */
-      const activeKey = (masterKey && (masterKey.startsWith('sk_live_') || masterKey.startsWith('sk_test_')))
-        ? masterKey
-        : PSK;
-
+      // Resolve which Paystack key to use (master key injection or env fallback)
+      const activeKey = isValidPaystackKey(masterKey) ? masterKey : PSK;
       if (!activeKey)
-        return res.status(403).json({ error: 'Master Key required. Inject your Paystack secret key first.' });
+        return jsonErr(res, 403, 'Master Key required. Inject your Paystack secret key first.');
 
-      /* Load user */
       const users = await sql`SELECT * FROM users WHERE id = ${String(userId)} LIMIT 1`;
-      if (!users.length) return res.status(404).json({ error: 'User not found.' });
+      if (!users.length) return jsonErr(res, 404, 'User not found.');
       const user = users[0];
 
       if (!user.payout_acct || !user.payout_bank)
-        return res.status(400).json({ error: 'Seller has no bank details saved.' });
+        return jsonErr(res, 400, 'Seller has no bank details saved.');
 
-      const bal       = parseFloat(user.seller_balance || 0);
-      const grossAmt  = parseFloat(amount);
-      const fee       = parseFloat(flatFee || 100);         /* ₦100 flat fee */
-      const paidOut   = parseFloat(netAmount || (grossAmt - fee)); /* what seller actually receives */
+      const grossAmt = parseFloat(amount);
+      const fee      = parseFloat(flatFee || PAYOUT_FLAT_FEE);
+      const paidOut  = parseFloat(netAmount || (grossAmt - fee));
+      const bal      = parseFloat(user.seller_balance || 0);
 
       if (grossAmt > bal)
-        return res.status(400).json({ error: `Seller balance (₦${bal.toLocaleString()}) is less than requested (₦${grossAmt.toLocaleString()}).` });
+        return jsonErr(res, 400, `Seller balance (₦${bal.toLocaleString()}) is less than requested (₦${grossAmt.toLocaleString()}).`);
 
-      let transferRef = 'MAN-' + Date.now();
-      let transferOk  = false;
-
-      /* Attempt Paystack Transfer using the active key */
-      const paystackWithKey = async (path, method, body) => {
-        const opts = {
-          method: method || 'GET',
-          headers: { 'Authorization': 'Bearer ' + activeKey, 'Content-Type': 'application/json' }
-        };
-        if (body) opts.body = JSON.stringify(body);
-        const r    = await fetch('https://api.paystack.co' + path, opts);
-        const text = await r.text();
-        if (!text || text.trim() === '') return { status: false, message: 'Empty response from Paystack' };
-        try { return JSON.parse(text); } catch(e) { return { status: false, message: 'Invalid JSON: ' + text.substring(0,100) }; }
-      };
-
-      /* Step 1: Create recipient */
-      const recipRes = await paystackWithKey('/transferrecipient', 'POST', {
-        type:           'nuban',
-        name:           user.payout_aname || user.name,
-        account_number: user.payout_acct,
-        bank_code:      user.payout_bank,
-        currency:       'NGN'
-      });
-
+      // Step 1: Create Paystack transfer recipient
+      const recipRes = await createRecipient(user, activeKey);
       if (!recipRes.status)
-        return res.status(400).json({ error: 'Could not create recipient: ' + (recipRes.message || 'Check bank details') });
+        return jsonErr(res, 400, 'Could not create recipient: ' + (recipRes.message || 'Check bank details'));
 
-      /* Step 2: Transfer NET amount (gross minus flat fee) */
-      const transferRes = await paystackWithKey('/transfer', 'POST', {
-        source:    'balance',
-        amount:    Math.floor(paidOut * 100), /* kobo */
-        recipient: recipRes.data.recipient_code,
-        reason:    'NeyoMarket seller payout — ' + user.name
-      });
-
+      // Step 2: Execute transfer for NET amount (gross minus flat fee)
+      const transferRes = await executeTransfer(
+        recipRes.data.recipient_code,
+        paidOut,
+        `NeyoMarket seller payout — ${user.name}`,
+        activeKey
+      );
       if (!transferRes.status)
-        return res.status(400).json({ error: 'Transfer failed: ' + (transferRes.message || 'Try again') });
+        return jsonErr(res, 400, 'Transfer failed: ' + (transferRes.message || 'Try again'));
 
-      transferRef = transferRes.data.reference || transferRef;
-      transferOk  = true;
+      const transferRef = transferRes.data?.reference || ('MAN-' + Date.now());
 
-      if (transferOk) {
-        /* Step 3: Deduct GROSS amount from seller_balance (fee stays on platform) */
-        await sql`
-          UPDATE users
-          SET seller_balance = COALESCE(seller_balance, 0) - ${grossAmt}
-          WHERE id = ${String(userId)}
-        `;
+      // Step 3: Deduct GROSS from seller_balance (fee is retained by platform)
+      await sql`
+        UPDATE users
+        SET seller_balance = COALESCE(seller_balance, 0) - ${grossAmt}
+        WHERE id = ${String(userId)}
+      `;
 
-        /* Step 4: Mark withdrawal success */
-        await sql`
-          UPDATE withdrawals
-          SET status    = 'success',
-              reference = ${transferRef}
-          WHERE id = ${String(withdrawalId)}
-        `;
-      }
+      // Step 4: Mark withdrawal as success
+      await sql`
+        UPDATE withdrawals
+        SET status    = 'success',
+            reference = ${transferRef}
+        WHERE id = ${String(withdrawalId)}
+      `;
+
+      log.info(`Payout approved — user ${userId} ₦${paidOut} (fee ₦${fee}) ref ${transferRef}`);
 
       return res.status(200).json({
         ok:        true,
         reference: transferRef,
-        grossAmt:  grossAmt,
-        fee:       fee,
+        grossAmt,
+        fee,
         netPaid:   paidOut,
-        message:   '₦' + paidOut.toLocaleString() + ' sent to ' + (user.payout_aname || user.name) + ' (₦' + fee + ' platform fee retained)'
+        message:   `₦${paidOut.toLocaleString()} sent to ${user.payout_aname || user.name} (₦${fee} platform fee retained)`,
       });
     }
 
-    /* REQUEST PAYOUT — admin-triggered, processes immediately */
+    // ──────────────────────────────────────────────────────────────────────────
+    // BULK PAYOUT — admin approves ALL pending withdrawals in one call
+    // POST ?action=bulk-payout  { masterKey? }
+    // Processes each pending withdrawal independently — failures don't block others.
+    // Returns a detailed per-item results report.
+    // ──────────────────────────────────────────────────────────────────────────
+    if (action === 'bulk-payout') {
+      if (req.method !== 'POST') return jsonErr(res, 405, 'POST only.');
+
+      const { masterKey } = req.body || {};
+      const activeKey = isValidPaystackKey(masterKey) ? masterKey : PSK;
+      if (!activeKey)
+        return jsonErr(res, 403, 'Master Key required. Inject your Paystack secret key first.');
+
+      // Fetch all pending withdrawals with user bank details
+      const pending = await sql`
+        SELECT w.id AS withdrawal_id, w.user_id, w.amount,
+               u.name, u.payout_aname, u.payout_acct, u.payout_bank,
+               u.seller_balance, u.kyc_status
+        FROM   withdrawals w
+        JOIN   users u ON u.id = w.user_id
+        WHERE  w.status = 'pending'
+        ORDER  BY w.created_at ASC
+        LIMIT  50
+      `;
+
+      if (!pending.length)
+        return res.status(200).json({ ok: true, message: 'No pending withdrawals.', results: [] });
+
+      log.info(`Bulk payout started — ${pending.length} pending withdrawals`);
+
+      const results = [];
+      let successCount = 0;
+      let failCount    = 0;
+
+      for (const row of pending) {
+        const wId      = row.withdrawal_id;
+        const userId   = row.user_id;
+        const grossAmt = parseFloat(row.amount);
+        const fee      = PAYOUT_FLAT_FEE;
+        const paidOut  = grossAmt - fee;
+        const bal      = parseFloat(row.seller_balance || 0);
+
+        // Per-item validations — skip rather than abort entire batch
+        if (row.kyc_status !== 'verified') {
+          results.push({ withdrawalId: wId, userId, status: 'skipped', reason: 'KYC not verified' });
+          failCount++;
+          continue;
+        }
+        if (!row.payout_acct || !row.payout_bank) {
+          results.push({ withdrawalId: wId, userId, status: 'skipped', reason: 'No bank details' });
+          failCount++;
+          continue;
+        }
+        if (grossAmt > bal) {
+          results.push({ withdrawalId: wId, userId, status: 'skipped', reason: `Insufficient balance (₦${bal})` });
+          failCount++;
+          continue;
+        }
+        if (paidOut <= 0) {
+          results.push({ withdrawalId: wId, userId, status: 'skipped', reason: 'Net payout ≤ 0 after fee' });
+          failCount++;
+          continue;
+        }
+
+        try {
+          // Create recipient
+          const recipRes = await createRecipient(row, activeKey);
+          if (!recipRes.status) {
+            results.push({ withdrawalId: wId, userId, status: 'failed', reason: recipRes.message || 'Recipient creation failed' });
+            failCount++;
+            continue;
+          }
+
+          // Execute transfer
+          const transferRes = await executeTransfer(
+            recipRes.data.recipient_code,
+            paidOut,
+            `NeyoMarket bulk payout — ${row.name}`,
+            activeKey
+          );
+          if (!transferRes.status) {
+            results.push({ withdrawalId: wId, userId, status: 'failed', reason: transferRes.message || 'Transfer failed' });
+            failCount++;
+            continue;
+          }
+
+          const transferRef = transferRes.data?.reference || ('BULK-' + Date.now() + '-' + wId);
+
+          // Deduct from seller balance
+          await sql`
+            UPDATE users
+            SET seller_balance = COALESCE(seller_balance, 0) - ${grossAmt}
+            WHERE id = ${String(userId)}
+          `;
+
+          // Mark withdrawal success
+          await sql`
+            UPDATE withdrawals
+            SET status    = 'success',
+                reference = ${transferRef}
+            WHERE id = ${String(wId)}
+          `;
+
+          log.info(`Bulk payout OK — withdrawal ${wId} user ${userId} ₦${paidOut} ref ${transferRef}`);
+          results.push({
+            withdrawalId: wId,
+            userId,
+            status:    'success',
+            grossAmt,
+            fee,
+            netPaid:   paidOut,
+            reference: transferRef,
+          });
+          successCount++;
+
+        } catch (itemErr) {
+          log.error(`Bulk payout item error — withdrawal ${wId}:`, itemErr.message);
+          results.push({ withdrawalId: wId, userId, status: 'error', reason: itemErr.message });
+          failCount++;
+        }
+      }
+
+      log.info(`Bulk payout complete — ${successCount} success, ${failCount} failed/skipped`);
+
+      return res.status(200).json({
+        ok:           true,
+        total:        pending.length,
+        successCount,
+        failCount,
+        message:      `Bulk payout complete: ${successCount} succeeded, ${failCount} failed/skipped.`,
+        results,
+      });
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // WITHDRAW — admin-triggered immediate payout (legacy / direct flow)
+    // POST ?action=withdraw  { userId, amount }
+    // ──────────────────────────────────────────────────────────────────────────
     if (action === 'withdraw') {
-      if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+      if (req.method !== 'POST') return jsonErr(res, 405, 'POST only.');
+
       const { userId, amount } = req.body || {};
-      if (!userId || !amount) return res.status(400).json({ error: 'userId and amount required.' });
+      if (!userId || !amount) return jsonErr(res, 400, 'userId and amount are required.');
+
+      const amountNum = parseFloat(amount);
+      if (isNaN(amountNum) || amountNum < WITHDRAWAL_MIN)
+        return jsonErr(res, 400, `Minimum withdrawal is ₦${WITHDRAWAL_MIN.toLocaleString()}.`);
 
       const users = await sql`SELECT * FROM users WHERE id = ${userId} LIMIT 1`;
-      if (!users.length) return res.status(404).json({ error: 'User not found.' });
+      if (!users.length) return jsonErr(res, 404, 'User not found.');
       const user = users[0];
 
       if (user.kyc_status !== 'verified')
-        return res.status(403).json({ error: 'Complete KYC verification first.' });
+        return jsonErr(res, 403, 'Complete KYC verification first.');
       if (!user.payout_acct || !user.payout_bank)
-        return res.status(400).json({ error: 'Add your bank details in Payout Settings first.' });
-      if (amount < 2000)
-        return res.status(400).json({ error: 'Minimum withdrawal is ₦2,000.' });
+        return jsonErr(res, 400, 'Add your bank details in Payout Settings first.');
 
-      /* Create recipient */
-      const recipientRes = await paystackAPI('/transferrecipient', 'POST', {
-        type:           'nuban',
-        name:           user.payout_aname || user.name,
-        account_number: user.payout_acct,
-        bank_code:      user.payout_bank,
-        currency:       'NGN'
-      });
-
+      const recipientRes = await createRecipient(user);
       if (!recipientRes.status)
-        return res.status(400).json({ error: 'Could not create recipient: ' + (recipientRes.message || 'Try again') });
+        return jsonErr(res, 400, 'Could not create recipient: ' + (recipientRes.message || 'Try again'));
 
-      const transferRes = await paystackAPI('/transfer', 'POST', {
-        source:    'balance',
-        amount:    Math.floor(amount * 100),
-        recipient: recipientRes.data.recipient_code,
-        reason:    'NeyoMarket seller payout'
-      });
-
+      const transferRes = await executeTransfer(
+        recipientRes.data.recipient_code,
+        amountNum,
+        'NeyoMarket seller payout'
+      );
       if (!transferRes.status)
-        return res.status(400).json({ error: 'Transfer failed: ' + (transferRes.message || 'Try again') });
+        return jsonErr(res, 400, 'Transfer failed: ' + (transferRes.message || 'Try again'));
 
       await sql`
         INSERT INTO withdrawals (user_id, amount, status, reference, created_at)
-        VALUES (${userId}, ${amount}, ${'pending'}, ${transferRes.data.reference || ''}, NOW())
+        VALUES (${userId}, ${amountNum}, 'pending', ${transferRes.data?.reference || ''}, NOW())
       `;
+
+      log.info(`Direct withdraw — user ${userId} ₦${amountNum} ref ${transferRes.data?.reference}`);
 
       return res.status(200).json({
         ok:        true,
-        reference: transferRes.data.reference,
-        message:   'Payout of ₦' + Number(amount).toLocaleString() + ' initiated!'
+        reference: transferRes.data?.reference,
+        message:   `Payout of ₦${amountNum.toLocaleString()} initiated!`,
       });
     }
 
-    /* WITHDRAWAL HISTORY — supports ?userId=all for admin */
+    // ──────────────────────────────────────────────────────────────────────────
+    // WITHDRAWAL HISTORY
+    // GET ?action=withdrawals&userId=...   (userId='all' returns full admin list)
+    // ──────────────────────────────────────────────────────────────────────────
     if (action === 'withdrawals') {
-      const userId = req.query.userId;
-      if (!userId) return res.status(400).json({ error: 'userId required.' });
+      const { userId } = req.query;
+      if (!userId) return jsonErr(res, 400, 'userId is required.');
+
       const rows = userId === 'all'
         ? await sql`SELECT * FROM withdrawals ORDER BY created_at DESC LIMIT 200`
         : await sql`SELECT * FROM withdrawals WHERE user_id = ${userId} ORDER BY created_at DESC LIMIT 50`;
+
       return res.status(200).json({ withdrawals: rows });
     }
 
-    /* ═══════════════════════════════════════════════════════════════════
-       DVC-RELEASE — Seller enters the buyer's 6-digit delivery code.
-       Validates code against delivery_code in orders table.
-       On match: marks order completed, credits seller_balance in Neon.
-       Tiered commission: 5% physical, 15% digital.
-    ═══════════════════════════════════════════════════════════════════ */
+    // ──────────────────────────────────────────────────────────────────────────
+    // DVC RELEASE — seller enters 6-digit delivery code to release escrow
+    // POST ?action=dvc-release  { orderId, dvcCode, sellerUserId? }
+    // Flow: validate code → compute tiered split → credit seller → loyalty points
+    //       → credit affiliate (if valid aff_code)
+    // ──────────────────────────────────────────────────────────────────────────
     if (action === 'dvc-release') {
-      if (req.method !== 'POST') return res.status(405).json({ error: 'POST only.' });
-      const { orderId, dvcCode, sellerUserId } = req.body || {};
-      if (!orderId || !dvcCode) return res.status(400).json({ error: 'orderId and dvcCode required.' });
+      if (req.method !== 'POST') return jsonErr(res, 405, 'POST only.');
 
-      /* Load order from Neon */
+      const { orderId, dvcCode, sellerUserId } = req.body || {};
+      if (!orderId || !dvcCode) return jsonErr(res, 400, 'orderId and dvcCode are required.');
+
+      // Load order
       const orders = await sql`SELECT * FROM orders WHERE id = ${String(orderId)} LIMIT 1`;
-      if (!orders.length) return res.status(404).json({ error: 'Order not found.' });
+      if (!orders.length) return jsonErr(res, 404, 'Order not found.');
       const order = orders[0];
 
-      /* Already completed — idempotent */
-      if (order.status === 'completed' || order.collected) {
+      // Idempotency guard — already released
+      if (order.status === 'completed' || order.collected)
         return res.status(200).json({ ok: true, released: 0, message: 'Already completed.' });
-      }
 
-      /* Validate the delivery code */
-      const expectedCode = String(order.delivery_code || '');
-      if (!expectedCode) {
-        /* Fallback: regenerate from orderId using same algo as frontend */
+      // ── Validate delivery code ──────────────────────────────────────────────
+      const expectedCode = String(order.delivery_code || '').trim();
+      const submittedCode = String(dvcCode).trim();
+
+      let codeValid = false;
+      if (expectedCode) {
+        codeValid = submittedCode === expectedCode;
+      } else {
+        // Fallback: regenerate from orderId using same deterministic algo as frontend
         const str = String(orderId);
         let hash  = 0;
         for (let i = 0; i < str.length; i++) {
@@ -384,51 +590,50 @@ module.exports = async function handler(req, res) {
           hash |= 0;
         }
         const generated = String(Math.abs(hash) % 900000 + 100000);
-        if (String(dvcCode).trim() !== generated) {
-          return res.status(400).json({ error: 'Incorrect delivery code. Ask the buyer to re-share it.' });
-        }
-      } else {
-        if (String(dvcCode).trim() !== expectedCode) {
-          return res.status(400).json({ error: 'Incorrect delivery code. Ask the buyer to re-share it.' });
-        }
+        codeValid = submittedCode === generated;
       }
 
-      /* ── Compute tiered revenue split ── */
+      if (!codeValid)
+        return jsonErr(res, 400, 'Incorrect delivery code. Ask the buyer to re-share it.');
+
+      // ── Parse order items ───────────────────────────────────────────────────
       let items = order.items;
-      if (typeof items === 'string') { try { items = JSON.parse(items); } catch(e) { items = []; } }
+      if (typeof items === 'string') {
+        try { items = JSON.parse(items); } catch (_) { items = []; }
+      }
       if (!Array.isArray(items)) items = [];
 
-      const hasPhysical = items.some(function(i){ return i.type === 'physical'; });
-      const total       = parseFloat(order.total || 0);
+      // ── Resolve seller membership tier ──────────────────────────────────────
+      const dvcSellerId = sellerUserId || items[0]?.sellerId || items[0]?.seller_id || null;
+      let   dvcTier     = 'free';
 
-      /* Fetch seller membership tier for correct commission rate */
-      const dvcSellerId = sellerUserId || (items[0] && (items[0].sellerId || items[0].seller_id));
-      let dvcTier = 'free';
       if (dvcSellerId) {
         try {
-          const tRows = await sql`SELECT membership_tier FROM users WHERE id = ${String(dvcSellerId)} LIMIT 1`;
+          const tRows = await sql`
+            SELECT membership_tier FROM users WHERE id = ${String(dvcSellerId)} LIMIT 1
+          `;
           if (tRows.length) dvcTier = tRows[0].membership_tier || 'free';
-        } catch(e) { /* non-fatal */ }
+        } catch (e) {
+          log.warn('Could not fetch membership tier (non-fatal):', e.message);
+        }
       }
 
-      const tierRates = {
-        free:     { digital: 0.10, physical: 0.05 },
-        starter:  { digital: 0.08, physical: 0.04 },
-        pro:      { digital: 0.06, physical: 0.03 },
-        business: { digital: 0.04, physical: 0.02 },
-      };
-      const rates        = tierRates[dvcTier] || tierRates.free;
+      // ── Compute revenue split ───────────────────────────────────────────────
+      const hasPhysical  = items.some(i => i.type === 'physical');
+      const total        = parseFloat(order.total || 0);
+      const rates        = TIER_RATES[dvcTier] || TIER_RATES.free;
       const baseRate     = hasPhysical ? rates.physical : rates.digital;
       const hasAff       = order.aff_code && String(order.aff_code).trim().length > 2;
-      const platformRate = Math.max(0.01, baseRate - (hasAff ? 0.02 : 0));
-      const affiliateRate = hasAff ? 0.05 : 0;
-      const sellerRate   = 1 - platformRate - affiliateRate;
+      const platformRate = Math.max(0.01, baseRate - (hasAff ? AFFILIATE_FEE_ADJ : 0));
+      const affRate      = hasAff ? AFFILIATE_RATE : 0;
+      const sellerRate   = 1 - platformRate - affRate;
+
       const platformFee  = Math.round(total * platformRate);
-      const affiliateFee = Math.round(total * affiliateRate);
+      const affiliateFee = Math.round(total * affRate);
       const sellerPayout = Math.round(total * sellerRate);
       const collectedAt  = new Date().toISOString();
 
-      /* ── Mark order completed ── */
+      // ── Mark order completed ────────────────────────────────────────────────
       await sql`
         UPDATE orders SET
           status        = 'completed',
@@ -440,43 +645,46 @@ module.exports = async function handler(req, res) {
         WHERE id = ${String(orderId)}
       `;
 
-      /* ── Credit seller balance ── */
-      let resolvedSellerIdPs = null;
-      if (sellerUserId) {
+      // ── Credit seller balance ───────────────────────────────────────────────
+      let resolvedSellerId = null;
+
+      if (dvcSellerId) {
         await sql`
           UPDATE users
           SET seller_balance = COALESCE(seller_balance, 0) + ${sellerPayout}
-          WHERE id = ${String(sellerUserId)}
+          WHERE id = ${String(dvcSellerId)}
         `;
-        resolvedSellerIdPs = String(sellerUserId);
-        console.log('[paystack.js] DVC release — seller', sellerUserId, 'credited ₦', sellerPayout);
-      } else {
-        /* Find seller from order items if no sellerUserId passed */
-        const sellerIdFromItem = items[0] && (items[0].sellerId || items[0].seller_id);
-        if (sellerIdFromItem) {
-          await sql`
-            UPDATE users
-            SET seller_balance = COALESCE(seller_balance, 0) + ${sellerPayout}
-            WHERE id = ${String(sellerIdFromItem)}
+        resolvedSellerId = String(dvcSellerId);
+        log.info(`DVC release — seller ${dvcSellerId} credited ₦${sellerPayout} (tier: ${dvcTier})`);
+      }
+
+      // ── Award seller loyalty points ─────────────────────────────────────────
+      if (resolvedSellerId) {
+        try {
+          const sRows = await sql`
+            SELECT loyalty_points, loyalty_history FROM users WHERE id = ${resolvedSellerId} LIMIT 1
           `;
-          resolvedSellerIdPs = String(sellerIdFromItem);
+          if (sRows.length) {
+            const newPts = parseInt(sRows[0].loyalty_points || 0) + LOYALTY_PTS_SALE;
+            const hist   = sRows[0].loyalty_history || [];
+            hist.push({
+              pts:   LOYALTY_PTS_SALE,
+              label: `Sale confirmed: ${orderId}`,
+              date:  new Date().toLocaleDateString(),
+            });
+            await sql`
+              UPDATE users
+              SET loyalty_points   = ${newPts},
+                  loyalty_history  = ${JSON.stringify(hist)}::jsonb
+              WHERE id = ${resolvedSellerId}
+            `;
+          }
+        } catch (e) {
+          log.warn('Loyalty points update failed (non-fatal):', e.message);
         }
       }
 
-      /* ── Award seller 20 loyalty points ── */
-      if (resolvedSellerIdPs) {
-        try {
-          const sRows = await sql`SELECT loyalty_points, loyalty_history FROM users WHERE id = ${resolvedSellerIdPs} LIMIT 1`;
-          if (sRows.length) {
-            const newPts  = parseInt(sRows[0].loyalty_points || 0) + 20;
-            const hist    = sRows[0].loyalty_history || [];
-            hist.push({ pts: 20, label: 'Sale confirmed: ' + orderId, date: new Date().toLocaleDateString() });
-            await sql`UPDATE users SET loyalty_points = ${newPts}, loyalty_history = ${JSON.stringify(hist)}::jsonb WHERE id = ${resolvedSellerIdPs}`;
-          }
-        } catch (e) { console.warn('[paystack.js] loyalty points (non-fatal):', e.message); }
-      }
-
-      /* ── FIX 4: Credit affiliate ONLY if valid non-empty aff_code ── */
+      // ── Credit affiliate — only if valid aff_code (FIX 4) ──────────────────
       const affCode = order.aff_code ? String(order.aff_code).trim() : '';
       if (affCode.length > 2 && affiliateFee > 0) {
         try {
@@ -485,56 +693,63 @@ module.exports = async function handler(req, res) {
             SET seller_balance = COALESCE(seller_balance, 0) + ${affiliateFee}
             WHERE aff_code = ${affCode}
           `;
-          console.log('[paystack.js] Affiliate', affCode, 'credited ₦', affiliateFee);
-        } catch(affErr) {
-          console.error('[paystack.js] Affiliate credit error (non-fatal):', affErr.message);
+          log.info(`Affiliate ${affCode} credited ₦${affiliateFee}`);
+        } catch (affErr) {
+          log.warn('Affiliate credit failed (non-fatal):', affErr.message);
         }
       }
 
       return res.status(200).json({
         ok:          true,
         released:    sellerPayout,
-        platformFee: platformFee,
-        message:     '✅ Delivery confirmed! ₦' + sellerPayout.toLocaleString() + ' released to your wallet.'
+        platformFee,
+        affiliateFee,
+        message:     `✅ Delivery confirmed! ₦${sellerPayout.toLocaleString()} released to your wallet.`,
       });
     }
 
-    /* ═══════════════════════════════════════════════════════════════════
-       REFUND — Admin triggers Paystack refund for disputed order.
-    ═══════════════════════════════════════════════════════════════════ */
+    // ──────────────────────────────────────────────────────────────────────────
+    // REFUND — admin triggers Paystack refund for a disputed order
+    // POST ?action=refund  { orderId, reference, amount? }
+    // ──────────────────────────────────────────────────────────────────────────
     if (action === 'refund') {
-      if (req.method !== 'POST') return res.status(405).json({ error: 'POST only.' });
+      if (req.method !== 'POST') return jsonErr(res, 405, 'POST only.');
+
       const { orderId, reference, amount } = req.body || {};
-      if (!orderId || !reference) return res.status(400).json({ error: 'orderId and reference required.' });
+      if (!orderId || !reference) return jsonErr(res, 400, 'orderId and reference are required.');
 
-      const refundAmount = Math.floor(parseFloat(amount || 0) * 100); /* naira to kobo */
+      const refundKobo = Math.floor(parseFloat(amount || 0) * 100); // naira → kobo
 
-      const refundRes = await fetch('https://api.paystack.co/refund', {
-        method:  'POST',
-        headers: { 'Authorization': 'Bearer ' + PSK, 'Content-Type': 'application/json' },
-        body:    JSON.stringify({
-          transaction:       reference,
-          amount:            refundAmount,
-          merchant_note:     'Buyer dispute resolved in buyer favour — NeyoMarket admin'
-        })
+      const refundRes = await callPaystack('/refund', 'POST', {
+        transaction:   reference,
+        amount:        refundKobo,
+        merchant_note: 'Buyer dispute resolved in buyer favour — NeyoMarket admin',
       });
-      const refundData = await refundRes.json();
 
-      if (!refundData.status) {
-        return res.status(400).json({ error: 'Refund failed: ' + (refundData.message || 'Check Paystack dashboard') });
-      }
+      if (!refundRes.status)
+        return jsonErr(res, 400, 'Refund failed: ' + (refundRes.message || 'Check Paystack dashboard'));
 
-      /* Mark order as refunded in Neon */
-      await sql`UPDATE orders SET status = 'refunded', collected = false WHERE id = ${String(orderId)}`;
+      await sql`
+        UPDATE orders
+        SET status    = 'refunded',
+            collected = false
+        WHERE id = ${String(orderId)}
+      `;
 
-      return res.status(200).json({ ok: true, message: 'Refund of ₦' + parseFloat(amount||0).toLocaleString() + ' initiated successfully.' });
+      log.info(`Refund processed — order ${orderId} ₦${parseFloat(amount || 0)} ref ${reference}`);
+
+      return res.status(200).json({
+        ok:      true,
+        message: `Refund of ₦${parseFloat(amount || 0).toLocaleString()} initiated successfully.`,
+      });
     }
 
-    return jsonErr(res, 400, 'Unknown action: ' + action);
+    // ── Unknown action ────────────────────────────────────────────────────────
+    return jsonErr(res, 400, `Unknown action: ${action}`);
 
   } catch (err) {
-    /* FIX 5: always JSON — never HTML 500 page */
-    console.error('[paystack.js]', err.message || err);
+    // Global catch — always returns JSON, never an HTML 500 page
+    log.error('Unhandled error:', err.message || err);
     return jsonErr(res, 500, 'Internal server error.', err.message);
   }
 };
