@@ -455,6 +455,31 @@
 body.ub-active .nav-top{top:44px!important}
 body.ub-active{padding-top:44px}
 @media(max-width:480px){.ub-text{font-size:.72rem}.ub-btn{padding:5px 11px;font-size:.72rem}}
+/* ═══ PLAN POPUP MODAL ═══ */
+#plan-popup-overlay{position:fixed;inset:0;z-index:10000;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.85);backdrop-filter:blur(4px);padding:16px}
+#plan-popup-overlay.visible{display:flex}
+#plan-popup{position:relative;background:#111;border:1px solid rgba(201,146,42,.3);border-radius:20px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;padding:28px 20px 24px;animation:pp-in .35s cubic-bezier(.4,0,.2,1)}
+@keyframes pp-in{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
+.pp-close{position:absolute;top:14px;right:14px;background:rgba(255,255,255,.08);border:none;color:#fff;border-radius:50%;width:30px;height:30px;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
+.pp-close:hover{background:rgba(255,255,255,.18)}
+.pp-icon{width:56px;height:56px;background:linear-gradient(135deg,#c9922a,#f5c842);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:1.6rem;margin:0 auto 14px}
+.pp-title{text-align:center;font-size:1.5rem;font-weight:800;color:#fff;margin-bottom:4px}
+.pp-title span{color:#c9922a}
+.pp-sub{text-align:center;font-size:.8rem;color:rgba(255,255,255,.55);margin-bottom:22px}
+.pp-plans{display:flex;flex-direction:column;gap:10px;margin-bottom:18px}
+.pp-plan{background:#1a1a1a;border:1.5px solid rgba(255,255,255,.08);border-radius:14px;padding:14px 16px;cursor:pointer;transition:border-color .2s,background .2s;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.pp-plan:hover{border-color:rgba(201,146,42,.5);background:#1f1f1f}
+.pp-plan.pp-popular{border-color:rgba(201,146,42,.6);background:rgba(201,146,42,.06)}
+.pp-plan-left{display:flex;flex-direction:column;gap:3px}
+.pp-plan-badge{font-size:.6rem;font-weight:800;letter-spacing:.8px;text-transform:uppercase;padding:2px 8px;border-radius:20px;width:fit-content}
+.pp-plan-name{font-size:.95rem;font-weight:700;color:#fff}
+.pp-plan-comm{font-size:.7rem;color:rgba(255,255,255,.45)}
+.pp-plan-perks{font-size:.68rem;color:rgba(255,255,255,.35);margin-top:2px}
+.pp-plan-price{font-size:1.1rem;font-weight:800;color:#c9922a;white-space:nowrap}
+.pp-plan-price span{font-size:.65rem;font-weight:500;color:rgba(255,255,255,.4)}
+.pp-free-btn{width:100%;background:transparent;border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.4);border-radius:10px;padding:10px;font-size:.75rem;cursor:pointer;transition:border-color .2s,color .2s;font-family:'Outfit',sans-serif}
+.pp-free-btn:hover{border-color:rgba(255,255,255,.25);color:rgba(255,255,255,.6)}
+.pp-secured{text-align:center;font-size:.65rem;color:rgba(255,255,255,.25);margin-top:12px}
 .accordion-section{border:1px solid var(--border);border-radius:10px;margin-bottom:12px;overflow:hidden;background:var(--card);}
 .accordion-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer;user-select:none;transition:background .2s;background:var(--bg3);}
 .accordion-header:hover{background:var(--bg2);}
@@ -2492,6 +2517,22 @@ footer{background:var(--text);color:#fff;border-top:1px solid rgba(255,255,255,.
       <button class="ub-btn" onclick="dismissUpgradeBanner(true)">Upgrade →</button>
       <button class="ub-close" onclick="dismissUpgradeBanner(false)" aria-label="Close">✕</button>
     </div>
+  </div>
+</div>
+
+
+<!-- ═══ PLAN POPUP MODAL ═══ -->
+<div id="plan-popup-overlay" role="dialog" aria-modal="true">
+  <div id="plan-popup">
+    <button class="pp-close" onclick="closePlanPopup()" aria-label="Close">✕</button>
+    <div class="pp-icon">⭐</div>
+    <div class="pp-title">Neyo-<span>Market</span> Plans</div>
+    <div class="pp-sub">Unlock your seller dashboard and start earning</div>
+    <div class="pp-plans" id="pp-plans-list">
+      <!-- rendered by JS -->
+    </div>
+    <button class="pp-free-btn" onclick="closePlanPopup()">Continue with Free plan</button>
+    <div class="pp-secured">🔒 Secured by Paystack &nbsp;⚡ Instant Access</div>
   </div>
 </div>
 
@@ -5274,6 +5315,8 @@ function loadAll() {
   setTimeout(checkPriceDrops, 2000);
   /* Show upgrade banner for free/starter users */
   setTimeout(showUpgradeBanner, 800);
+  /* Show plan popup for free/starter users */
+  setTimeout(showPlanPopup, 1800);
   /* Render leaderboard after prods load */
   setTimeout(renderLeaderboard, 1500);
   /* Render featured seller */
@@ -5296,6 +5339,74 @@ function loadAll() {
       .catch(function() { ords = ld('nm_orders', []); });
   }
 }
+
+/* ═══ PLAN POPUP MODAL ═══ */
+function showPlanPopup() {
+  if (!CU) return;
+  var tier = (CU.membershipTier || 'free').toLowerCase();
+  if (tier !== 'free' && tier !== 'starter') return; /* pro/business never see it */
+  var key = 'nm_plan_popup_' + (CU.id || CU.email);
+  var dismissed = localStorage.getItem(key);
+  if (dismissed && Date.now() < Number(dismissed)) return; /* 24hr cooldown */
+
+  /* Build plan cards */
+  var plans = [
+    { id:'starter', name:'Starter', price:1500, color:'#2563eb', comm:'8% commission', perks:'30 listings · Email support', popular:false },
+    { id:'pro',     name:'Pro',     price:5000, color:'#c9922a', comm:'6% commission', perks:'Unlimited · Priority placement · Pro badge', popular:true },
+    { id:'business',name:'Business',price:15000,color:'#7c3aed', comm:'4% commission', perks:'Unlimited · Top placement · Dedicated support', popular:false }
+  ];
+
+  var list = document.getElementById('pp-plans-list');
+  if (!list) return;
+  list.innerHTML = plans.map(function(p) {
+    return '<div class="pp-plan' + (p.popular ? ' pp-popular' : '') + '" onclick="selectPlanPopup(\'' + p.id + '\')">'
+      + '<div class="pp-plan-left">'
+      + (p.popular ? '<span class="pp-plan-badge" style="background:rgba(201,146,42,.2);color:#c9922a">⭐ Most Popular</span>' : '')
+      + '<div class="pp-plan-name" style="color:' + p.color + '">' + p.name + '</div>'
+      + '<div class="pp-plan-comm">' + p.comm + '</div>'
+      + '<div class="pp-plan-perks">' + p.perks + '</div>'
+      + '</div>'
+      + '<div class="pp-plan-price">₦' + p.price.toLocaleString() + '<span>/mo</span></div>'
+      + '</div>';
+  }).join('');
+
+  var overlay = document.getElementById('plan-popup-overlay');
+  if (overlay) overlay.classList.add('visible');
+}
+
+function selectPlanPopup(tierId) {
+  closePlanPopup();
+  /* Go to settings tier grid to complete payment */
+  go('profile');
+  setTimeout(function() {
+    switchDashTab('settings', document.getElementById('tab-settings'));
+    setTimeout(function() {
+      var tierGrid = document.getElementById('tier-grid-container');
+      if (tierGrid) tierGrid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      /* Auto-click the matching tier button */
+      setTimeout(function() {
+        var btns = document.querySelectorAll('.tier-btn');
+        btns.forEach(function(btn) {
+          if (btn.getAttribute('onclick') && btn.getAttribute('onclick').indexOf(tierId) !== -1) {
+            btn.click();
+          }
+        });
+      }, 300);
+    }, 400);
+  }, 350);
+}
+
+function closePlanPopup() {
+  var overlay = document.getElementById('plan-popup-overlay');
+  if (overlay) overlay.classList.remove('visible');
+  if (CU) {
+    var key = 'nm_plan_popup_' + (CU.id || CU.email);
+    localStorage.setItem(key, String(Date.now() + 24 * 60 * 60 * 1000)); /* 24 hours */
+  }
+}
+window.showPlanPopup  = showPlanPopup;
+window.closePlanPopup = closePlanPopup;
+window.selectPlanPopup = selectPlanPopup;
 
 /* ═══ UPGRADE BANNER ═══ */
 function showUpgradeBanner() {
@@ -7153,7 +7264,7 @@ function opn(id) {
   var pdQty      = (p.quantity !== undefined && p.quantity !== null) ? parseInt(p.quantity, 10) : null;
   var pdLocation = p.location || p.seller_location || '';
   var pdBio      = p.sellerBio || p.seller_bio || '';
-  var pdViews    = parseInt(p.viewCount || p.view_count || 0, 10) + 1; /* +1 counts current view */
+  var pdViews    = parseInt(p.viewCount || p.view_count || 0, 10); /* shown initially; updated live from DB */
   var pdStock    = pdQty !== null
     ? (pdQty <= 0
       ? '<span style="background:#fee2e2;color:#dc2626;padding:2px 8px;border-radius:12px;font-size:.7rem;font-weight:700">OUT OF STOCK</span>'
@@ -7330,43 +7441,50 @@ function opn(id) {
      Fire-and-forget — deduped per product per session so refreshing
      the same product page doesn't keep adding counts. */
   (function trackView(productId) {
-    /* Dedupe: only count once per 30 minutes per product per device */
     var cooldownKey = 'nm_viewed_' + productId;
     var lastViewed  = parseInt(localStorage.getItem(cooldownKey) || '0', 10);
     var thirtyMin   = 30 * 60 * 1000;
-    if (Date.now() - lastViewed < thirtyMin) {
-      /* Still within cooldown — just fetch latest count to display, don't increment */
+    var withinCooldown = (Date.now() - lastViewed < thirtyMin);
+
+    function updateBadge(count) {
+      var badge = document.getElementById('pd-views-' + productId);
+      if (badge) badge.textContent = '👁 ' + Number(count).toLocaleString() + ' views';
+      /* Always update local cache so next open shows correct value */
+      var prod = prods.find(function(x){ return Number(x.id) === Number(productId); });
+      if (prod) prod.viewCount = count;
+    }
+
+    if (withinCooldown) {
+      /* Within cooldown — don't increment, but always fetch fresh count from DB */
       fetch('/api/products?action=get-views&productId=' + productId)
         .then(function(r){ return r.json(); })
-        .then(function(data) {
-          if (data.ok) {
-            var badge = document.getElementById('pd-views-' + productId);
-            if (badge) badge.textContent = '👁 ' + Number(data.viewCount).toLocaleString() + ' views';
-          }
-        })
+        .then(function(data){ if (data.ok) updateBadge(data.viewCount); })
         .catch(function() {});
-      return;
+    } else {
+      /* Outside cooldown — increment AND get fresh count */
+      localStorage.setItem(cooldownKey, String(Date.now()));
+      fetch('/api/products?action=track-view', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ productId: productId })
+      })
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if (data.ok) {
+          updateBadge(data.viewCount);
+        } else {
+          console.error('[track-view] API error:', data);
+          /* Fallback: still fetch current count even if increment failed */
+          fetch('/api/products?action=get-views&productId=' + productId)
+            .then(function(r){ return r.json(); })
+            .then(function(d){ if (d.ok) updateBadge(d.viewCount); })
+            .catch(function(){});
+        }
+      })
+      .catch(function(err){
+        console.error('[track-view] fetch failed:', err);
+      });
     }
-    localStorage.setItem(cooldownKey, String(Date.now()));
-    fetch('/api/products?action=track-view', {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ productId: productId })
-    })
-    .then(function(r){ return r.json(); })
-    .then(function(data) {
-      if (data.ok) {
-        /* Update the badge live with the server-confirmed count */
-        var badge = document.getElementById('pd-views-' + productId);
-        if (badge) badge.textContent = '👁 ' + Number(data.viewCount).toLocaleString() + ' views';
-        /* Update local product cache so re-opens show correct count */
-        var prod = prods.find(function(x){ return Number(x.id) === Number(productId); });
-        if (prod) prod.viewCount = data.viewCount;
-      } else {
-        console.error('[track-view] API returned error:', data);
-      }
-    })
-    .catch(function(err) { console.error('[track-view] fetch failed:', err); });
   })(p.id);
 }
 
@@ -8832,6 +8950,7 @@ function doSignIn() {
       go(dest);
       /* Show upgrade banner for free/starter users after login */
       setTimeout(showUpgradeBanner, 900);
+      setTimeout(showPlanPopup, 2000);
       /* Auto-open review form if user was trying to leave a review */
       if (window.__pendingPRForm && dest === 'home') {
         setTimeout(function() {
@@ -8979,6 +9098,7 @@ function doSignUp() {
       else {
         go('home');
         setTimeout(showUpgradeBanner, 900);
+        setTimeout(showPlanPopup, 2000);
         /* Auto-open review form if user was trying to leave a review */
         if (window.__pendingPRForm) {
           setTimeout(function() {
