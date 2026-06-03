@@ -7330,9 +7330,24 @@ function opn(id) {
      Fire-and-forget — deduped per product per session so refreshing
      the same product page doesn't keep adding counts. */
   (function trackView(productId) {
-    var sessionKey = 'nm_viewed_' + productId;
-    if (sessionStorage.getItem(sessionKey)) return; /* already counted this session */
-    sessionStorage.setItem(sessionKey, '1');
+    /* Dedupe: only count once per 30 minutes per product per device */
+    var cooldownKey = 'nm_viewed_' + productId;
+    var lastViewed  = parseInt(localStorage.getItem(cooldownKey) || '0', 10);
+    var thirtyMin   = 30 * 60 * 1000;
+    if (Date.now() - lastViewed < thirtyMin) {
+      /* Still within cooldown — just fetch latest count to display, don't increment */
+      fetch('/api/products?action=get-views&productId=' + productId)
+        .then(function(r){ return r.json(); })
+        .then(function(data) {
+          if (data.ok) {
+            var badge = document.getElementById('pd-views-' + productId);
+            if (badge) badge.textContent = '👁 ' + Number(data.viewCount).toLocaleString() + ' views';
+          }
+        })
+        .catch(function() {});
+      return;
+    }
+    localStorage.setItem(cooldownKey, String(Date.now()));
     fetch('/api/products?action=track-view', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -7347,9 +7362,11 @@ function opn(id) {
         /* Update local product cache so re-opens show correct count */
         var prod = prods.find(function(x){ return Number(x.id) === Number(productId); });
         if (prod) prod.viewCount = data.viewCount;
+      } else {
+        console.error('[track-view] API returned error:', data);
       }
     })
-    .catch(function() {}); /* silent fail — never break product view */
+    .catch(function(err) { console.error('[track-view] fetch failed:', err); });
   })(p.id);
 }
 
