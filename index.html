@@ -5413,9 +5413,7 @@ function showUpgradeBanner() {
   if (!CU) return;
   var tier = (CU.membershipTier || 'free').toLowerCase();
   if (tier !== 'free' && tier !== 'starter') return; /* pro/business → no banner */
-  var key = 'nm_upgrade_banner_' + (CU.id || CU.email);
-  var dismissed = localStorage.getItem(key);
-  if (dismissed && Date.now() < Number(dismissed)) return; /* still within 48-hr cooldown */
+  /* No cooldown — banner shows on every refresh for free/starter users */
   var banner = document.getElementById('upgrade-banner');
   if (!banner) return;
   banner.classList.add('visible');
@@ -5430,10 +5428,7 @@ function dismissUpgradeBanner(goUpgrade) {
     banner.classList.remove('visible', 'hiding');
     document.body.classList.remove('ub-active');
   }, 260);
-  if (CU) {
-    var key = 'nm_upgrade_banner_' + (CU.id || CU.email);
-    localStorage.setItem(key, String(Date.now() + 48 * 60 * 60 * 1000)); /* 48 hours */
-  }
+  /* No cooldown saved — banner will show again on next refresh */
   if (goUpgrade) {
     go('profile');
     setTimeout(function() { switchDashTab('settings', document.getElementById('tab-settings')); }, 350);
