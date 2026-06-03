@@ -751,6 +751,15 @@ module.exports = async function handler(req, res) {
 
       if (!rows.length) return res.status(404).send('Product not found');
 
+      /* ── Track view: increment view_count for every OG link open ── */
+      try {
+        await sql`
+          UPDATE products
+          SET view_count = COALESCE(view_count, 0) + 1
+          WHERE id = ${Number(productId)}
+        `;
+      } catch(e) { /* silent — never break the OG redirect */ }
+
       const p        = rows[0];
       const name     = p.name || 'Product on NeyoMarket';
       const desc     = (p.description || 'Buy securely on NeyoMarket — Nigeria\'s trusted marketplace.').slice(0, 200);
