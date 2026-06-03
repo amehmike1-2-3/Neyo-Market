@@ -508,7 +508,7 @@ module.exports = async function handler(req, res) {
        POST — create product
        FIX 2: Reject digital products without a file_url
     ════════════════════════════════════════════════ */
-    if (req.method === 'POST') {
+    if (req.method === 'POST' && req.query.action !== 'track-view') {
       const p = req.body || {};
 
       if (!p.name || !p.price)
