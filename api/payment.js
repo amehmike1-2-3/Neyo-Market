@@ -671,7 +671,7 @@ module.exports = async function handler(req, res) {
             }
             const sp2  = parseFloat(order.seller_payout || 0);
             const sid2 = order.seller_id ? String(order.seller_id) : (() => { const its = safeJson(order.items,[]); return Array.isArray(its)&&its[0] ? String(its[0].sellerId||its[0].seller_id||'') : ''; })();
-            if (sp2 > 0 && sid2 && ['paid','completed'].includes(order.status)) {
+            if (sp2 > 0 && sid2) {
               await sql`UPDATE users SET seller_balance = GREATEST(0, COALESCE(seller_balance,0) - ${sp2}) WHERE id = ${sid2}`;
               await sql`UPDATE wallets SET balance = GREATEST(0, COALESCE(balance,0) - ${sp2}), updated_at = NOW() WHERE user_id = ${sid2}`;
             }
