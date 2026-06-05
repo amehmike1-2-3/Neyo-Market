@@ -539,6 +539,97 @@ nav{
 .nb.on,.nb:active{color:var(--gold);background:rgba(201,146,42,.08)}
 @media(max-width:768px){.nav-links{display:none}}
 .nav-r{display:flex;align-items:center;gap:6px;flex-shrink:0}
+
+/* ═══ NOTIFICATION BELL ═══ */
+.notif-bell-btn{
+  position:relative;background:none;border:1px solid var(--border);
+  border-radius:50%;width:34px;height:34px;font-size:1rem;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:var(--tr);flex-shrink:0;color:var(--text);
+}
+.notif-bell-btn:hover{background:var(--bg3);border-color:var(--gold)}
+.notif-badge{
+  position:absolute;top:-3px;right:-3px;
+  background:var(--red);color:#fff;
+  font-size:.48rem;font-weight:800;
+  min-width:16px;height:16px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  padding:0 3px;border:2px solid var(--bg2);
+  line-height:1;letter-spacing:0;
+  opacity:0;transform:scale(0);transition:opacity .2s,transform .2s;
+}
+.notif-badge.show{opacity:1;transform:scale(1)}
+/* Notification panel */
+.notif-panel{
+  position:fixed;top:calc(var(--nh) + 8px);right:8px;
+  width:min(360px,calc(100vw - 16px));
+  background:var(--bg2);border:1.5px solid var(--border);
+  border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,.14);
+  z-index:850;
+  opacity:0;transform:translateY(-8px) scale(.97);
+  pointer-events:none;
+  transition:opacity .2s cubic-bezier(.4,0,.2,1),transform .2s cubic-bezier(.4,0,.2,1);
+  max-height:min(480px,80vh);display:flex;flex-direction:column;overflow:hidden;
+}
+.notif-panel.open{
+  opacity:1;transform:translateY(0) scale(1);pointer-events:all;
+}
+.notif-panel-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 16px 11px;border-bottom:1px solid var(--border);flex-shrink:0;
+}
+.notif-panel-head h4{
+  font-size:.9rem;font-weight:700;color:var(--text);margin:0;
+  display:flex;align-items:center;gap:7px;
+}
+.notif-panel-head .notif-mark-read{
+  font-size:.72rem;color:var(--gold);cursor:pointer;
+  background:none;border:none;font-family:inherit;font-weight:600;
+  padding:4px 8px;border-radius:6px;transition:.15s;
+}
+.notif-panel-head .notif-mark-read:hover{background:rgba(201,146,42,.1)}
+.notif-panel-body{overflow-y:auto;flex:1;padding:10px 10px 14px;
+  display:flex;flex-direction:column;gap:6px;-webkit-overflow-scrolling:touch}
+.notif-item{
+  display:flex;gap:10px;padding:11px 12px;
+  border-radius:10px;border:1px solid transparent;
+  background:transparent;transition:.15s;cursor:default;position:relative;
+}
+.notif-item.unread{background:rgba(201,146,42,.05);border-color:rgba(201,146,42,.18)}
+.notif-item.unread::before{
+  content:'';position:absolute;left:4px;top:50%;transform:translateY(-50%);
+  width:5px;height:5px;border-radius:50%;background:var(--gold);flex-shrink:0;
+}
+.notif-item-icon{
+  width:34px;height:34px;border-radius:9px;
+  background:rgba(201,146,42,.1);border:1px solid rgba(201,146,42,.2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:.95rem;flex-shrink:0;
+}
+.notif-item-body{flex:1;min-width:0}
+.notif-item-title{font-size:.82rem;font-weight:600;color:var(--text);
+  margin-bottom:2px;line-height:1.3}
+.notif-item-text{font-size:.75rem;color:var(--muted);line-height:1.5;font-weight:400}
+.notif-item-date{font-size:.65rem;color:var(--muted2);margin-top:4px;font-weight:400}
+.notif-empty{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:36px 20px;color:var(--muted);text-align:center;
+}
+.notif-empty-icon{font-size:2rem;margin-bottom:10px;opacity:.5}
+.notif-empty p{font-size:.82rem;font-weight:400;line-height:1.6}
+.notif-panel-footer{
+  padding:10px 16px 12px;border-top:1px solid var(--border);flex-shrink:0;
+  display:flex;gap:8px;
+}
+.notif-panel-footer a{
+  flex:1;text-align:center;font-size:.76rem;font-weight:600;
+  color:var(--muted);text-decoration:none;padding:7px;border-radius:8px;
+  border:1px solid var(--border);transition:.15s;background:var(--bg3);
+  display:flex;align-items:center;justify-content:center;gap:5px;
+}
+.notif-panel-footer a:hover{border-color:var(--gold);color:var(--gold);background:rgba(201,146,42,.06)}
+/* Overlay to close panel on outside click */
+#notif-overlay{display:none;position:fixed;inset:0;z-index:840;}
 /* Primary button — gold only */
 .bg{background:var(--gold);color:#fff;padding:9px 16px;border-radius:6px;
     font-size:.76rem;font-weight:600;transition:var(--tr);white-space:nowrap;
@@ -3810,6 +3901,11 @@ nav:not(.bottom-nav){
   <div class="nav-r" id="nav-r" style="display:flex;align-items:center;gap:6px"></div>
   <!-- nav-static: NEVER wiped by updNav -->
   <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+    <!-- Notification Bell -->
+    <button class="notif-bell-btn" id="notif-bell-btn" onclick="toggleNotifPanel()" title="Notifications" aria-label="Notifications">
+      🔔
+      <span class="notif-badge" id="notif-badge"></span>
+    </button>
     <button class="theme-toggle" id="theme-btn" onclick="toggleTheme()" title="Toggle theme">🌙</button>
     <button id="ham-btn" onclick="openHamMenu()" aria-label="Menu" style="display:none;flex-direction:column;align-items:center;justify-content:center;gap:5px;width:38px;height:38px;background:none;border:1px solid var(--border);border-radius:8px;cursor:pointer;padding:7px;flex-shrink:0">
       <span style="display:block;width:18px;height:2px;background:var(--text);border-radius:2px"></span>
@@ -3818,6 +3914,32 @@ nav:not(.bottom-nav){
     </button>
   </div>
 </nav>
+
+<!-- ═══ NOTIFICATION OVERLAY (click-outside close) ═══ -->
+<div id="notif-overlay" onclick="closeNotifPanel()"></div>
+
+<!-- ═══ NOTIFICATION PANEL ═══ -->
+<div class="notif-panel" id="notif-panel" role="dialog" aria-label="Notifications">
+  <div class="notif-panel-head">
+    <h4>🔔 Notifications</h4>
+    <button class="notif-mark-read" onclick="markAllNotifsRead()">Mark all read</button>
+  </div>
+  <div class="notif-panel-body" id="notif-panel-body">
+    <div class="notif-empty">
+      <div class="notif-empty-icon">🔔</div>
+      <p>No notifications yet.<br/>Platform announcements will appear here.</p>
+    </div>
+  </div>
+  <div class="notif-panel-footer">
+    <a href="https://chat.whatsapp.com/FQxy9Zeb2ODIuPTtBxqNuD" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      WhatsApp Group
+    </a>
+    <a href="https://whatsapp.com/channel/0029Vb8IrLkH5JLvjk897y3o/100" target="_blank" rel="noopener">
+      📢 WA Channel
+    </a>
+  </div>
+</div>
 
 <div id="ham-overlay" onclick="closeHamMenu()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:800;backdrop-filter:blur(3px)"></div>
 
@@ -4357,26 +4479,7 @@ nav:not(.bottom-nav){
       </div>
     </div>
 
-    <!-- ══ COMMUNITY BANNER ══ -->
-    <div style="background:linear-gradient(135deg,#0a1628,#0d2137);border-radius:16px;padding:22px;margin:24px 0;border:1px solid rgba(37,211,102,.2)">
-      <div style="text-align:center;margin-bottom:16px">
-        <div style="font-size:1.6rem;margin-bottom:6px">💬</div>
-        <div style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:700;color:#fff;margin-bottom:4px">Join the NeyoMarket Community</div>
-        <div style="font-size:.8rem;color:rgba(255,255,255,.55);line-height:1.6">Get flash sale alerts, connect with sellers & buyers, and stay updated on new features.</div>
-      </div>
-      <div style="display:flex;gap:10px;flex-direction:column">
-        <a href="https://chat.whatsapp.com/FQxy9Zeb2ODIuPTtBxqNuD" target="_blank" rel="noopener"
-          style="display:flex;align-items:center;justify-content:center;gap:10px;background:#25d366;color:#fff;border-radius:12px;padding:14px;text-decoration:none;font-weight:700;font-size:.9rem;transition:.2s">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="#fff"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-          Join WhatsApp Group
-        </a>
-        <a href="https://whatsapp.com/channel/0029Vb8IrLkH5JLvjk897y3o/100" target="_blank" rel="noopener"
-          style="display:flex;align-items:center;justify-content:center;gap:10px;background:#128c7e;color:#fff;border-radius:12px;padding:14px;text-decoration:none;font-weight:700;font-size:.9rem;transition:.2s">
-          <span style="font-size:1.1rem">📢</span>
-          Follow WhatsApp Channel
-        </a>
-      </div>
-    </div>
+
     <div class="hot-deals-section" id="hot-deals-section" style="display:none">
       <div class="hot-deals-header">
         <span style="font-size:1.4rem">🔥</span>
@@ -4404,12 +4507,11 @@ nav:not(.bottom-nav){
       </div>
     </div>
 
-    <!-- ═══ TOP SELLERS LEADERBOARD ═══ -->
-    <div id="home-leaderboard" style="margin-bottom:22px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+    <div id="home-leaderboard" style="margin-bottom:24px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border)">
         <div style="display:flex;align-items:center;gap:8px">
           <span style="font-size:1.1rem">🏆</span>
-          <h2 style="margin:0;font-size:1rem;font-weight:700">Top Sellers This Month</h2>
+          <h2 style="margin:0;font-size:1.05rem;font-weight:700;color:var(--text)">Top Sellers This Month</h2>
         </div>
         <span id="lb-updated" style="font-size:.65rem;color:var(--muted)"></span>
       </div>
@@ -4426,20 +4528,15 @@ nav:not(.bottom-nav){
       <div id="home-rv-grid" style="display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch"></div>
     </div>
 
-    <!-- ═══ ANNOUNCEMENTS / NEWS BANNER ═══ -->
-    <div id="announcements-section" style="margin-bottom:22px;display:none">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-        <span style="font-size:1.1rem">📣</span>
-        <h2 style="margin:0;font-size:1rem;font-weight:700">Announcements</h2>
-        <span style="font-size:.72rem;color:var(--gold);background:rgba(201,146,42,.12);border:1px solid rgba(201,146,42,.3);padding:2px 8px;border-radius:12px">New</span>
-      </div>
-      <div id="announcements-list" style="display:flex;flex-direction:column;gap:10px"></div>
-    </div>
+    <!-- ═══ ANNOUNCEMENTS — moved to notification bell panel ═══ -->
 
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;margin-top:4px">
-      <span style="font-size:1.1rem">📍</span>
-      <h2 style="margin:0;font-size:1rem;font-weight:700">Trending Near You</h2>
-      <span style="font-size:.72rem;color:var(--muted);background:var(--bg3);border:1px solid var(--border);padding:2px 8px;border-radius:12px">Nigeria</span>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:1.1rem">📍</span>
+        <h2 style="margin:0;font-size:1.05rem;font-weight:700;color:var(--text)">Trending Near You</h2>
+        <span style="font-size:.68rem;color:var(--muted);background:var(--bg3);border:1px solid var(--border);padding:2px 8px;border-radius:12px;font-weight:500">Nigeria</span>
+      </div>
+      <button onclick="go('market')" style="background:none;border:none;color:var(--gold);font-size:.78rem;font-weight:600;cursor:pointer;font-family:inherit;padding:0;white-space:nowrap">See all →</button>
     </div>
 
     <div class="cats" id="home-cats">
@@ -7858,37 +7955,111 @@ function fHome(el, cat) {
 }
 window.fHome = fHome;
 
+/* ═══ NOTIFICATION PANEL — BELL ICON ══════════════════════════════════
+   State managed in window.NM_NOTIFS:
+   - items: array of announcement objects
+   - readIds: Set of ids the user has already read
+═══════════════════════════════════════════════════════════════════════ */
+window.NM_NOTIFS = { items: [], readIds: new Set() };
+
+function toggleNotifPanel() {
+  var panel = document.getElementById('notif-panel');
+  var overlay = document.getElementById('notif-overlay');
+  if (!panel) return;
+  var isOpen = panel.classList.contains('open');
+  if (isOpen) {
+    closeNotifPanel();
+  } else {
+    panel.classList.add('open');
+    if (overlay) overlay.style.display = 'block';
+    /* Mark all as read visually when panel opens */
+    markAllNotifsRead();
+  }
+}
+
+function closeNotifPanel() {
+  var panel = document.getElementById('notif-panel');
+  var overlay = document.getElementById('notif-overlay');
+  if (panel) panel.classList.remove('open');
+  if (overlay) overlay.style.display = 'none';
+}
+window.closeNotifPanel = closeNotifPanel;
+window.toggleNotifPanel = toggleNotifPanel;
+
+function markAllNotifsRead() {
+  window.NM_NOTIFS.items.forEach(function(a) {
+    window.NM_NOTIFS.readIds.add(a.id || a.title);
+  });
+  /* Persist in session */
+  try { sessionStorage.setItem('nm_notifs_read', JSON.stringify([...window.NM_NOTIFS.readIds])); } catch(e){}
+  /* Clear badge */
+  var badge = document.getElementById('notif-badge');
+  if (badge) { badge.textContent = ''; badge.classList.remove('show'); }
+  /* Remove unread styling from items */
+  var items = document.querySelectorAll('.notif-item.unread');
+  items.forEach(function(el){ el.classList.remove('unread'); });
+}
+window.markAllNotifsRead = markAllNotifsRead;
+
+function renderNotifPanel(items) {
+  var body = document.getElementById('notif-panel-body');
+  if (!body) return;
+
+  /* Restore previously read ids from session */
+  try {
+    var stored = JSON.parse(sessionStorage.getItem('nm_notifs_read') || '[]');
+    stored.forEach(function(id){ window.NM_NOTIFS.readIds.add(id); });
+  } catch(e){}
+
+  if (!items || !items.length) {
+    body.innerHTML = '<div class="notif-empty"><div class="notif-empty-icon">🔔</div><p>No notifications yet.<br/>Platform announcements will appear here.</p></div>';
+    return;
+  }
+
+  var unreadCount = 0;
+  var html = items.map(function(a) {
+    var id = a.id || a.title;
+    var isUnread = !window.NM_NOTIFS.readIds.has(id);
+    if (isUnread) unreadCount++;
+    var date = a.created_at ? new Date(a.created_at).toLocaleDateString('en-NG',{day:'numeric',month:'short',year:'numeric'}) : '';
+    return '<div class="notif-item' + (isUnread ? ' unread' : '') + '">'
+      + '<div class="notif-item-icon">📣</div>'
+      + '<div class="notif-item-body">'
+      + '<div class="notif-item-title">' + a.title
+      + (a.badge_text ? ' <span style="background:var(--gold);color:#fff;font-size:.58rem;font-weight:700;padding:1px 7px;border-radius:20px;margin-left:5px">' + a.badge_text + '</span>' : '')
+      + '</div>'
+      + (a.content ? '<div class="notif-item-text">' + a.content + '</div>' : '')
+      + (date ? '<div class="notif-item-date">' + date + '</div>' : '')
+      + '</div>'
+      + '</div>';
+  }).join('');
+  body.innerHTML = html;
+
+  /* Update badge */
+  var badge = document.getElementById('notif-badge');
+  if (badge) {
+    if (unreadCount > 0) {
+      badge.textContent = unreadCount > 9 ? '9+' : String(unreadCount);
+      badge.classList.add('show');
+    } else {
+      badge.textContent = '';
+      badge.classList.remove('show');
+    }
+  }
+}
+
 /* ═══ ANNOUNCEMENTS ═══════════════════════════════════════════════
    Fetches from /api/reviews?type=announcements
-   Renders into #announcements-section on the home page.
+   Renders into the notification bell panel.
    Called from initApp() on startup.
 ═════════════════════════════════════════════════════════════════ */
 function loadAnnouncements() {
   fetch('/api/reviews?type=announcements')
     .then(function(r){ return r.json(); })
     .then(function(data) {
-      var items = (data.announcements || []).slice(0, 5);
-      if (!items.length) return;
-      var section = document.getElementById('announcements-section');
-      var list    = document.getElementById('announcements-list');
-      if (!section || !list) return;
-
-      list.innerHTML = items.map(function(a) {
-        var badge = a.badge_text ? '<span style="background:var(--gold);color:#fff;font-size:.65rem;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:8px;white-space:nowrap">' + a.badge_text + '</span>' : '';
-        var date  = a.created_at ? new Date(a.created_at).toLocaleDateString('en-NG', { day:'numeric', month:'short' }) : '';
-        return '<div style="background:linear-gradient(135deg,rgba(201,146,42,.07) 0%,var(--surface) 100%);border:1px solid rgba(201,146,42,.25);border-left:3px solid var(--gold);border-radius:10px;padding:13px 15px">'
-          + '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">'
-          + '<div style="font-size:.86rem;font-weight:700;color:var(--text);line-height:1.3">' + a.title + badge + '</div>'
-          + (date ? '<span style="font-size:.7rem;color:var(--muted);white-space:nowrap;flex-shrink:0">' + date + '</span>' : '')
-          + '</div>'
-          + (a.content ? '<div style="font-size:.8rem;color:var(--muted);margin-top:6px;line-height:1.55">' + a.content + '</div>' : '')
-          + '</div>';
-      }).join('');
-
-      section.style.display = 'block';
-      /* Pulse the "New" badge then fade it */
-      var badge = section.querySelector('span[style*="gold"]');
-      if (badge) { setTimeout(function(){ badge.style.opacity = '0'; badge.style.transition = 'opacity 2s'; }, 8000); }
+      var items = (data.announcements || []).slice(0, 10);
+      window.NM_NOTIFS.items = items;
+      renderNotifPanel(items);
     })
     .catch(function(){});
 }
