@@ -6450,6 +6450,7 @@ var isAdmin = false;    // global admin flag
 var cart = [];
 var prods = [];
 var ords = [];
+var sellerOrds = []; /* seller incoming orders — always fetched live from Neon */
 var usrs = [];
 var uploadedImages = [];
 var dReady = false;
@@ -6762,7 +6763,7 @@ function go(pageId) {
     if (CU.role !== 'seller' && CU.role !== 'admin') {
       toast('Seller account required. Update your account type in Profile.', 'warn'); go('profile'); return;
     }
-    renderSellerPage();
+    loadSellerOrders(); /* always fetch live from Neon — never from localStorage */
   }
   if (pageId === 'store') { /* populated by openStorefront() */ }
   if (pageId === 'shipping') bSum('shipping');
@@ -10698,7 +10699,7 @@ function switchDashTab(name, btn) {
     setTimeout(function(){ loadWithdrawBalance(); loadWithdrawalHistory(); renderTierGrid(); renderPromoteProducts(); updatePasswordSectionUI(); }, 300);
   }
   if (name === 'seller') {
-    setTimeout(function(){ loadWalletBalance(); }, 400);
+    setTimeout(function(){ loadWalletBalance(); loadSellerOrders(); }, 400);
   }
   if (name === 'affiliate') {
     setTimeout(function(){ loadAffiliateDash(); }, 300);
@@ -11454,12 +11455,11 @@ function renderSellerDash() {
 
   var active  = myProds.filter(function (p) { return p.status === 'active'; }).length;
   var pending = myProds.filter(function (p) { return p.status === 'pending'; }).length;
-  var totalRevenue = ords.reduce(function (sum, o) {
-    var mine = o.items && o.items.some(function (i) { return i.sellerId && prods.find(function(p){ return p.id === i.sellerId && (p.seller === CU.name || p.sellerEmail === maskEmail(CU.email)); }); });
-    return mine ? sum + Math.round(o.total * 0.9) : sum;
+  var totalRevenue = sellerOrds.reduce(function (sum, o) {
+    return sum + parseFloat(o.sellerPayout || o.seller_payout || 0);
   }, 0);
 
-  var myOrds       = ords.filter(function(o){ return o.items && o.items.some(function(i){ return prods.find(function(p){ return p.id === i.sellerId && (p.seller === CU.name); }); }); });
+  var myOrds        = sellerOrds;
   var completedOrds = myOrds.filter(function(o){ return o.status === 'completed'; }).length;
   var topProd      = myProds.sort(function(a,b){ return (b.reviews||0)-(a.reviews||0); })[0];
 
@@ -11579,6 +11579,25 @@ function deleteProduct(productId) {
 }
 window.deleteProduct = deleteProduct;
 
+/* ═══ SELLER ORDERS LIVE FETCH — always pulls from Neon, never localStorage ═══ */
+function loadSellerOrders(callback) {
+  if (!CU) return;
+  fetch('/api/payment?action=orders&sellerId=' + encodeURIComponent(String(CU.id)))
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      sellerOrds = data.orders || [];
+      renderSellerPage();
+      renderSellerDash();
+      if (typeof callback === 'function') callback();
+    })
+    .catch(function(e) {
+      console.warn('[loadSellerOrders] fetch failed:', e.message);
+      renderSellerPage();
+      renderSellerDash();
+    });
+}
+window.loadSellerOrders = loadSellerOrders;
+
 /* ═══ SELLER DASHBOARD PAGE RENDERER ═══ */
 function renderSellerPage() {
   if (!CU) return;
@@ -11590,9 +11609,9 @@ function renderSellerPage() {
   var activeP  = myProds.filter(function (p) { return p.status === 'active'; });
   var pendingP = myProds.filter(function (p) { return p.status === 'pending'; });
 
-  /* Calculate total sales from orders */
+  /* Calculate total sales from seller orders (live from DB via sellerOrds) */
   var totalSales = 0;
-  ords.forEach(function (o) {
+  sellerOrds.forEach(function (o) {
     o.items.forEach(function (item) {
       var isMyProduct = myProds.some(function (p) { return p.id === item.id; });
       if (isMyProduct) totalSales += item.price * (item.qty || 1);
@@ -11676,11 +11695,7 @@ function renderSellerPage() {
 
   /* ── Incoming Orders — SELLER ONLY ── */
   if (!CU || (CU.role !== 'seller' && CU.role !== 'admin')) return; /* buyers never see this */
-  var selOrders = ords.filter(function (o) {
-    return o.items && o.items.some(function (item) {
-      return myProds.some(function (p) { return p.id === item.id; });
-    });
-  });
+  var selOrders = sellerOrds; /* already filtered by sellerId from Neon DB */
 
   var ordWrap = document.getElementById('sel-orders-wrap');
   if (!ordWrap) {
@@ -11799,7 +11814,7 @@ function sellerClaimFunds(orderId) {
   inp.disabled = true;
   err.textContent = '';
 
-  fetch('/api/paystack?action=dvc-release', {
+  fetch('/api/payment?action=dvc-release', {
     method:  'POST',
     headers: { 'Content-Type': 'application/json' },
     body:    JSON.stringify({
@@ -11815,14 +11830,9 @@ function sellerClaimFunds(orderId) {
   .then(function(data) {
     if (data.ok) {
       toast('✅ ' + (data.message || 'Funds released to your wallet!'), 'ok');
-      /* Update local order state */
-      var o = ords.find(function(x){ return x.id === orderId; });
-      if (o) { o.collected = true; o.status = 'completed'; }
-      saveAll();
       /* Clear the pending DVC order from localStorage since it's now complete */
       localStorage.removeItem('nm_dvc_pending_order');
-      renderSellerPage();   /* refreshes incoming orders list + DVC rows */
-      renderSellerDash();   /* refreshes stats: total sales, orders, pending count */
+      loadSellerOrders(); /* re-fetch live from Neon — reflects completed status */
       loadWalletBalance();
     } else {
       inp.disabled = false;
