@@ -6551,10 +6551,15 @@ function loadAll() {
       .then(function(data) {
         if (data && Array.isArray(data.orders)) {
           ords = data.orders;
-          /* Refresh orders UI if profile is open */
+          /* Refresh buyer orders UI if profile is open */
           if (document.getElementById('page-profile') &&
               document.getElementById('page-profile').classList.contains('active')) {
             renderOrders();
+          }
+          /* Refresh seller dashboard so DVC section reflects live DB status */
+          if (CU.role === 'seller' || CU.role === 'admin') {
+            renderSellerPage();  /* re-renders order list + DVC boxes */
+            renderSellerDash();  /* re-renders stats (total sales, orders, pending) */
           }
         }
       })
@@ -11756,14 +11761,18 @@ function renderSellerPage() {
               + (custPhone ? '<a href="https://wa.me/' + custPhone.replace(/\D/g,'') + '" target="_blank" style="background:rgba(30,216,128,.1);border:1px solid rgba(30,216,128,.22);color:var(--green);padding:5px 12px;border-radius:7px;font-size:.76rem;font-weight:700;text-decoration:none">💬 WhatsApp Buyer</a>' : '')
               + '</div>'
               /* ── DVC CLAIM INPUT: physical orders waiting for confirmation ── */
-              + (isPhys && !o.collected ? '<div style="margin-top:10px;padding:12px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px">'
-                + '<div style="font-size:.78rem;font-weight:700;color:#92400e;margin-bottom:8px">📦 Enter Buyer\'s 6-Digit Delivery Code to Claim Funds</div>'
-                + '<div style="display:flex;gap:8px;align-items:center">'
-                + '<input id="dvc-claim-' + o.id + '" type="text" inputmode="numeric" maxlength="6" placeholder="● ● ● ● ● ●" style="flex:1;padding:10px;border:2px solid #fde68a;border-radius:6px;font-size:1.1rem;letter-spacing:8px;text-align:center;background:var(--bg2);outline:none;font-weight:700" oninput="this.value=this.value.replace(/[^0-9]/g,\'\')"/>'
-                + '<button onclick="sellerClaimFunds(\'' + o.id + '\')" style="background:#c9922a;color:#fff;border:none;padding:10px 16px;border-radius:6px;font-weight:800;font-size:.82rem;cursor:pointer;white-space:nowrap">✅ Claim</button>'
-                + '</div>'
-                + '<div id="dvc-claim-err-' + o.id + '" style="font-size:.75rem;color:#dc2626;margin-top:5px;min-height:14px"></div>'
-                + '</div>' : '')
+              + (isPhys && !o.collected ? (function(){
+                  /* Save this order ID so DVC box survives a page refresh */
+                  try { localStorage.setItem('nm_dvc_pending_order', String(o.id)); } catch(e){}
+                  return '<div style="margin-top:10px;padding:12px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px">'
+                    + '<div style="font-size:.78rem;font-weight:700;color:#92400e;margin-bottom:8px">📦 Enter Buyer\'s 6-Digit Delivery Code to Claim Funds</div>'
+                    + '<div style="display:flex;gap:8px;align-items:center">'
+                    + '<input id="dvc-claim-' + o.id + '" type="text" inputmode="numeric" maxlength="6" placeholder="● ● ● ● ● ●" style="flex:1;padding:10px;border:2px solid #fde68a;border-radius:6px;font-size:1.1rem;letter-spacing:8px;text-align:center;background:var(--bg2);outline:none;font-weight:700" oninput="this.value=this.value.replace(/[^0-9]/g,\'\')"/>'
+                    + '<button onclick="sellerClaimFunds(\'' + o.id + '\')" style="background:#c9922a;color:#fff;border:none;padding:10px 16px;border-radius:6px;font-weight:800;font-size:.82rem;cursor:pointer;white-space:nowrap">✅ Claim</button>'
+                    + '</div>'
+                    + '<div id="dvc-claim-err-' + o.id + '" style="font-size:.75rem;color:#dc2626;margin-top:5px;min-height:14px"></div>'
+                    + '</div>';
+                })() : '')
               + '</div></div>';
           }).join(''));
   }
@@ -11810,7 +11819,10 @@ function sellerClaimFunds(orderId) {
       var o = ords.find(function(x){ return x.id === orderId; });
       if (o) { o.collected = true; o.status = 'completed'; }
       saveAll();
-      renderSellerPage();
+      /* Clear the pending DVC order from localStorage since it's now complete */
+      localStorage.removeItem('nm_dvc_pending_order');
+      renderSellerPage();   /* refreshes incoming orders list + DVC rows */
+      renderSellerDash();   /* refreshes stats: total sales, orders, pending count */
       loadWalletBalance();
     } else {
       inp.disabled = false;
