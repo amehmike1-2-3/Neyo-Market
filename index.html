@@ -13212,15 +13212,21 @@ window.submitDVC = submitDVC;
 function adminRefund(orderId, paystackRef, amount) {
   if (!confirm('Issue full refund of ₦' + parseFloat(amount).toLocaleString() + ' to the buyer? This will call the Paystack refund API.')) return;
 
-  fetch('/api/payment?action=refund', {
-    method:  'POST',
+  // FIX: The action=refund endpoint does not exist. Refund logic lives under
+  // action=disputes PATCH with resolve_buyer, which calls Paystack and updates the DB.
+  fetch('/api/payment?action=disputes', {
+    method:  'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify({ orderId: orderId, reference: paystackRef, amount: amount })
+    body:    JSON.stringify({ orderId: orderId, action: 'resolve_buyer' })
   })
   .then(function(r){ return r.json(); })
   .then(function(data) {
     if (data.ok) {
       toast('✅ Refund of ₦' + parseFloat(amount).toLocaleString() + ' initiated!', 'ok');
+      // Refresh seller stats from Neon (order is now refunded — affects their counts)
+      if (typeof renderSellerDash === 'function') renderSellerDash();
+      if (typeof loadWalletBalance === 'function') loadWalletBalance();
+      // Re-render disputes tab — resolved order won't appear (status='refunded')
       aTab('dis', document.querySelector('.asb.on'));
     } else {
       toast('❌ Refund failed: ' + (data.error||'Unknown'), 'fail');
@@ -13233,15 +13239,22 @@ window.adminRefund = adminRefund;
 function adminRelease(orderId, userId, sellerAmount) {
   if (!confirm('Release ₦' + parseFloat(sellerAmount).toLocaleString() + ' to the seller? This marks the order complete.')) return;
 
-  fetch('/api/payment?action=orders&id=' + String(orderId), {
+  // FIX: action=orders PATCH only sets status — it never credits seller_balance in Neon.
+  // action=disputes PATCH resolve_seller correctly: sets status=completed, credits
+  // seller_balance in Neon, and disputed=false so the dispute row disappears on refresh.
+  fetch('/api/payment?action=disputes', {
     method:  'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify({ id: orderId, status: 'completed', collected: true })
+    body:    JSON.stringify({ orderId: orderId, action: 'resolve_seller' })
   })
   .then(function(r){ return r.json(); })
   .then(function(data) {
-    if (data.ok !== false) {
-      toast('✅ Escrow released to seller!', 'ok');
+    if (data.ok) {
+      toast('✅ Escrow released to seller! ₦' + parseFloat(data.payout||sellerAmount).toLocaleString() + ' credited.', 'ok');
+      // Refresh seller wallet balance and dashboard stats from Neon (not localStorage)
+      if (typeof loadWalletBalance === 'function') loadWalletBalance();
+      if (typeof renderSellerDash === 'function') renderSellerDash();
+      // Re-render disputes tab — resolved order won't appear (status='completed')
       aTab('dis', document.querySelector('.asb.on'));
     } else {
       toast('❌ Release failed: ' + (data.error||''), 'fail');
