@@ -594,7 +594,7 @@ module.exports = async function handler(req, res) {
 
   /* ══════════════════════════════════════════════════════════════════
      DISPUTES — PATCH ?action=disputes
-     ✅ FIXED: Direct state updates are now executed seamlessly without failing
+     ✅ FIXED: Seller release + Refund logic
   ══════════════════════════════════════════════════════════════════ */
   if (action === 'disputes' && req.method === 'PATCH') {
     try {
@@ -615,7 +615,7 @@ module.exports = async function handler(req, res) {
         await sql`UPDATE orders SET status = 'completed', disputed = false, collected = true WHERE id = ${orderIdStr}`;
 
         const items = safeJson(order.items, []);
-        // Improved sellerId extraction (use stored seller_id column first)
+        // Improved sellerId extraction
         let sellerId = order.seller_id 
           ? String(order.seller_id) 
           : (Array.isArray(items) && items[0]
@@ -659,16 +659,17 @@ module.exports = async function handler(req, res) {
             })
           });
           refundData = await refundRes.json();
+          console.log('[resolve_buyer] Paystack full response:', JSON.stringify(refundData));
         } catch (fetchErr) {
           console.error('[refund] fetch error:', fetchErr.message);
-          // Still update local status as fallback
           await sql`UPDATE orders SET status = 'refunded', disputed = false WHERE id = ${orderIdStr}`;
           return res.status(200).json({ ok: true, note: 'Local status updated (Paystack unreachable)' });
         }
 
         if (!refundData.status) {
-          const errMsg = (refundData.message || '').toLowerCase();
-          if (errMsg.includes('already been fully refunded') || errMsg.includes('refund already initiated') || errMsg.includes('transaction already refunded')) {
+          const errMsg = refundData.message || '';
+          console.log('[refund] Paystack error:', errMsg);
+          if (errMsg.includes('already been fully refunded') || errMsg.includes('Refund already initiated') || errMsg.includes('already refunded')) {
             await sql`UPDATE orders SET status = 'refunded', disputed = false WHERE id = ${orderIdStr}`;
             return res.status(200).json({ ok: true, message: 'Refund already processed.' });
           }
@@ -680,7 +681,6 @@ module.exports = async function handler(req, res) {
 
         console.log('[payment/disputes PATCH] refunded buyer —', orderIdStr);
         
-        // FIX C: Minimal correct interface requirement payload response
         return res.status(200).json({
           ok: true
         });
@@ -702,7 +702,7 @@ module.exports = async function handler(req, res) {
 
   /* ══════════════════════════════════════════════════════════════════
      POST ?action=confirm
-     Verify payment, save order, split commission, write admin_transactions.
+     ... (rest of the file continues exactly as in your original paste)
   ══════════════════════════════════════════════════════════════════ */
   if (action === 'confirm' && req.method === 'POST') {
     const { reference, orderId, userId, items, total,
@@ -1207,4 +1207,4 @@ function dlErrorPage(title, message) {
     + '<h1>' + title + '</h1><p>' + message + '</p>'
     + '<a href="https://neyomarket.com.ng">Go to NeyoMarket</a>'
     + '</div></body></html>';
-   }
+       }
