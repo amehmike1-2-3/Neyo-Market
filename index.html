@@ -11609,8 +11609,7 @@ function renderSellerPage() {
   var activeP  = myProds.filter(function (p) { return p.status === 'active'; });
   var pendingP = myProds.filter(function (p) { return p.status === 'pending'; });
 
-  /* Calculate total sales from seller orders (live from DB via sellerOrds) */
-var validOrders = sellerOrds || []; 
+  /* Calculate total sales and balances from valid orders */
 var totalSales = 0;
 var escrowBalance = 0;
 var completedOrders = 0;
@@ -11618,6 +11617,20 @@ var totalOrders = validOrders.length;
 
 validOrders.forEach(function (o) {
   var payoutValue = parseFloat((o.payouts && o.payouts.seller) || o.sellerPayout || o.price || o.total || 0);
+
+  // 1. IF THE ORDER IS REFUNDED: Skip it entirely for earnings, or subtract it.
+  if (o.status === 'REFUNDED') {
+    // We don't add it to totalSales because the money is gone.
+    return; // Skip to the next order in the loop
+  }
+
+  // 2. IF THE ORDER IS IN DISPUTE: Keep it out of completed sales, maybe hold it in escrow
+  if (o.status === 'DISPUTED') {
+    // Optional: escrowBalance += payoutValue; (If you want disputed money visible as "held")
+    return; 
+  }
+
+  // 3. NORMAL ORDERS: Process normally if they aren't refunded/disputed
   totalSales += payoutValue;
 
   if (o.status === 'ESCROW_HELD') {
