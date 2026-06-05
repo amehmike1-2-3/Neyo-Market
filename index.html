@@ -11610,14 +11610,24 @@ function renderSellerPage() {
   var pendingP = myProds.filter(function (p) { return p.status === 'pending'; });
 
   /* Calculate total sales from seller orders (live from DB via sellerOrds) */
-  var totalSales = 0;
-  sellerOrds.forEach(function (o) {
-    o.items.forEach(function (item) {
-      var isMyProduct = myProds.some(function (p) { return p.id === item.id; });
-      if (isMyProduct) totalSales += item.price * (item.qty || 1);
-    });
-  });
-  var myEarnings = Math.round(totalSales * 0.9); // seller gets 90%
+var validOrders = sellerOrds || []; 
+var totalSales = 0;
+var escrowBalance = 0;
+var completedOrders = 0;
+var totalOrders = validOrders.length;
+
+validOrders.forEach(function (o) {
+  var payoutValue = parseFloat((o.payouts && o.payouts.seller) || o.sellerPayout || o.price || o.total || 0);
+  totalSales += payoutValue;
+
+  if (o.status === 'ESCROW_HELD') {
+    escrowBalance += payoutValue;
+  } else if (o.status === 'COMPLETED') {
+    completedOrders++;
+  }
+});
+
+var myEarnings = Math.round(totalSales); 
 
   var sc = document.getElementById('sel-count');   if (sc) sc.textContent = myProds.length;
   var sa = document.getElementById('sel-active');  if (sa) sa.textContent = activeP.length;
