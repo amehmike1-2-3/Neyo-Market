@@ -11609,8 +11609,8 @@ function renderSellerPage() {
   var activeP  = myProds.filter(function (p) { return p.status === 'active'; });
   var pendingP = myProds.filter(function (p) { return p.status === 'pending'; });
 
-    /* Calculate total sales from seller orders (live from DB via sellerOrds) */
-  var validOrders = sellerOrds || []; // This fixes the crash by defining validOrders!
+      /* Calculate total sales and balances from valid orders */
+  var validOrders = sellerOrds || []; 
   var totalSales = 0;
   var escrowBalance = 0;
   var completedOrders = 0;
@@ -11619,22 +11619,25 @@ function renderSellerPage() {
   validOrders.forEach(function (o) {
     var payoutValue = parseFloat((o.payouts && o.payouts.seller) || o.sellerPayout || o.price || o.total || 0);
 
-    // 1. IF THE ORDER IS REFUNDED: Skip it entirely for earnings
-    if (o.status === 'REFUNDED') {
+    // Get the status and convert it to uppercase to avoid spelling mismatches
+    var currentStatus = (o.status || '').toUpperCase();
+
+    // 1. IF THE ORDER IS REFUNDED: Skip it completely so it drops out of Total Earnings
+    if (currentStatus === 'REFUNDED' || currentStatus === 'REFUND') {
       return; 
     }
 
     // 2. IF THE ORDER IS IN DISPUTE: Keep it out of completed sales
-    if (o.status === 'DISPUTED') {
+    if (currentStatus === 'DISPUTED' || currentStatus === 'DISPUTE') {
       return; 
     }
 
     // 3. NORMAL ORDERS: Process normally
     totalSales += payoutValue;
 
-    if (o.status === 'ESCROW_HELD') {
+    if (currentStatus === 'ESCROW_HELD') {
       escrowBalance += payoutValue;
-    } else if (o.status === 'COMPLETED') {
+    } else if (currentStatus === 'COMPLETED') {
       completedOrders++;
     }
   });
