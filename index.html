@@ -11609,40 +11609,40 @@ function renderSellerPage() {
   var activeP  = myProds.filter(function (p) { return p.status === 'active'; });
   var pendingP = myProds.filter(function (p) { return p.status === 'pending'; });
 
-  /* Calculate total sales and balances from valid orders */
-var totalSales = 0;
-var escrowBalance = 0;
-var completedOrders = 0;
-var totalOrders = validOrders.length;
+    /* Calculate total sales from seller orders (live from DB via sellerOrds) */
+  var validOrders = sellerOrds || []; // This fixes the crash by defining validOrders!
+  var totalSales = 0;
+  var escrowBalance = 0;
+  var completedOrders = 0;
+  var totalOrders = validOrders.length;
 
-validOrders.forEach(function (o) {
-  var payoutValue = parseFloat((o.payouts && o.payouts.seller) || o.sellerPayout || o.price || o.total || 0);
+  validOrders.forEach(function (o) {
+    var payoutValue = parseFloat((o.payouts && o.payouts.seller) || o.sellerPayout || o.price || o.total || 0);
 
-  // 1. IF THE ORDER IS REFUNDED: Skip it entirely for earnings, or subtract it.
-  if (o.status === 'REFUNDED') {
-    // We don't add it to totalSales because the money is gone.
-    return; // Skip to the next order in the loop
-  }
+    // 1. IF THE ORDER IS REFUNDED: Skip it entirely for earnings
+    if (o.status === 'REFUNDED') {
+      return; 
+    }
 
-  // 2. IF THE ORDER IS IN DISPUTE: Keep it out of completed sales, maybe hold it in escrow
-  if (o.status === 'DISPUTED') {
-    // Optional: escrowBalance += payoutValue; (If you want disputed money visible as "held")
-    return; 
-  }
+    // 2. IF THE ORDER IS IN DISPUTE: Keep it out of completed sales
+    if (o.status === 'DISPUTED') {
+      return; 
+    }
 
-  // 3. NORMAL ORDERS: Process normally if they aren't refunded/disputed
-  totalSales += payoutValue;
+    // 3. NORMAL ORDERS: Process normally
+    totalSales += payoutValue;
 
-  if (o.status === 'ESCROW_HELD') {
-    escrowBalance += payoutValue;
-  } else if (o.status === 'COMPLETED') {
-    completedOrders++;
-  }
-});
+    if (o.status === 'ESCROW_HELD') {
+      escrowBalance += payoutValue;
+    } else if (o.status === 'COMPLETED') {
+      completedOrders++;
+    }
+  });
 
-var myEarnings = Math.round(totalSales); 
+  var myEarnings = Math.round(totalSales); 
 
-  var sc = document.getElementById('sel-count');   if (sc) sc.textContent = myProds.length;
+  /* Update Dashboard Statistics Elements */
+  var sc = document.getElementById('sel-count');   if (sc) sc.textContent = totalOrders;
   var sa = document.getElementById('sel-active');  if (sa) sa.textContent = activeP.length;
   var sp = document.getElementById('sel-pending'); if (sp) sp.textContent = pendingP.length;
   var ss = document.getElementById('sel-sales');   if (ss) ss.textContent = '₦' + myEarnings.toLocaleString();
