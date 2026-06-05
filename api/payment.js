@@ -626,6 +626,17 @@ module.exports = async function handler(req, res) {
           `;
         }
 
+        /* Also upsert into wallets table (matching confirm flow) */
+        if (sellerId && sellerPayout > 0) {
+          await sql`
+            INSERT INTO wallets (user_id, balance, pending_balance, referral_earnings, updated_at)
+            VALUES (${sellerId}, ${sellerPayout}, 0, 0, NOW())
+            ON CONFLICT (user_id) DO UPDATE SET
+              balance = wallets.balance + ${sellerPayout},
+              updated_at = NOW()
+          `;
+        }
+
         console.log('[payment/disputes PATCH] resolved for seller —', orderIdStr, '₦' + sellerPayout);
         return res.status(200).json({
           ok:      true,
@@ -665,7 +676,7 @@ module.exports = async function handler(req, res) {
         }
 
         // FIX A: Explicit local sync execution
-        await sql`UPDATE orders SET status = 'refunded', disputed = false WHERE id = ${orderIdStr}`;
+        await sql`UPDATE orders SET status = 'refunded', disputed = false, collected = false WHERE id = ${orderIdStr}`;
 
         console.log('[payment/disputes PATCH] refunded buyer —', orderIdStr);
         
@@ -889,7 +900,7 @@ module.exports = async function handler(req, res) {
       const buyerEmail = (customer && customer.email) ? String(customer.email) : '';
       const buyerName  = (customer && customer.name) ? String(customer.name) : 'Valued Customer';
       const SITE       = process.env.SITE_URL || 'https://neyomarket.com.ng';
-      const sym        = { NGN:'₦', USD:'$', GBP:'£', EUR:'€', CAD:'CA$', GHS:'GH₵' }[(itemList[0] && itemList[0].currency) || 'NGN'] || '₦';
+      const sym        = { NGN:'₦', USD:'\( ', GBP:'£', EUR:'€', CAD:'CA \)', GHS:'GH₵' }[(itemList[0] && itemList[0].currency) || 'NGN'] || '₦';
 
       const itemListHtml = itemList.map(function(i){
         return '<li style="padding:4px 0;color:#555">' + (i.emoji||'📦') + ' ' + (i.name||'Product') + (i.selectedVariant ? ' — ' + i.selectedVariant : '') + ' × ' + (i.qty||1) + '</li>';
@@ -1196,4 +1207,4 @@ function dlErrorPage(title, message) {
     + '<h1>' + title + '</h1><p>' + message + '</p>'
     + '<a href="https://neyomarket.com.ng">Go to NeyoMarket</a>'
     + '</div></body></html>';
-}
+     }
