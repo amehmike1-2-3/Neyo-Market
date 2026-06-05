@@ -265,7 +265,7 @@ module.exports = async function handler(req, res) {
      ?userId=<id>   → buyer's own orders only
      ?admin=true    → all orders (admin only)
   ══════════════════════════════════════════════════════════════════ */
-  if (action === 'orders' && req.method === 'GET') {
+    if (action === 'orders' && req.method === 'GET') {
     try {
       const userId   = req.query.userId;
       const sellerId = req.query.sellerId;
@@ -275,10 +275,15 @@ module.exports = async function handler(req, res) {
       if (isAdmin) {
         rows = await sql`SELECT * FROM orders ORDER BY created_at DESC LIMIT 500`;
       } else if (sellerId) {
+        const parsedSellerId = parseInt(sellerId);
+        const searchString1 = `%"sellerId":"${sellerId}"%`;
+        const searchString2 = `%"sellerId":${sellerId}%`;
+
         rows = await sql`
           SELECT * FROM orders
-          WHERE items::text LIKE ${'%"sellerId":"' + String(sellerId) + '"%'}
-             OR items::text LIKE ${'%"sellerId":' + String(sellerId) + '%'}
+          WHERE seller_id = ${parsedSellerId}
+             OR items::text LIKE ${searchString1}
+             OR items::text LIKE ${searchString2}
           ORDER BY created_at DESC LIMIT 200
         `;
       } else if (userId) {
@@ -289,7 +294,7 @@ module.exports = async function handler(req, res) {
           ORDER BY created_at DESC
         `;
       } else {
-        return jsonErr(res, 400, 'userId is required. Use ?userId=<id> or ?admin=true');
+        return jsonErr(res, 400, 'userId or sellerId is required. Use ?userId=<id>, ?sellerId=<id> or ?admin=true');
       }
 
       return res.status(200).json({ ok: true, orders: rows.map(toOrder) });
