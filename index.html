@@ -3535,6 +3535,187 @@ nav:not(.bottom-nav){
   .dw{max-width:1000px!important}
 }
 
+/* ╔══════════════════════════════════════════════════════
+   FINAL PREMIUM LAYER — NeyoMarket 9.5/10
+   Empty states · Skeletons · Card micro-details
+   Dashboard KPIs · Typography · Dark mode consistency
+   ══════════════════════════════════════════════════════╝ */
+
+/* ── EMPTY STATE — premium icon+title+sub+cta ── */
+.eg{
+  display:flex!important;flex-direction:column!important;
+  align-items:center!important;justify-content:center!important;
+  padding:56px 24px!important;min-height:260px!important;
+  border-radius:18px!important;border:1.5px dashed var(--border)!important;
+  background:linear-gradient(145deg,var(--bg3),var(--bg2))!important;
+  grid-column:1/-1!important;text-align:center!important;gap:0!important;
+}
+.eg-icon{
+  width:72px;height:72px;border-radius:18px;
+  background:linear-gradient(135deg,rgba(201,146,42,.14),rgba(201,146,42,.06));
+  border:1.5px solid rgba(201,146,42,.22);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.9rem;margin-bottom:18px;
+  box-shadow:0 4px 20px rgba(201,146,42,.12);
+}
+.eg-title{
+  font-size:.97rem;font-weight:700;color:var(--text);
+  margin-bottom:7px;letter-spacing:-.012em;
+}
+.eg-sub{
+  font-size:.79rem;color:var(--muted);
+  max-width:270px;line-height:1.65;font-weight:400;margin-bottom:22px;
+}
+.eg-cta{
+  display:inline-flex;align-items:center;gap:6px;
+  background:var(--gold);color:#fff;
+  padding:11px 22px;border-radius:10px;
+  font-size:.78rem;font-weight:700;cursor:pointer;border:none;
+  font-family:'Outfit',sans-serif;letter-spacing:.02em;
+  box-shadow:0 4px 16px rgba(201,146,42,.25);
+  transition:all .2s ease;
+}
+.eg-cta:hover{background:var(--gold2);transform:translateY(-1px);box-shadow:0 6px 20px rgba(201,146,42,.38)}
+[data-theme="dark"] .eg{
+  background:linear-gradient(145deg,var(--bg3),var(--bg2))!important;
+  border-color:var(--border2)!important;
+}
+
+/* ── SKELETON SHIMMER ── */
+@keyframes nyo-shimmer{
+  0%{background-position:-600px 0}
+  100%{background-position:600px 0}
+}
+.pcard-skeleton{
+  border-radius:14px;border:1.5px solid var(--border);
+  overflow:hidden;background:var(--bg2);box-shadow:0 1px 4px rgba(0,0,0,.06);
+}
+.pcard-skeleton .sk-img{
+  height:190px;border-bottom:1.5px solid var(--border);
+  background:linear-gradient(90deg,var(--bg3) 0px,var(--border) 160px,var(--bg3) 320px);
+  background-size:600px 100%;animation:nyo-shimmer 1.5s infinite linear;
+}
+.pcard-skeleton .sk-body{padding:13px;display:flex;flex-direction:column;gap:8px}
+.pcard-skeleton .sk-line{
+  height:10px;border-radius:5px;
+  background:linear-gradient(90deg,var(--bg3) 0px,var(--border) 160px,var(--bg3) 320px);
+  background-size:600px 100%;animation:nyo-shimmer 1.5s infinite linear;
+}
+.sk-w-90{width:90%}.sk-w-75{width:75%}.sk-w-50{width:50%}.sk-w-40{width:40%}
+.pcard-skeleton .sk-btn{
+  height:36px;border-radius:9px;margin-top:2px;
+  background:linear-gradient(90deg,var(--bg3) 0px,var(--border) 160px,var(--bg3) 320px);
+  background-size:600px 100%;animation:nyo-shimmer 1.5s infinite linear;
+}
+.sk-stat{
+  height:72px;border-radius:10px;
+  background:linear-gradient(90deg,var(--bg3) 0px,var(--border) 160px,var(--bg3) 320px);
+  background-size:600px 100%;animation:nyo-shimmer 1.5s infinite linear;
+}
+.sk-row{
+  height:52px;border-radius:8px;margin-bottom:4px;
+  background:linear-gradient(90deg,var(--bg3) 0px,var(--border) 160px,var(--bg3) 320px);
+  background-size:600px 100%;animation:nyo-shimmer 1.5s infinite linear;
+}
+@media(prefers-reduced-motion:reduce){
+  .pcard-skeleton .sk-img,.pcard-skeleton .sk-line,.pcard-skeleton .sk-btn,
+  .sk-stat,.sk-row{animation:none;background:var(--bg3)}
+}
+
+/* ── CARD MICRO-DETAILS ── */
+/* "New" badge — styled pill */
+.badge-new{
+  background:var(--green-bg);color:var(--green);
+  border:1px solid rgba(5,150,105,.22);
+  padding:2px 8px;border-radius:20px;
+  font-size:.57rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+}
+/* Original price strikethrough */
+.price-original{
+  font-size:.68rem;color:var(--muted2);
+  text-decoration:line-through;margin-right:4px;
+}
+/* Savings tag */
+.savings-tag{
+  display:inline-flex;align-items:center;gap:3px;
+  background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.15);
+  color:var(--red);font-size:.64rem;font-weight:700;
+  padding:2px 8px;border-radius:4px;margin-bottom:4px;
+}
+/* Seller name emphasis */
+.pcs-seller{color:var(--muted);font-weight:600}
+.pcs-dot{color:var(--muted2)}
+
+/* ── DASHBOARD KPI CARDS — gold accent bar on hover ── */
+.sm{position:relative;overflow:hidden}
+.sm::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;
+  height:3px;background:linear-gradient(90deg,var(--gold),rgba(201,146,42,.1));
+  opacity:0;transition:opacity .2s;
+}
+.sm:hover::after{opacity:1}
+
+/* ── SELLER DASHBOARD PANEL — top accent bar ── */
+.sdp{position:relative;overflow:hidden}
+.sdp::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--gold),rgba(201,146,42,.12));
+}
+
+/* ── SECTION HEADINGS — Cormorant serif display ── */
+.shd h2{
+  font-family:'Cormorant Garamond',serif!important;
+  font-size:clamp(1.5rem,5vw,2.3rem)!important;
+  font-weight:700!important;letter-spacing:-.025em!important;
+}
+.shd p{font-weight:400!important}
+
+/* ── DASHBOARD STAT LABEL/VALUE ── */
+.sc2 .lb{
+  font-size:.62rem!important;font-weight:700!important;
+  letter-spacing:.08em!important;text-transform:uppercase!important;
+}
+.sc2 .vl{
+  font-family:'Cormorant Garamond',serif!important;
+  font-size:1.65rem!important;font-weight:700!important;line-height:1!important;
+}
+
+/* ── FORM CARD ── */
+.fc{border-radius:16px!important;box-shadow:0 4px 20px rgba(0,0,0,.08)!important}
+.fc h2{
+  font-family:'Cormorant Garamond',serif!important;
+  font-size:1.75rem!important;font-weight:700!important;letter-spacing:-.025em!important;
+}
+/* Input focus ring refinement */
+.fi:focus{
+  border-color:var(--gold)!important;
+  box-shadow:0 0 0 3px rgba(201,146,42,.12)!important;
+  background:var(--bg2)!important;
+}
+
+/* ── HOW IT WORKS CARDS ── */
+.rc{transition:transform .22s ease,box-shadow .22s ease!important}
+.rc:hover{transform:translateY(-3px)!important;box-shadow:0 8px 24px rgba(0,0,0,.09)!important}
+
+/* ── ORDER CARDS ── */
+.ord{transition:border-color .18s,box-shadow .18s!important}
+.ord:hover{border-color:rgba(201,146,42,.28)!important;box-shadow:0 4px 14px rgba(0,0,0,.07)!important}
+
+/* ── AFFILIATE STATS ── */
+.afc .afn{
+  font-family:'Cormorant Garamond',serif!important;
+  font-size:1.55rem!important;font-weight:700!important;
+  background:linear-gradient(135deg,var(--gold),#E09020)!important;
+  -webkit-background-clip:text!important;-webkit-text-fill-color:transparent!important;
+  background-clip:text!important;
+}
+
+/* ── TABLET / DESKTOP ── */
+@media(min-width:769px){
+  .eg{padding:68px 24px!important;min-height:300px!important}
+  .eg-icon{width:80px;height:80px;font-size:2.2rem}
+}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
 </head>
@@ -6324,6 +6505,10 @@ function loadAll() {
   var s = localStorage.getItem('nm_current_user') || sessionStorage.getItem('nm_session');
   if (s) { try { CU = JSON.parse(s); } catch (e) { CU = null; } }
 
+  /* Show skeleton grids immediately — before fetch completes */
+  renderSkeletons(document.getElementById('home-grid'), 8);
+  renderSkeletons(document.getElementById('mkt-grid'), 12);
+
   /* Fetch live products from Neon on every load */
   apiCall('/products').then(function (data) {
     if (data && Array.isArray(data.products)) {
@@ -7242,6 +7427,54 @@ function resetSell() {
    mkCard(p) — builds one product card HTML string.
    Standalone so renderHotDeals, rGrid, and any renderer can call it.
 ═══════════════════════════════════════════════════════════════════ */
+
+/* ─── emptyState(opts) — premium empty state HTML ─────────────────
+   opts: { icon, title, sub, cta, action }
+   Usage: el.innerHTML = emptyState({ icon:'🛍️', title:'...', ... })
+─────────────────────────────────────────────────────────────────── */
+function emptyState(opts) {
+  var o = opts || {};
+  var icon   = o.icon   || '📭';
+  var title  = o.title  || 'Nothing here yet';
+  var sub    = o.sub    || 'Check back soon.';
+  var cta    = o.cta;
+  var action = o.action || '';
+  var ctaHtml = cta
+    ? '<button class="eg-cta" onclick="' + action + '">' + cta + '</button>'
+    : '';
+  return '<div class="eg">'
+    + '<div class="eg-icon">' + icon + '</div>'
+    + '<div class="eg-title">' + title + '</div>'
+    + '<div class="eg-sub">' + sub + '</div>'
+    + ctaHtml
+    + '</div>';
+}
+window.emptyState = emptyState;
+
+/* ─── mkSkeleton() / renderSkeletons(el, n) ───────────────────────
+   Show before fetch. Replace with real cards on success.
+─────────────────────────────────────────────────────────────────── */
+function mkSkeleton() {
+  return '<div class="pcard-skeleton">'
+    + '<div class="sk-img"></div>'
+    + '<div class="sk-body">'
+    +   '<div class="sk-line sk-w-90"></div>'
+    +   '<div class="sk-line sk-w-75"></div>'
+    +   '<div class="sk-line sk-w-50"></div>'
+    +   '<div class="sk-line sk-w-40"></div>'
+    +   '<div class="sk-btn"></div>'
+    + '</div>'
+    + '</div>';
+}
+function renderSkeletons(el, n) {
+  if (!el) return;
+  var html = '';
+  for (var i = 0; i < (n || 8); i++) html += mkSkeleton();
+  el.innerHTML = html;
+}
+window.mkSkeleton       = mkSkeleton;
+window.renderSkeletons  = renderSkeletons;
+
 function mkCard(p) {
   var mi = (p.imgs && p.imgs[0])
     ? '<img src="' + p.imgs[0] + '" alt="' + p.name + '"/>'
@@ -7311,15 +7544,23 @@ function mkCard(p) {
         : '')
     + '</div>'
     + '<div class="pcb"><h4>' + p.name + featuredBadge + promoBadge + tierBadge + '</h4>'
-    + '<div class="pcs">by ' + p.seller + (location ? ' \u00b7 \uD83D\uDCCD' + location : '') + (p.reviews > 0 ? ' \u00b7 \u2B50' + p.rating : '') + '</div>'
+    + '<div class="pcs"><span class="pcs-dot">by </span><span class="pcs-seller">' + p.seller + '</span>'
+      + (location ? '<span class="pcs-dot"> · </span>📍' + location : '')
+      + (p.reviews > 0 ? '<span class="pcs-dot"> · </span>⭐' + p.rating : '')
+      + '</div>'
     + (lowStock ? '<div style="font-size:.7rem;color:var(--orange);font-weight:700;margin-bottom:3px">\u26a1 Only ' + qty + ' left!</div>' : '')
     + (saleActive && saving > 0 ? '<div class="savings-tag">🔥 Save ' + currSymbol(p.currency) + saving.toLocaleString() + ' (' + savePct + '% OFF)</div>' : '')
     + (timerStr ? '<div class="live-timer" id="t' + p.id + '"><span class="dot">&#x25CF;</span> <span>' + timerStr + '</span></div>' : '')
     + '<div class="pcf"><div>'
-    + (saleActive ? '<span class="price-original">' + currSymbol(p.currency) + p.price.toLocaleString() + '</span>' : '')
-    + '<span class="pcp' + (saleActive ? '" style="color:var(--red)' : '') + '">' + currSymbol(p.currency) + displayPrice.toLocaleString() + '</span>'
+    + (saleActive
+        ? '<span class="price-original">' + currSymbol(p.currency) + p.price.toLocaleString() + '</span>'
+          + '<span class="pcp" style="color:var(--red)">' + currSymbol(p.currency) + displayPrice.toLocaleString() + '</span>'
+        : '<span class="pcp">' + currSymbol(p.currency) + displayPrice.toLocaleString() + '</span>'
+      )
     + '</div>'
-    + (p.reviews > 0 ? '<span class="pcr">\u2B50' + p.rating + '</span>' : '<span style="font-size:.7rem;color:var(--muted)">New</span>')
+    + (p.reviews > 0
+        ? '<span class="pcr">\u2B50' + p.rating + '</span>'
+        : '<span class="badge-new">NEW</span>')
     + '</div>'
     + (outOfStock
       ? '<button class="addbtn" disabled style="opacity:.45;cursor:not-allowed;background:#9ca3af">Sold Out</button>'
@@ -7451,7 +7692,13 @@ function fWishlist(el) {
   rGrid('mkt-grid', wished);
   if (!wished.length) {
     var g = document.getElementById('mkt-grid');
-    if (g) g.innerHTML = '<div class="eg"><div style="font-size:2rem;margin-bottom:8px">🤍</div><p>Your wishlist is empty. Tap 🤍 on any product to save it.</p></div>';
+    if (g) g.innerHTML = emptyState({
+      icon:   '🤍',
+      title:  'Your wishlist is empty',
+      sub:    'Tap the heart on any product to save it for later.',
+      cta:    'Browse Products',
+      action: "go('market')"
+    });
   }
 }
 window.fWishlist = fWishlist;
@@ -7572,7 +7819,13 @@ window.buildOrderTracker = buildOrderTracker;
 function rGrid(cid, items) {
   var el = document.getElementById(cid); if (!el) return;
   if (!items || !items.length) {
-    el.innerHTML = '<div class="eg"><div style="font-size:2.2rem;margin-bottom:10px">\uD83D\uDCE6</div><p>No products yet. Be the first to list one!</p></div>';
+    el.innerHTML = emptyState({
+      icon:   '📦',
+      title:  'No products yet',
+      sub:    'Be the first to list a product on NeyoMarket!',
+      cta:    '＋ List a Product',
+      action: "go('sell')"
+    });
     return;
   }
   /* Sort featured products to top */
@@ -8212,11 +8465,39 @@ function fMkt(el, cat) {
     var cl = cat.toLowerCase();
     return pc === cl || pt === cl || pc.indexOf(cl) !== -1;
   });
+  if (!f.length && cat !== 'all') {
+    var grid = document.getElementById('mkt-grid');
+    if (grid) grid.innerHTML = emptyState({
+      icon:   '🔍',
+      title:  'No products in this category',
+      sub:    'There are no listings here yet. Try a different category or browse all.',
+      cta:    'Browse All',
+      action: "fMkt(document.querySelector('#mkt-cats .cp'),'all')"
+    });
+    return;
+  }
   rGrid('mkt-grid', f);
 }
 window.fMkt = fMkt;
 
-function doSrch(q) { var ql = q.toLowerCase(); rGrid('mkt-grid', getActive().filter(function (p) { return p.name.toLowerCase().includes(ql) || p.seller.toLowerCase().includes(ql); })); }
+function doSrch(q) {
+  var ql = q.toLowerCase();
+  var results = getActive().filter(function (p) {
+    return p.name.toLowerCase().includes(ql) || p.seller.toLowerCase().includes(ql);
+  });
+  if (!results.length && q.trim()) {
+    var grid = document.getElementById('mkt-grid');
+    if (grid) grid.innerHTML = emptyState({
+      icon:   '🔍',
+      title:  'No results for "' + q + '"',
+      sub:    'Try a different keyword, or browse all products below.',
+      cta:    'Clear Search',
+      action: "document.getElementById('srch').value='';doSrch('')"
+    });
+    return;
+  }
+  rGrid('mkt-grid', results);
+}
 window.doSrch = doSrch;
 
 function doLocFilter(loc) {
@@ -8770,7 +9051,13 @@ function updBadge() {
 function openCart() {
   var body = document.getElementById('cart-body');
   if (!cart.length) {
-    body.innerHTML = '<div class="emc"><div style="font-size:2.5rem">🛒</div><p style="color:var(--muted);margin-top:10px">Your cart is empty</p><button class="bg" style="margin-top:14px;padding:10px 22px" onclick="cM(\'m-cart\');go(\'market\')">Shop Now</button></div>';
+    body.innerHTML = '<div class="emc">' + emptyState({
+      icon:   '🛒',
+      title:  'Your cart is empty',
+      sub:    'Add products from the marketplace to get started.',
+      cta:    '🛍️ Shop Now',
+      action: "cM('m-cart');go('market')"
+    }) + '</div>';
     oM('m-cart'); return;
   }
   var total = 0;
@@ -9300,11 +9587,13 @@ function renderOrders() {
       window.ordersCache = myOrders; /* cache for course player unlock */
 
       if (!myOrders.length) {
-        list.innerHTML = '<div style="text-align:center;padding:28px 0">'
-          + '<div style="font-size:2rem;margin-bottom:10px">🛒</div>'
-          + '<p style="font-size:.86rem;color:var(--muted);margin-bottom:14px">No orders yet.</p>'
-          + '<button onclick="go(\'market\')" class="bg" style="padding:10px 22px">Browse Marketplace</button>'
-          + '</div>';
+        list.innerHTML = emptyState({
+          icon:   '🛒',
+          title:  'No orders yet',
+          sub:    'Your purchases will appear here. Start shopping on NeyoMarket!',
+          cta:    '🛍️ Browse Marketplace',
+          action: "go('market')"
+        });
         return;
       }
 
@@ -11406,7 +11695,13 @@ function renderSellerPage() {
   if (ordWrap) {
     ordWrap.innerHTML = '<h3>📬 Incoming Orders (' + selOrders.length + ')</h3>'
       + (selOrders.length === 0
-        ? '<p style="color:var(--muted);font-size:.84rem;padding:12px 0">No orders yet. Share your product links to get your first sale! 🚀</p>'
+        ? emptyState({
+            icon:   '📬',
+            title:  'No orders yet',
+            sub:    'Share your product links to get your first sale! Orders will appear here instantly.',
+            cta:    '🔗 Share My Store',
+            action: "copyAffLink()"
+          })
         : selOrders.slice().reverse().map(function (o) {
             /* Which of my products were in this order? */
             var myItems = o.items.filter(function (item) {
@@ -12307,7 +12602,7 @@ function aTab(tab, btn) {
                   + '</tr>';
               }).join('')
             + '</table></div>'
-          : '<p style="color:var(--muted)">No orders yet.</p>')
+          : emptyState({ icon:'📋', title:'No orders yet', sub:'Orders placed on NeyoMarket will appear here.' }))
         + '</div>';
 
     /* ─── KYC REVIEW ─── */
@@ -12604,7 +12899,7 @@ function aTab(tab, btn) {
                   + '</tr>';
               }).join('')
             + '</table></div>'
-          : '<div style="color:var(--muted);font-size:.84rem">No orders.</div>')
+          : emptyState({ icon:'📋', title:'No orders', sub:'No orders have been placed yet.' }))
         + '</div>';
 
     /* ─── ADMIN WALLET ─── */
