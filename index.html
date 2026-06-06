@@ -16847,7 +16847,6 @@ function renderRPCards(reviews, append) {
   });
 }
 
-  
 function loadMoreRP() {
   var next = RP_ALL.slice(RP_PAGE * RP_LIMIT, (RP_PAGE + 1) * RP_LIMIT);
   renderRPCards(next, true);
@@ -16899,26 +16898,5 @@ window.loadMoreRP = loadMoreRP;
     run();
   }
 })();
-
-  // Universal Event Delegation
-  document.addEventListener('click', function(event) {
-    // We check for the class 'eg-cta' (the standard class for these buttons)
-    // or 'pr-leave-btn' just in case.
-    if (event.target.matches('.eg-cta') || event.target.matches('.pr-leave-btn')) {
-      event.preventDefault();
-      
-      console.log("FIXED: Button click detected!");
-
-      // If openReviewPopup is not found, we try 'openReviewModal' 
-      // or other common naming conventions.
-      if (typeof openReviewPopup === 'function') {
-        openReviewPopup();
-      } else if (typeof showReviewModal === 'function') {
-        showReviewModal();
-      } else {
-        console.error("Popup function not found. Check your script for function names.");
-      }
-    }
-  });
 
 </script>
