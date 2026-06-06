@@ -96,9 +96,11 @@ module.exports = async function handler(req, res) {
       const [usersRow]    = await sql`SELECT COUNT(*) AS count FROM users`;
       const [prodsRow]    = await sql`SELECT COUNT(*) AS count FROM products WHERE status = 'active'`;
       const [ordersRow]   = await sql`SELECT COUNT(*) AS count FROM orders`;
-      const [revenueRow]  = await sql`
-        SELECT COALESCE(SUM(total),0) AS total FROM orders
+            const [revenueRow]  = await sql`
+        SELECT COALESCE(SUM(total),0) AS total FROM orders 
+        WHERE status != 'refunded'
       `;
+
       // Wrap in try/catch — created_at may not exist on users table
       let newUsersRow = { count: 0 };
       try {
