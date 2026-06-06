@@ -209,6 +209,7 @@ module.exports = async function handler(req, res) {
       const [myRevenue] = await sql`
         SELECT COALESCE(SUM(amount * 0.9),0) AS total FROM orders
         WHERE seller_id = ${parseInt(userId)}
+        AND status != 'refunded'
       `;
 
       // Also fetch wallet balance for this seller
