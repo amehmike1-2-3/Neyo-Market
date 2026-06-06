@@ -1,4 +1,4 @@
-// /api/affiliate.js — NeyoMarket Affiliate + Analytics API (combined)
+ // /api/affiliate.js — NeyoMarket Affiliate + Analytics API (combined)
 const { neon } = require('@neondatabase/serverless');
 
 const sql = neon(process.env.DATABASE_URL);
@@ -69,9 +69,9 @@ module.exports = async function handler(req, res) {
 
       const rows = await sql`
         SELECT ac.* FROM affiliate_commissions ac
-        JOIN orders o ON o.id::text = ac.order_id::text
+        LEFT JOIN orders o ON o.id::text = ac.order_id::text
         WHERE ac.aff_code = ${affCode}
-        AND o.status != 'refunded'
+        AND (o.status IS NULL OR o.status != 'refunded')
         ORDER BY ac.created_at DESC
       `;
 
@@ -270,9 +270,9 @@ module.exports = async function handler(req, res) {
       // Affiliate commissions earned by this seller as an affiliate
       const affRows = await sql`
         SELECT ac.* FROM affiliate_commissions ac
-        JOIN orders o ON o.id::text = ac.order_id::text
+        LEFT JOIN orders o ON o.id::text = ac.order_id::text
         WHERE ac.aff_user_id::text = ${String(userId)}
-        AND o.status != 'refunded'
+        AND (o.status IS NULL OR o.status != 'refunded')
         ORDER BY ac.created_at DESC
       `;
       const affEarned  = affRows.filter(r => r.status === 'paid').reduce((s,r) => s + parseFloat(r.commission||0), 0);
@@ -282,7 +282,7 @@ module.exports = async function handler(req, res) {
         totalProducts:  parseInt(myProds.count || 0),
         totalOrders:    parseInt(myOrders.count || 0),
         pendingOrders:  parseInt(myPending.count || 0),
-        totalRevenue:   Math.round(parseFloat(myRevenue.total || 0)),
+        totalRevenue:   walletBalance > 0 ? Math.round(walletBalance) : Math.round(parseFloat(myRevenue.total || 0)),
         walletBalance:  Math.round(walletBalance),
         walletPending:  Math.round(walletPending),
         affEarned:      Math.round(affEarned),
@@ -315,9 +315,9 @@ module.exports = async function handler(req, res) {
       // Commission rows from affiliate_commissions table (exclude refunded orders)
       const commRows = await sql`
         SELECT ac.* FROM affiliate_commissions ac
-        JOIN orders o ON o.id::text = ac.order_id::text
+        LEFT JOIN orders o ON o.id::text = ac.order_id::text
         WHERE ac.aff_user_id::text = ${String(userId)}
-        AND o.status != 'refunded'
+        AND (o.status IS NULL OR o.status != 'refunded')
         ORDER BY ac.created_at DESC
       `;
       const totalEarned = commRows.filter(r => r.status === 'paid').reduce((s,r) => s + parseFloat(r.commission||0), 0);
@@ -346,10 +346,10 @@ module.exports = async function handler(req, res) {
                COUNT(*) AS orders,
                COALESCE(SUM(ac.commission),0) AS revenue
         FROM affiliate_commissions ac
-        JOIN orders o ON o.id::text = ac.order_id::text
+        LEFT JOIN orders o ON o.id::text = ac.order_id::text
         WHERE ac.aff_user_id::text = ${String(userId)}
         AND ac.created_at >= NOW() - INTERVAL '30 days'
-        AND o.status != 'refunded'
+        AND (o.status IS NULL OR o.status != 'refunded')
         GROUP BY DATE(ac.created_at), day
         ORDER BY DATE(ac.created_at) ASC
       `;
