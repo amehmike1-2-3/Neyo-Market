@@ -265,32 +265,30 @@ module.exports = async function handler(req, res) {
      ?userId=<id>   → buyer's own orders only
      ?admin=true    → all orders (admin only)
   ══════════════════════════════════════════════════════════════════ */
-    if (action === 'orders' && req.method === 'GET') {
+      if (action === 'orders' && req.method === 'GET') {
     try {
-      const userId   = req.query.userId;
+      const userId = req.query.userId;
       const sellerId = req.query.sellerId;
-      const isAdmin  = req.query.admin === 'true';
+      const isAdmin = req.query.admin === 'true';
       let rows;
 
       if (isAdmin) {
-        rows = await sql`SELECT * FROM orders ORDER BY created_at DESC LIMIT 500`;
+        rows = await sql`SELECT * FROM orders WHERE status != 'refunded' ORDER BY created_at DESC LIMIT 500`;
       } else if (sellerId) {
         const parsedSellerId = parseInt(sellerId);
         const searchString1 = `%"sellerId":"${sellerId}"%`;
         const searchString2 = `%"sellerId":${sellerId}%`;
-
         rows = await sql`
           SELECT * FROM orders
-          WHERE seller_id = ${parsedSellerId}
-             OR items::text LIKE ${searchString1}
-             OR items::text LIKE ${searchString2}
+          WHERE (seller_id = ${parsedSellerId} OR items::text LIKE ${searchString1} OR items::text LIKE ${searchString2})
+          AND status != 'refunded'
           ORDER BY created_at DESC LIMIT 200
         `;
       } else if (userId) {
-        /* STRICT: Only return orders where user_id matches the requester */
         rows = await sql`
           SELECT * FROM orders
           WHERE user_id = ${String(userId)}
+          AND status != 'refunded'
           ORDER BY created_at DESC
         `;
       } else {
@@ -303,6 +301,7 @@ module.exports = async function handler(req, res) {
       return jsonErr(res, 500, 'Could not fetch orders.', err.message);
     }
   }
+
 
   /* ══════════════════════════════════════════════════════════════════
      ORDERS — POST ?action=orders
