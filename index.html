@@ -13648,14 +13648,18 @@ function adminApprovePayout(withdrawalId, userId, amount) {
               body: JSON.stringify({ userId: userId, amount: amt, reason: 'Paystack transfer failed' })
             })
             .then(function(rData) {
-              if (rData.ok) {
-              toast('💰 ₦' + amt.toLocaleString() + ' refunded to user balance', 'ok');
+    if (rData.ok) {
+        toast('💰 Refund successful!', 'ok');
         
-            // --- ADD THIS LINE HERE ---
-              loadSellerOrders(); 
+        // 1. Re-fetch the orders to get the new 'refunded' status
+        loadSellerOrders(function() {
+            // 2. Once orders are loaded, force the Analytics page to redraw
+            renderSellerPage(); 
+            toast('Analytics updated', 'ok');
+        });
         
-            } else {
-        toast('⚠️ Manual refund needed: ' + rData.error, 'warn');
+    } else {
+        toast('⚠️ Refund failed: ' + rData.error, 'warn');
     }
 })
            .catch(function(e) {
