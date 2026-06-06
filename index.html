@@ -4909,7 +4909,7 @@ nav:not(.bottom-nav){
      REVIEWS PAGE
 ═══════════════════════════════════════ -->
 <div class="page" id="page-reviews">
-  <div style="background:var(--bg);padding:20px 0 56px;min-height:calc(100vh - var(--nh))">
+  <div style="background:var(--bg);padding:20px 0 60px">
     <div class="pr-inner">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
         <button onclick="go('home')" style="background:none;border:none;color:var(--muted);font-size:1.1rem;cursor:pointer;padding:4px 8px;border-radius:6px;line-height:1">←</button>
@@ -8163,22 +8163,6 @@ window.fHome = fHome;
    - readIds: Set of ids the user has already read
 ═══════════════════════════════════════════════════════════════════════ */
 window.NM_NOTIFS = { items: [], readIds: new Set() };
-
-/* ─── pushLocalNotif(notif) ────────────────────────────────────────────
-   Prepends a local notification to NM_NOTIFS.items and re-renders the
-   panel + badge without a server fetch. Safe to call any time.
-   notif = { id, title, content, icon (optional), created_at (optional) }
-──────────────────────────────────────────────────────────────────────── */
-function pushLocalNotif(notif) {
-  if (!notif || !notif.title) return;
-  notif.id = notif.id || ('local-' + Date.now());
-  notif.created_at = notif.created_at || new Date().toISOString();
-  /* Prepend so newest appears first */
-  window.NM_NOTIFS.items.unshift(notif);
-  /* Do NOT add to readIds — it should show as unread */
-  renderNotifPanel(window.NM_NOTIFS.items);
-}
-window.pushLocalNotif = pushLocalNotif;
 
 function toggleNotifPanel() {
   var panel = document.getElementById('notif-panel');
@@ -11845,9 +11829,6 @@ function renderSellerDash() {
   var active  = myProds.filter(function (p) { return p.status === 'active'; }).length;
   var pending = myProds.filter(function (p) { return p.status === 'pending'; }).length;
   var totalRevenue = sellerOrds.reduce(function (sum, o) {
-    var s = (o.status || '').toUpperCase();
-    /* Exclude refunded and disputed orders — match renderSellerPage logic */
-    if (s === 'REFUNDED' || s === 'REFUND' || s === 'DISPUTED' || s === 'DISPUTE') return sum;
     return sum + parseFloat(o.sellerPayout || o.seller_payout || 0);
   }, 0);
 
@@ -16669,19 +16650,9 @@ function submitPlatformReview() {
     if (btn) { btn.disabled = false; btn.textContent = '📨 Submit Review'; }
     if (data.ok) {
       if (typeof showToast === 'function') showToast('✅ Review submitted! Thank you.');
-      else if (typeof toast === 'function') toast('✅ Review submitted! Thank you.', 'ok');
       togglePRForm();
       var commentEl = document.getElementById('pr-comment');
       if (commentEl) commentEl.value = '';
-      /* Push bell notification so the user knows their review was received */
-      var starLabel = ['','★','★★','★★★','★★★★','★★★★★'][PR_SELECTED_STAR] || '';
-      pushLocalNotif({
-        id: 'review-' + Date.now(),
-        title: '⭐ Review submitted ' + starLabel,
-        content: comment.trim() ? '"' + comment.trim().substring(0, 80) + (comment.trim().length > 80 ? '…' : '') + '"' : 'Your rating has been recorded. Thank you!',
-        badge_text: 'NEW'
-      });
-      PR_SELECTED_STAR = 0;
       loadPlatformReviews();
     } else {
       if (errEl) errEl.textContent = data.error || 'Could not submit review.';
