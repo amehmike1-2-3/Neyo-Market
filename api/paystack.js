@@ -192,9 +192,9 @@ module.exports = async function handler(req, res) {
       let kycStatus = 'pending';
       if (paystackRes.status === true) {
         kycStatus = 'verified';
-      } else if (paystackRes.data?.identification?.status === 'success') {
+      } else if ((paystackRes.data && paystackRes.data.identification && paystackRes.data.identification.status) === 'success') {
         kycStatus = 'verified';
-      } else if (paystackRes.message?.toLowerCase().includes('success')) {
+      } else if ((paystackRes.message && paystackRes.message.toLowerCase().includes('success'))) {
         kycStatus = 'verified';
       }
 
@@ -234,7 +234,7 @@ module.exports = async function handler(req, res) {
         return res.status(200).json({ balance: 0, message: 'No subaccount yet.' });
 
       const result  = await callPaystack('/subaccount/' + user.subaccount_code);
-      const balance = result.data?.account_balance
+      const balance = (result.data && result.data.account_balance)
         ? result.data.account_balance / 100
         : 0;
 
@@ -325,7 +325,7 @@ module.exports = async function handler(req, res) {
       if (!transferRes.status)
         return jsonErr(res, 400, 'Transfer failed: ' + (transferRes.message || 'Try again'));
 
-      const transferRef = transferRes.data?.reference || ('MAN-' + Date.now());
+      const transferRef = (transferRes.data && transferRes.data.reference) || ('MAN-' + Date.now());
 
       // Step 3: Deduct GROSS from seller_balance (fee is retained by platform)
       await sql`
@@ -441,7 +441,7 @@ module.exports = async function handler(req, res) {
             continue;
           }
 
-          const transferRef = transferRes.data?.reference || ('BULK-' + Date.now() + '-' + wId);
+          const transferRef = (transferRes.data && transferRes.data.reference) || ('BULK-' + Date.now() + '-' + wId);
 
           // Deduct from seller balance
           await sql`
@@ -526,14 +526,14 @@ module.exports = async function handler(req, res) {
 
       await sql`
         INSERT INTO withdrawals (user_id, amount, status, reference, created_at)
-        VALUES (${userId}, ${amountNum}, 'pending', ${transferRes.data?.reference || ''}, NOW())
+        VALUES (${userId}, ${amountNum}, 'pending', ${(transferRes.data && transferRes.data.reference) || ''}, NOW())
       `;
 
-      log.info(`Direct withdraw — user ${userId} ₦${amountNum} ref ${transferRes.data?.reference}`);
+      log.info(`Direct withdraw — user ${userId} ₦${amountNum} ref ${(transferRes.data && transferRes.data.reference)}`);
 
       return res.status(200).json({
         ok:        true,
-        reference: transferRes.data?.reference,
+        reference: (transferRes.data && transferRes.data.reference),
         message:   `Payout of ₦${amountNum.toLocaleString()} initiated!`,
       });
     }
@@ -604,7 +604,7 @@ module.exports = async function handler(req, res) {
       if (!Array.isArray(items)) items = [];
 
       // ── Resolve seller membership tier ──────────────────────────────────────
-      const dvcSellerId = sellerUserId || items[0]?.sellerId || items[0]?.seller_id || null;
+      const dvcSellerId = sellerUserId || (items[0] && items[0].sellerId) || (items[0] && items[0].seller_id) || null;
       let   dvcTier     = 'free';
 
       if (dvcSellerId) {
