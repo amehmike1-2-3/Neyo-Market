@@ -16899,4 +16899,32 @@ window.loadMoreRP = loadMoreRP;
   }
 })();
 
+  // Add this function if you don't already have one that opens the review modal
+function openReviewPopup() {
+    var modal = document.getElementById('review-modal'); // Ensure this ID matches your modal's HTML ID
+    if (modal) {
+        modal.style.display = 'flex'; // Or 'block', depending on your CSS
+    } else {
+        console.error("Modal not found! Check your HTML for an element with id='review-modal'");
+    }
+}
+
+  document.addEventListener('click', function(event) {
+    // 1. Find the class name by right-clicking the button on your site and choosing 'Inspect'
+    // 2. Replace 'pr-leave-btn' below with the actual class name you found
+    if (event.target && event.target.matches('.pr-leave-btn')) {
+        event.preventDefault();
+        
+        console.log("Button clicked! Attempting to open popup...");
+        
+        // 3. Ensure the function name here matches the function defined above
+        if (typeof openReviewPopup === 'function') {
+            openReviewPopup();
+        } else {
+            console.error("The function 'openReviewPopup' is not defined!");
+        }
+    }
+});
+
+
 </script>
