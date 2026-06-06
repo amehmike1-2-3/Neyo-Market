@@ -63,9 +63,11 @@ module.exports = async function handler(req, res) {
       if (!affCode) return res.status(200).json({ totalEarned: 0, pendingComm: 0, sales: 0, referrals: 0, commissions: [] });
 
       const rows = await sql`
-        SELECT * FROM affiliate_commissions
-        WHERE aff_code = ${affCode}
-        ORDER BY created_at DESC
+        SELECT ac.* FROM affiliate_commissions ac
+        JOIN orders o ON ac.order_id = o.id::text
+        WHERE ac.aff_code = ${affCode}
+        AND o.status != 'refunded'
+        ORDER BY ac.created_at DESC
       `;
 
       const totalEarned = rows
