@@ -1737,12 +1737,91 @@ footer{background:var(--text);color:#fff;border-top:1px solid rgba(255,255,255,.
 [data-theme="dark"] .gld { color: var(--gold) !important; }
 
 
-/* ── MOBILE NAV ── */
-@media(max-width:768px){
-  #nav-r{ max-width:52px !important; flex-shrink:0 !important; }
-  .nav-links{ display:none !important; }
-  #ham-btn{ display:flex !important; }
+/* ── DARK MODE: Dispute section text fix ── */
+[data-theme="dark"] .hiw-dispute {
+  background: rgba(220,38,38,.08) !important;
+  border-color: rgba(220,38,38,.2) !important;
 }
+[data-theme="dark"] .hiw-dstep h5,
+[data-theme="dark"] .hiw-dispute-title {
+  color: #fff !important;
+}
+[data-theme="dark"] .hiw-dstep p {
+  color: rgba(255,255,255,.55) !important;
+}
+[data-theme="dark"] .hiw-dstep {
+  background: rgba(255,255,255,.04) !important;
+}
+
+/* ── DARK MODE: Orders page card text fix ── */
+[data-theme="dark"] .ord {
+  background: var(--bg2) !important;
+  border-color: var(--border) !important;
+}
+[data-theme="dark"] .ordh h4,
+[data-theme="dark"] .ordi {
+  color: var(--text) !important;
+}
+[data-theme="dark"] .ord div[style*="color:#"],
+[data-theme="dark"] .ord span[style*="color:#"] {
+  color: var(--text) !important;
+}
+/* Order status badges in dark mode */
+[data-theme="dark"] .ord span[style*="background:#d1fae5"] {
+  background: var(--green-bg) !important;
+  color: var(--green) !important;
+}
+[data-theme="dark"] .ord span[style*="background:#dbeafe"],
+[data-theme="dark"] .ord span[style*="background:#eff6ff"] {
+  background: var(--blue-bg) !important;
+  color: var(--blue) !important;
+}
+[data-theme="dark"] .ord span[style*="background:#fef3c7"] {
+  background: var(--orange-bg) !important;
+  color: var(--orange) !important;
+}
+[data-theme="dark"] .ord span[style*="background:#fef2f2"] {
+  background: var(--red-bg) !important;
+  color: var(--red) !important;
+}
+/* Any hardcoded dark text inside order cards */
+[data-theme="dark"] .ord *[style*="color:#065f46"],
+[data-theme="dark"] .ord *[style*="color:#1e40af"],
+[data-theme="dark"] .ord *[style*="color:#92400e"],
+[data-theme="dark"] .ord *[style*="color:#991b1b"] {
+  filter: brightness(1.6) !important;
+}
+/* Dispute reason box */
+[data-theme="dark"] .ord div[style*="background:#fef2f2"] {
+  background: var(--red-bg) !important;
+  border-color: rgba(248,81,73,.2) !important;
+}
+[data-theme="dark"] .ord div[style*="color:#991b1b"],
+[data-theme="dark"] .ord div[style*="color:#b91c1c"] {
+  color: var(--red) !important;
+}
+/* Return window closed notice */
+[data-theme="dark"] .ord div[style*="background:var(--bg3)"] {
+  color: var(--muted) !important;
+}
+/* Dispute row cards in admin */
+[data-theme="dark"] .dispute-row {
+  background: var(--bg2) !important;
+  border-color: var(--border) !important;
+}
+[data-theme="dark"] .dispute-row div[style*="color:#991b1b"],
+[data-theme="dark"] .dispute-row div[style*="background:#fef2f2"] {
+  background: var(--red-bg) !important;
+  color: var(--red) !important;
+  border-color: rgba(248,81,73,.2) !important;
+}
+
+/* ── DARK MODE: How-it-works dark-background cards that are safe ── */
+[data-theme="dark"] .hiw-section {
+  background: var(--bg) !important;
+}
+[data-theme="dark"] .rc p { color: var(--muted) !important; }
+[data-theme="dark"] .rc h4 { color: var(--text) !important; }
 
 
 /* ── ANALYTICS PAGE ── */
@@ -3892,6 +3971,7 @@ nav:not(.bottom-nav){
   <div class="nav-links">
     <button class="nb on" id="nb-home"   onclick="go('home')">Home</button>
     <button class="nb"    id="nb-market" onclick="go('market')">Market</button>
+    <button class="nb"    id="nb-flash"  onclick="go('flash')" style="color:var(--red)">⚡ Flash</button>
     <button class="nb"    id="nb-sell"   onclick="go('sell')">Sell</button>
     <button class="nb"    id="nb-aff"    onclick="go('aff')">Affiliate</button>
     <button class="nb"    id="nb-rules"  onclick="go('rules')">Rules</button>
@@ -3968,6 +4048,7 @@ nav:not(.bottom-nav){
     <button onclick="hamGo('contact')" style="display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:10px;border:none;background:none;color:var(--text);font-family:inherit;font-size:.88rem;font-weight:500;cursor:pointer;text-align:left;width:100%">✉ Contact Us</button>
     <button onclick="hamGo('blog')"    style="display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:10px;border:none;background:none;color:var(--text);font-family:inherit;font-size:.88rem;font-weight:500;cursor:pointer;text-align:left;width:100%">📝 Blog</button>
     <button onclick="hamGo('press')"   style="display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:10px;border:none;background:none;color:var(--text);font-family:inherit;font-size:.88rem;font-weight:500;cursor:pointer;text-align:left;width:100%">📰 Press</button>
+    <button onclick="hamGo('reviews')" style="display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:10px;border:none;background:none;color:var(--text);font-family:inherit;font-size:.88rem;font-weight:500;cursor:pointer;text-align:left;width:100%">⭐ Reviews</button>
     <!-- Community -->
     <div style="margin:4px 14px;height:1px;background:var(--border)"></div>
     <a href="https://chat.whatsapp.com/FQxy9Zeb2ODIuPTtBxqNuD" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:10px;color:var(--text);font-family:inherit;font-size:.88rem;font-weight:500;cursor:pointer;text-align:left;width:100%;text-decoration:none;background:none">
@@ -4763,6 +4844,107 @@ nav:not(.bottom-nav){
       <button class="filter-chip" id="fc-wishlist" onclick="fWishlist(this)">❤️ Wishlist</button>
     </div>
     <div class="pg" id="mkt-grid"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     FLASH SALES PAGE
+═══════════════════════════════════════ -->
+<div class="page" id="page-flash">
+  <div class="sec">
+    <!-- Header banner -->
+    <div style="background:linear-gradient(135deg,#dc2626 0%,#b91c1c 100%);border-radius:14px;padding:24px 20px;margin-bottom:22px;position:relative;overflow:hidden">
+      <div style="position:absolute;top:-40px;right:-40px;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,.06);pointer-events:none"></div>
+      <div style="position:absolute;bottom:-30px;left:-30px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.04);pointer-events:none"></div>
+      <div style="position:relative;z-index:1">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <span style="font-size:1.6rem">⚡</span>
+          <h1 style="font-family:'Cormorant Garamond',serif;font-size:1.7rem;font-weight:700;color:#fff;margin:0">Flash Sales</h1>
+        </div>
+        <p style="color:rgba(255,255,255,.75);font-size:.84rem;margin:0 0 14px;font-weight:300">Limited-time discounts on top products. Grab them before prices go back up!</p>
+        <!-- Countdown Timer -->
+        <div style="display:inline-flex;align-items:center;gap:10px;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.2);border-radius:10px;padding:10px 16px">
+          <span style="font-size:.72rem;font-weight:700;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.5px">Sale Ends In:</span>
+          <div id="flash-countdown" style="display:flex;gap:6px">
+            <div style="text-align:center">
+              <div id="fc-hrs" style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:700;color:#fff;line-height:1;min-width:32px">00</div>
+              <div style="font-size:.55rem;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.4px">hrs</div>
+            </div>
+            <span style="font-size:1.2rem;font-weight:700;color:rgba(255,255,255,.5);margin-top:2px">:</span>
+            <div style="text-align:center">
+              <div id="fc-min" style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:700;color:#fff;line-height:1;min-width:32px">00</div>
+              <div style="font-size:.55rem;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.4px">min</div>
+            </div>
+            <span style="font-size:1.2rem;font-weight:700;color:rgba(255,255,255,.5);margin-top:2px">:</span>
+            <div style="text-align:center">
+              <div id="fc-sec" style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:700;color:#fff;line-height:1;min-width:32px">00</div>
+              <div style="font-size:.55rem;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.4px">sec</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Stats row -->
+    <div id="flash-stats" style="display:flex;align-items:center;gap:12px;margin-bottom:18px;font-size:.82rem;color:var(--muted)">
+      <span id="flash-count-label">Loading deals…</span>
+    </div>
+    <!-- Discounted products grid -->
+    <div class="pg" id="flash-grid">
+      <div style="grid-column:1/-1;text-align:center;padding:40px 16px;color:var(--muted)">
+        <div style="font-size:2rem;margin-bottom:10px">⏳</div>
+        <div>Loading flash deals…</div>
+      </div>
+    </div>
+    <!-- Empty state (hidden until needed) -->
+    <div id="flash-empty" style="display:none;text-align:center;padding:60px 20px;color:var(--muted)">
+      <div style="font-size:3rem;margin-bottom:14px">🏷️</div>
+      <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:8px;color:var(--text)">No Flash Deals Right Now</h3>
+      <p style="font-size:.84rem;margin-bottom:20px;line-height:1.7">All products are currently at full price. Check back soon for limited-time discounts!</p>
+      <button class="bg" style="padding:11px 24px" onclick="go('market')">🛒 Browse All Products</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     REVIEWS PAGE
+═══════════════════════════════════════ -->
+<div class="page" id="page-reviews">
+  <div class="pr-section" style="min-height:calc(100vh - var(--nh))">
+    <div class="pr-inner">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+        <button onclick="go('home')" style="background:none;border:none;color:var(--muted);font-size:1.1rem;cursor:pointer;padding:4px 8px;border-radius:6px;line-height:1">←</button>
+        <div>
+          <div class="pr-badge">⭐ Verified User Reviews</div>
+        </div>
+      </div>
+      <h2 class="pr-title">What People Say About <span>NeyoMarket</span></h2>
+      <p class="pr-sub">Real reviews from real buyers, sellers, and affiliates who use NeyoMarket every day.</p>
+      <!-- Overall rating — mirrors home section, re-uses same data -->
+      <div class="pr-overall">
+        <div>
+          <div class="pr-overall-score" id="rp-score">—</div>
+          <div class="pr-overall-stars" id="rp-stars">☆☆☆☆☆</div>
+          <div class="pr-overall-count" id="rp-count">No reviews yet</div>
+        </div>
+        <div class="pr-overall-bars" id="rp-bars">
+          <div class="pr-bar-row"><span class="pr-bar-label">5 ⭐</span><div class="pr-bar-track"><div class="pr-bar-fill" id="rp-b5" style="width:0%"></div></div><span class="pr-bar-pct" id="rp-p5">0%</span></div>
+          <div class="pr-bar-row"><span class="pr-bar-label">4 ⭐</span><div class="pr-bar-track"><div class="pr-bar-fill" id="rp-b4" style="width:0%"></div></div><span class="pr-bar-pct" id="rp-p4">0%</span></div>
+          <div class="pr-bar-row"><span class="pr-bar-label">3 ⭐</span><div class="pr-bar-track"><div class="pr-bar-fill" id="rp-b3" style="width:0%"></div></div><span class="pr-bar-pct" id="rp-p3">0%</span></div>
+          <div class="pr-bar-row"><span class="pr-bar-label">2 ⭐</span><div class="pr-bar-track"><div class="pr-bar-fill" id="rp-b2" style="width:0%"></div></div><span class="pr-bar-pct" id="rp-p2">0%</span></div>
+          <div class="pr-bar-row"><span class="pr-bar-label">1 ⭐</span><div class="pr-bar-track"><div class="pr-bar-fill" id="rp-b1" style="width:0%"></div></div><span class="pr-bar-pct" id="rp-p1">0%</span></div>
+        </div>
+      </div>
+      <!-- Write review button -->
+      <div class="pr-write-wrap">
+        <button class="bg" style="padding:11px 24px;font-size:.82rem" onclick="togglePRForm()">✍️ Leave a Review</button>
+        <!-- Reuses same #pr-write-card from home section -->
+      </div>
+      <!-- Reviews grid (populated when page loads) -->
+      <div class="pr-grid" id="rp-grid">
+        <div class="pr-empty">⏳ Loading reviews…</div>
+      </div>
+      <button class="pr-load-more" id="rp-load-more" style="display:none" onclick="loadMoreRP()">Load More Reviews</button>
+    </div>
   </div>
 </div>
 
@@ -6865,6 +7047,26 @@ function go(pageId) {
   if (pageId === 'store') { /* populated by openStorefront() */ }
   if (pageId === 'shipping') bSum('shipping');
   if (pageId === 'checkout') bSum('checkout');
+  if (pageId === 'flash') {
+    initFlashCountdown();
+    /* If prods not loaded yet, fetch then render; else render immediately */
+    if (!window.prods || !window.prods.length) {
+      var flashGrid = document.getElementById('flash-grid');
+      if (flashGrid) flashGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px 16px;color:var(--muted)"><div style="font-size:2rem;margin-bottom:10px">⏳</div><div>Loading flash deals…</div></div>';
+      fetch('/api/products')
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          if (d && d.products) { window.prods = d.products; prods = d.products; }
+          renderFlashSales();
+        })
+        .catch(function(){ renderFlashSales(); });
+    } else {
+      renderFlashSales();
+    }
+  }
+  if (pageId === 'reviews') {
+    loadReviewsPage();
+  }
 }
 window.go = go;
 
@@ -13416,6 +13618,52 @@ window.submitDVC = submitDVC;
 /* ════════════════════════════════════════════════
    ADMIN: REFUND & RELEASE
 ════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════
+   refreshAnalytics — re-fetches orders from Neon
+   and filters out refunded orders before re-rendering
+   the seller dashboard and admin analytics.
+   CALL THIS after any successful refund.
+════════════════════════════════════════════════ */
+function refreshAnalytics() {
+  if (!CU) return;
+
+  /* 1. Refresh seller dashboard stats (filters refunded orders internally) */
+  if (typeof loadSellerOrders === 'function' && (CU.role === 'seller' || CU.role === 'admin')) {
+    loadSellerOrders(function() {
+      /* loadSellerOrders callback — renderSellerPage() is called inside */
+    });
+  }
+
+  /* 2. Refresh admin analytics tab if we're on it */
+  if (typeof loadAnalytics === 'function' && document.getElementById('page-analytics') &&
+      document.getElementById('page-analytics').classList.contains('active')) {
+    loadAnalytics();
+  }
+
+  /* 3. Refresh admin dashboard overview if open */
+  if (CU.role === 'admin' && typeof aTab === 'function') {
+    var onBtn = document.querySelector('.ads .asb.on');
+    if (onBtn && onBtn.textContent.trim().indexOf('Dashboard') !== -1) {
+      aTab('ov', onBtn);
+    }
+  }
+
+  /* 4. Re-fetch and sync sellerOrds — exclude refunded orders from revenue */
+  fetch('/api/payment?action=orders&userId=' + encodeURIComponent(String(CU.id)))
+    .then(function(r){ return r.json(); })
+    .then(function(data) {
+      var fresh = (data.orders || []).filter(function(o){
+        var s = (o.status || '').toLowerCase();
+        return s !== 'refunded' && s !== 'refund';
+      });
+      window.sellerOrds = fresh;
+      if (typeof renderSellerPage === 'function') renderSellerPage();
+      if (typeof renderSellerDash === 'function') renderSellerDash();
+    })
+    .catch(function(){});
+}
+window.refreshAnalytics = refreshAnalytics;
+
 function adminRefund(orderId, paystackRef, amount) {
   if (!confirm('Issue full refund of ₦' + parseFloat(amount).toLocaleString() + ' to the buyer? This will call the Paystack refund API.')) return;
 
@@ -13433,6 +13681,8 @@ function adminRefund(orderId, paystackRef, amount) {
       // Refresh seller stats from Neon (order is now refunded — affects their counts)
       if (typeof renderSellerDash === 'function') renderSellerDash();
       if (typeof loadWalletBalance === 'function') loadWalletBalance();
+      // Re-sync analytics — filter out the refunded order from all revenue figures
+      refreshAnalytics();
       // Re-render disputes tab — resolved order won't appear (status='refunded')
       aTab('dis', document.querySelector('.asb.on'));
     } else {
@@ -16417,6 +16667,220 @@ window.togglePRForm = togglePRForm;
 window.setPRStar = setPRStar;
 window.submitPlatformReview = submitPlatformReview;
 window.loadMorePR = loadMorePR;
+
+/* ════════════════════════════════════════════════
+   FLASH SALES PAGE
+════════════════════════════════════════════════ */
+var flashCountdownTimer = null;
+
+function initFlashCountdown() {
+  /* Reset any existing timer */
+  if (flashCountdownTimer) clearInterval(flashCountdownTimer);
+
+  /* Target: end of today at 23:59:59 (daily flash sale window) */
+  var now    = new Date();
+  var target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 0);
+  if (now >= target) {
+    /* Move to next day */
+    target.setDate(target.getDate() + 1);
+  }
+
+  function tick() {
+    var diff = target - new Date();
+    if (diff <= 0) {
+      clearInterval(flashCountdownTimer);
+      var h = document.getElementById('fc-hrs');
+      var m = document.getElementById('fc-min');
+      var s = document.getElementById('fc-sec');
+      if (h) h.textContent = '00';
+      if (m) m.textContent = '00';
+      if (s) s.textContent = '00';
+      return;
+    }
+    var hours   = Math.floor(diff / 3600000);
+    var minutes = Math.floor((diff % 3600000) / 60000);
+    var seconds = Math.floor((diff % 60000) / 1000);
+    var hEl = document.getElementById('fc-hrs');
+    var mEl = document.getElementById('fc-min');
+    var sEl = document.getElementById('fc-sec');
+    if (hEl) hEl.textContent = String(hours).padStart(2,'0');
+    if (mEl) mEl.textContent = String(minutes).padStart(2,'0');
+    if (sEl) sEl.textContent = String(seconds).padStart(2,'0');
+  }
+  tick();
+  flashCountdownTimer = setInterval(tick, 1000);
+}
+
+function renderFlashSales() {
+  var grid     = document.getElementById('flash-grid');
+  var emptyEl  = document.getElementById('flash-empty');
+  var statsEl  = document.getElementById('flash-count-label');
+  if (!grid) return;
+
+  /* Get all active products with a discount */
+  var all = (typeof getActive === 'function') ? getActive() : (window.prods || []);
+  var deals = all.filter(function(p) {
+    var dp = parseFloat(p.discountPrice || p.discount_price || 0);
+    var bp = parseFloat(p.price || 0);
+    /* Must have a genuine discount */
+    if (dp <= 0 || dp >= bp) return false;
+    /* Check sale not expired */
+    var ends = p.saleEndsAt || p.sale_ends_at || null;
+    if (ends && new Date(ends) < new Date()) return false;
+    return true;
+  });
+
+  if (statsEl) {
+    statsEl.innerHTML = deals.length > 0
+      ? '<span style="color:var(--red);font-weight:700">' + deals.length + ' deal' + (deals.length !== 1 ? 's' : '') + '</span> on right now'
+      : 'No active deals right now';
+  }
+
+  if (!deals.length) {
+    grid.style.display = 'none';
+    if (emptyEl) emptyEl.style.display = 'block';
+    return;
+  }
+  grid.style.display = '';
+  if (emptyEl) emptyEl.style.display = 'none';
+
+  /* Sort by biggest discount % first */
+  deals.sort(function(a, b) {
+    var discA = 1 - (parseFloat(a.discountPrice || a.discount_price) / parseFloat(a.price));
+    var discB = 1 - (parseFloat(b.discountPrice || b.discount_price) / parseFloat(b.price));
+    return discB - discA;
+  });
+
+  /* Reuse the same rGrid() renderer but inject discount badges */
+  if (typeof rGrid === 'function') {
+    rGrid('flash-grid', deals);
+    /* After render, overlay the discount % badge on each card */
+    setTimeout(function() {
+      deals.forEach(function(p) {
+        var card = grid.querySelector('[data-pid="' + p.id + '"]');
+        if (!card) return;
+        var dp  = parseFloat(p.discountPrice || p.discount_price);
+        var bp  = parseFloat(p.price);
+        var pct = Math.round((1 - dp / bp) * 100);
+        /* Only add badge if not already there */
+        if (!card.querySelector('.flash-pct-badge')) {
+          var badge = document.createElement('div');
+          badge.className = 'flash-pct-badge';
+          badge.textContent = '-' + pct + '%';
+          badge.style.cssText = 'position:absolute;top:8px;left:8px;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;padding:3px 8px;border-radius:4px;font-size:.62rem;font-weight:800;letter-spacing:.5px;text-transform:uppercase;box-shadow:0 2px 6px rgba(220,38,38,.4);z-index:3';
+          card.style.position = 'relative';
+          card.insertBefore(badge, card.firstChild);
+        }
+      });
+    }, 80);
+  } else {
+    /* Fallback if rGrid not available yet */
+    grid.innerHTML = deals.map(function(p) {
+      var dp  = parseFloat(p.discountPrice || p.discount_price);
+      var bp  = parseFloat(p.price);
+      var pct = Math.round((1 - dp / bp) * 100);
+      var sym = (typeof currSymbol === 'function') ? currSymbol(p.currency) : '₦';
+      var img = (p.imgs && p.imgs[0])
+        ? '<img src="' + p.imgs[0] + '" style="width:100%;height:140px;object-fit:cover;border-radius:8px;margin-bottom:8px" loading="lazy"/>'
+        : '<div style="width:100%;height:140px;border-radius:8px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:2.5rem;margin-bottom:8px">' + (p.emoji || '📦') + '</div>';
+      return '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px;cursor:pointer;position:relative" onclick="openPD(' + p.id + ')">'
+        + '<div style="position:absolute;top:8px;left:8px;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;padding:3px 8px;border-radius:4px;font-size:.62rem;font-weight:800;z-index:3">-' + pct + '%</div>'
+        + img
+        + '<div style="font-size:.84rem;font-weight:600;color:var(--text);margin-bottom:4px;line-height:1.3">' + p.name.substring(0,40) + '</div>'
+        + '<div style="display:flex;align-items:center;gap:6px">'
+        + '<span style="font-size:1rem;font-weight:700;color:var(--red)">' + sym + dp.toLocaleString() + '</span>'
+        + '<span style="font-size:.78rem;text-decoration:line-through;color:var(--muted)">' + sym + bp.toLocaleString() + '</span>'
+        + '</div>'
+        + '<button onclick="event.stopPropagation();addCart(' + p.id + ')" style="width:100%;margin-top:8px;background:var(--gold);color:#fff;border:none;padding:10px;border-radius:6px;font-size:.78rem;font-weight:600;cursor:pointer">Add to Cart</button>'
+        + '</div>';
+    }).join('');
+  }
+}
+window.renderFlashSales = renderFlashSales;
+
+/* ════════════════════════════════════════════════
+   REVIEWS PAGE — separate from home section
+   Uses its own grid (rp-grid) and IDs (rp-*)
+   but re-fetches from the same /api/reviews endpoint
+════════════════════════════════════════════════ */
+var RP_PAGE  = 0;
+var RP_LIMIT = 12;
+var RP_TOTAL = 0;
+var RP_ALL   = [];
+
+function loadReviewsPage() {
+  fetch('/api/reviews?type=platform')
+    .then(function(r){ return r.json(); })
+    .then(function(data) {
+      RP_ALL   = data.reviews || [];
+      RP_TOTAL = RP_ALL.length;
+      updateRPOverall(RP_ALL);
+      renderRPCards(RP_ALL.slice(0, RP_LIMIT), false);
+      RP_PAGE = 1;
+      var lm = document.getElementById('rp-load-more');
+      if (lm) lm.style.display = RP_TOTAL > RP_LIMIT ? 'block' : 'none';
+    })
+    .catch(function() {
+      var grid = document.getElementById('rp-grid');
+      if (grid) grid.innerHTML = '<div class="pr-empty">💬 Be the first to review NeyoMarket!</div>';
+    });
+}
+
+function updateRPOverall(reviews) {
+  if (!reviews.length) return;
+  var total = reviews.length;
+  var sum   = reviews.reduce(function(a, r){ return a + r.rating; }, 0);
+  var avg   = (sum / total).toFixed(1);
+  var counts = {1:0,2:0,3:0,4:0,5:0};
+  reviews.forEach(function(r){ counts[r.rating] = (counts[r.rating]||0) + 1; });
+
+  var scoreEl = document.getElementById('rp-score');
+  var starsEl = document.getElementById('rp-stars');
+  var countEl = document.getElementById('rp-count');
+  if (scoreEl) scoreEl.textContent = avg;
+  if (starsEl) starsEl.textContent = starsHTML(Math.round(avg));
+  if (countEl) countEl.textContent = total + ' review' + (total !== 1 ? 's' : '');
+
+  for (var s = 1; s <= 5; s++) {
+    var pct = total ? Math.round((counts[s]/total)*100) : 0;
+    var bEl = document.getElementById('rp-b'+s);
+    var pEl = document.getElementById('rp-p'+s);
+    if (bEl) bEl.style.width = pct + '%';
+    if (pEl) pEl.textContent = pct + '%';
+  }
+}
+
+function renderRPCards(reviews, append) {
+  var grid = document.getElementById('rp-grid');
+  if (!grid) return;
+  if (!append) grid.innerHTML = '';
+  if (!reviews.length && !append) {
+    grid.innerHTML = '<div class="pr-empty">💬 No reviews yet. Be the first to review NeyoMarket!</div>';
+    return;
+  }
+  reviews.forEach(function(r, i) {
+    var card = document.createElement('div');
+    card.className = 'pr-card';
+    card.style.transitionDelay = (i * 0.06) + 's';
+    card.innerHTML = '<div class="pr-card-top">'
+      + '<div class="pr-avatar">' + initials(r.user_name) + '</div>'
+      + '<div><div class="pr-name">' + (r.user_name || 'Anonymous') + '</div>'
+      + '<div class="pr-date">' + timeAgo(r.created_at) + '</div></div></div>'
+      + '<div class="pr-stars">' + starsHTML(r.rating) + '</div>'
+      + (r.comment ? '<div class="pr-comment">' + r.comment.replace(/</g,'&lt;') + '</div>' : '');
+    grid.appendChild(card);
+    setTimeout(function(){ card.classList.add('visible'); }, 50);
+  });
+}
+
+function loadMoreRP() {
+  var next = RP_ALL.slice(RP_PAGE * RP_LIMIT, (RP_PAGE + 1) * RP_LIMIT);
+  renderRPCards(next, true);
+  RP_PAGE++;
+  var lm = document.getElementById('rp-load-more');
+  if (lm && RP_PAGE * RP_LIMIT >= RP_TOTAL) lm.style.display = 'none';
+}
+window.loadMoreRP = loadMoreRP;
 
 /* Load reviews only when user scrolls to the section — not on page load */
 (function initPRLazy() {
