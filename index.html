@@ -14042,10 +14042,14 @@ window.hamFilterCat = hamFilterCat;
 (function applyTheme() {
   var saved = localStorage.getItem('nm_theme') || 'light';
   document.documentElement.setAttribute('data-theme', saved);
-  // Update button immediately AND after DOM ready
+  // Update all theme buttons immediately AND after DOM ready
   function syncBtn() {
     var btn = document.getElementById('theme-btn');
     if (btn) btn.textContent = saved === 'dark' ? '☀️' : '🌙';
+    var icon = document.getElementById('ham-theme-icon');
+    if (icon) icon.textContent = saved === 'dark' ? '☀️' : '🌙';
+    var label = document.getElementById('ham-theme-label');
+    if (label) label.textContent = saved === 'dark' ? 'Light Mode' : 'Dark Mode';
   }
   syncBtn();
   document.addEventListener('DOMContentLoaded', syncBtn);
