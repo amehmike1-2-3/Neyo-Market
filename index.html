@@ -13647,15 +13647,18 @@ function adminApprovePayout(withdrawalId, userId, amount) {
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ userId: userId, amount: amt, reason: 'Paystack transfer failed' })
             })
-            .then(function(r) { return r.json(); })
             .then(function(rData) {
               if (rData.ok) {
-                toast('💰 ₦' + amt.toLocaleString() + ' refunded to user balance', 'ok');
-              } else {
-                toast('⚠️ Manual refund needed: ' + rData.error, 'warn');
-              }
-            })
-            .catch(function(e) {
+              toast('💰 ₦' + amt.toLocaleString() + ' refunded to user balance', 'ok');
+        
+            // --- ADD THIS LINE HERE ---
+              loadSellerOrders(); 
+        
+            } else {
+        toast('⚠️ Manual refund needed: ' + rData.error, 'warn');
+    }
+})
+           .catch(function(e) {
               toast('⚠️ Could not auto-refund: ' + e.message, 'warn');
             });
           }
