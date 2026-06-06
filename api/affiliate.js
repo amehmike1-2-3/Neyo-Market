@@ -225,14 +225,16 @@ module.exports = async function handler(req, res) {
       const walletPending = parseFloat(wallet.pending_balance || 0);
 
       // Top 5 products
-      const myTopProds = await sql`
-        SELECT p.name, p.price, COUNT(o.id) AS sales,
-               COALESCE(SUM(o.amount * 0.9),0) AS revenue
-        FROM orders o
-        JOIN products p ON o.product_id::text = p.id::text
-        WHERE o.seller_id = ${parseInt(userId)}
-        GROUP BY p.id, p.name, p.price
-        ORDER BY sales DESC LIMIT 5
+            const myDailyOrders = await sql`
+        SELECT TO_CHAR(date::date,'Mon DD') AS day,
+               COUNT(*) AS orders,
+               COALESCE(SUM(amount * 0.9),0) AS revenue
+        FROM orders
+        WHERE seller_id = ${parseInt(userId)}
+        AND status != 'refunded'
+        AND date::date >= (NOW() - INTERVAL '30 days')::date
+        GROUP BY date::date, day
+        ORDER BY date::date ASC
       `;
 
       // Daily last 30 days
