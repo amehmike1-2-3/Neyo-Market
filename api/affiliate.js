@@ -62,10 +62,12 @@ module.exports = async function handler(req, res) {
       const affCode = req.query.affCode;
       if (!affCode) return res.status(200).json({ totalEarned: 0, pendingComm: 0, sales: 0, referrals: 0, commissions: [] });
 
+      // FIX: Filtered by refunded status
       const rows = await sql`
-        SELECT * FROM affiliate_commissions
-        WHERE aff_code = ${affCode}
-        ORDER BY created_at DESC
+        SELECT ac.* FROM affiliate_commissions ac
+        JOIN orders o ON ac.order_id = o.id::text
+        WHERE ac.aff_code = ${affCode} AND o.status != 'refunded'
+        ORDER BY ac.created_at DESC
       `;
 
       const totalEarned = rows
@@ -86,85 +88,56 @@ module.exports = async function handler(req, res) {
     }
 
     /* ══════════════════════════════════════════════════
-       ANALYTICS — ADMIN (full platform stats)
+       ANALYTICS — ADMIN (Filtered)
     ══════════════════════════════════════════════════ */
     if (action === 'analytics-admin') {
       const role = req.query.role || '';
       if (role !== 'admin') return res.status(403).json({ error: 'Admin only.' });
 
-      // Totals (Filtered)
       const [usersRow]    = await sql`SELECT COUNT(*) AS count FROM users`;
       const [prodsRow]    = await sql`SELECT COUNT(*) AS count FROM products WHERE status = 'active'`;
       const [ordersRow]   = await sql`SELECT COUNT(*) AS count FROM orders WHERE status != 'refunded'`;
-      const [revenueRow]  = await sql`
-        SELECT COALESCE(SUM(total),0) AS total FROM orders WHERE status != 'refunded'
-      `;
+      const [revenueRow]  = await sql`SELECT COALESCE(SUM(total),0) AS total FROM orders WHERE status != 'refunded'`;
       
       let newUsersRow = { count: 0 };
       try {
-        const [r] = await sql`
-          SELECT COUNT(*) AS count FROM users
-          WHERE created_at >= NOW() - INTERVAL '30 days'
-        `;
+        const [r] = await sql`SELECT COUNT(*) AS count FROM users WHERE created_at >= NOW() - INTERVAL '30 days'`;
         newUsersRow = r;
       } catch(e) {}
       
-      const [affPaidRow]  = await sql`
-        SELECT COALESCE(SUM(commission),0) AS total FROM affiliate_commissions WHERE status = 'paid'
-      `;
-      const [affPendRow]  = await sql`
-        SELECT COALESCE(SUM(commission),0) AS total FROM affiliate_commissions WHERE status = 'pending'
-      `;
+      const [affPaidRow]  = await sql`SELECT COALESCE(SUM(commission),0) AS total FROM affiliate_commissions WHERE status = 'paid'`;
+      const [affPendRow]  = await sql`SELECT COALESCE(SUM(commission),0) AS total FROM affiliate_commissions WHERE status = 'pending'`;
 
-      const ordersByStatus = await sql`
-        SELECT status, COUNT(*) AS count FROM orders GROUP BY status ORDER BY count DESC
-      `;
+      const ordersByStatus = await sql`SELECT status, COUNT(*) AS count FROM orders GROUP BY status ORDER BY count DESC`;
 
-      // Top 5 products (Filtered)
       const topProducts = await sql`
-        SELECT p.name, p.price, COUNT(o.id) AS sales,
-               COALESCE(SUM(o.total),0) AS revenue
-        FROM orders o
-        JOIN products p ON o.product_id::text = p.id::text
+        SELECT p.name, p.price, COUNT(o.id) AS sales, COALESCE(SUM(o.total),0) AS revenue
+        FROM orders o JOIN products p ON o.product_id::text = p.id::text
         WHERE o.status != 'refunded'
-        GROUP BY p.id, p.name, p.price
-        ORDER BY sales DESC LIMIT 5
+        GROUP BY p.id, p.name, p.price ORDER BY sales DESC LIMIT 5
       `;
 
-      // Daily orders + revenue (Filtered)
       const dailyOrders = await sql`
-        SELECT TO_CHAR(date::date,'Mon DD') AS day,
-               COUNT(*) AS orders,
-               COALESCE(SUM(total),0) AS revenue
-        FROM orders
-        WHERE status != 'refunded' AND date::date >= (NOW() - INTERVAL '30 days')::date
-        GROUP BY date::date, day
-        ORDER BY date::date ASC
+        SELECT TO_CHAR(date::date,'Mon DD') AS day, COUNT(*) AS orders, COALESCE(SUM(total),0) AS revenue
+        FROM orders WHERE status != 'refunded' AND date::date >= (NOW() - INTERVAL '30 days')::date
+        GROUP BY date::date, day ORDER BY date::date ASC
       `;
 
       const topAffiliates = await sql`
-        SELECT aff_code, COUNT(*) AS referrals,
-               COALESCE(SUM(commission),0) AS earned
-        FROM affiliate_commissions
-        GROUP BY aff_code
-        ORDER BY earned DESC LIMIT 5
+        SELECT aff_code, COUNT(*) AS referrals, COALESCE(SUM(commission),0) AS earned
+        FROM affiliate_commissions GROUP BY aff_code ORDER BY earned DESC LIMIT 5
       `;
 
       const adminWalletRows = await sql`
-        SELECT COALESCE(balance,0) AS total_balance,
-               COALESCE(pending_balance,0) AS total_pending
-        FROM wallets
-        WHERE user_id = 'master_admin_001'
-        LIMIT 1
+        SELECT COALESCE(balance,0) AS total_balance, COALESCE(pending_balance,0) AS total_pending
+        FROM wallets WHERE user_id = 'master_admin_001' LIMIT 1
       `;
       const adminWallet = adminWalletRows[0] || {};
       const totalRevenueFromOrders = parseFloat(revenueRow.total || 0);
       const adminBalance = parseFloat(adminWallet.total_balance || 0);
       const adminPending = parseFloat(adminWallet.total_pending || 0);
 
-      const platformRevenue = adminBalance > 0
-        ? Math.round(adminBalance)
-        : Math.round(totalRevenueFromOrders * 0.10);
+      const platformRevenue = adminBalance > 0 ? Math.round(adminBalance) : Math.round(totalRevenueFromOrders * 0.10);
       const platformPending = adminPending > 0 ? Math.round(adminPending) : 0;
 
       return res.status(200).json({
@@ -172,101 +145,67 @@ module.exports = async function handler(req, res) {
         totalProducts:    parseInt(prodsRow.count || 0),
         totalOrders:      parseInt(ordersRow.count || 0),
         totalRevenue:     Math.round(totalRevenueFromOrders),
-        platformRevenue,
-        platformPending,
+        platformRevenue, platformPending,
         totalAffPaid:     Math.round(parseFloat(affPaidRow.total || 0)),
         totalAffPending:  Math.round(parseFloat(affPendRow.total || 0)),
         newUsersMonth:    parseInt(newUsersRow.count || 0),
-        ordersByStatus,
-        topProducts,
-        dailyOrders,
-        topAffiliates
+        ordersByStatus, topProducts, dailyOrders, topAffiliates
       });
     }
 
     /* ══════════════════════════════════════════════════
-       ANALYTICS — SELLER (own stats only - Filtered)
+       ANALYTICS — SELLER (Filtered)
     ══════════════════════════════════════════════════ */
     if (action === 'analytics-seller') {
       const userId = req.query.userId || '';
       if (!userId) return res.status(400).json({ error: 'userId required.' });
 
-      const [myProds] = await sql`
-        SELECT COUNT(*) AS count FROM products
-        WHERE seller_id::text = ${String(userId)} AND status = 'active'
-      `;
-      const [myOrders] = await sql`
-        SELECT COUNT(*) AS count FROM orders
-        WHERE seller_id = ${parseInt(userId)} AND status != 'refunded'
-      `;
-      const [myPending] = await sql`
-        SELECT COUNT(*) AS count FROM orders
-        WHERE seller_id = ${parseInt(userId)}
-        AND LOWER(status) LIKE '%pending%'
-      `;
-      const [myRevenue] = await sql`
-        SELECT COALESCE(SUM(amount * 0.9),0) AS total FROM orders
-        WHERE seller_id = ${parseInt(userId)} AND status != 'refunded'
-      `;
+      const [myProds] = await sql`SELECT COUNT(*) AS count FROM products WHERE seller_id::text = ${String(userId)} AND status = 'active'`;
+      const [myOrders] = await sql`SELECT COUNT(*) AS count FROM orders WHERE seller_id = ${parseInt(userId)} AND status != 'refunded'`;
+      const [myPending] = await sql`SELECT COUNT(*) AS count FROM orders WHERE seller_id = ${parseInt(userId)} AND LOWER(status) LIKE '%pending%'`;
+      const [myRevenue] = await sql`SELECT COALESCE(SUM(amount * 0.9),0) AS total FROM orders WHERE seller_id = ${parseInt(userId)} AND status != 'refunded'`;
 
-      const walletRows = await sql`
-        SELECT COALESCE(balance,0) AS balance,
-               COALESCE(pending_balance,0) AS pending_balance
-        FROM wallets WHERE user_id::text = ${String(userId)} LIMIT 1
-      `;
+      const walletRows = await sql`SELECT COALESCE(balance,0) AS balance, COALESCE(pending_balance,0) AS pending_balance FROM wallets WHERE user_id::text = ${String(userId)} LIMIT 1`;
       const wallet = walletRows[0] || {};
-      const walletBalance = parseFloat(wallet.balance || 0);
-      const walletPending = parseFloat(wallet.pending_balance || 0);
 
       const myTopProds = await sql`
-        SELECT p.name, p.price, COUNT(o.id) AS sales,
-               COALESCE(SUM(o.amount * 0.9),0) AS revenue
-        FROM orders o
-        JOIN products p ON o.product_id::text = p.id::text
-        WHERE o.seller_id = ${parseInt(userId)}
-        AND o.status != 'refunded'
-        GROUP BY p.id, p.name, p.price
-        ORDER BY sales DESC LIMIT 5
+        SELECT p.name, p.price, COUNT(o.id) AS sales, COALESCE(SUM(o.amount * 0.9),0) AS revenue
+        FROM orders o JOIN products p ON o.product_id::text = p.id::text
+        WHERE o.seller_id = ${parseInt(userId)} AND o.status != 'refunded'
+        GROUP BY p.id, p.name, p.price ORDER BY sales DESC LIMIT 5
       `;
 
       const myDailyOrders = await sql`
-        SELECT TO_CHAR(date::date,'Mon DD') AS day,
-               COUNT(*) AS orders,
-               COALESCE(SUM(amount * 0.9),0) AS revenue
-        FROM orders
-        WHERE seller_id = ${parseInt(userId)}
-        AND status != 'refunded'
-        AND date::date >= (NOW() - INTERVAL '30 days')::date
-        GROUP BY date::date, day
-        ORDER BY date::date ASC
+        SELECT TO_CHAR(date::date,'Mon DD') AS day, COUNT(*) AS orders, COALESCE(SUM(amount * 0.9),0) AS revenue
+        FROM orders WHERE seller_id = ${parseInt(userId)} AND status != 'refunded' AND date::date >= (NOW() - INTERVAL '30 days')::date
+        GROUP BY date::date, day ORDER BY date::date ASC
       `;
 
       const affRows = await sql`
         SELECT ac.* FROM affiliate_commissions ac
         JOIN orders o ON ac.order_id = o.id::text
-        WHERE ac.aff_user_id::text = ${String(userId)}
-        AND o.status != 'refunded'
+        WHERE ac.aff_user_id::text = ${String(userId)} AND o.status != 'refunded'
         ORDER BY ac.created_at DESC
       `;
       const affEarned  = affRows.filter(r => r.status === 'paid').reduce((s,r) => s + parseFloat(r.commission||0), 0);
       const affPending = affRows.filter(r => r.status === 'pending').reduce((s,r) => s + parseFloat(r.commission||0), 0);
 
       return res.status(200).json({
-        totalProducts:  parseInt(myProds.count || 0),
-        totalOrders:    parseInt(myOrders.count || 0),
-        pendingOrders:  parseInt(myPending.count || 0),
-        totalRevenue:   Math.round(parseFloat(myRevenue.total || 0)),
-        walletPending:  Math.round(walletPending),
-        affEarned:      Math.round(affEarned),
-        affPending:     Math.round(affPending),
-        affReferrals:   affRows.length,
-        topProducts:    myTopProds,
-        dailyOrders:    myDailyOrders
+        totalProducts: parseInt(myProds.count || 0),
+        totalOrders: parseInt(myOrders.count || 0),
+        pendingOrders: parseInt(myPending.count || 0),
+        totalRevenue: Math.round(parseFloat(myRevenue.total || 0)),
+        walletPending: Math.round(parseFloat(wallet.pending_balance || 0)),
+        affEarned: Math.round(affEarned),
+        affPending: Math.round(affPending),
+        affReferrals: affRows.length,
+        topProducts: myTopProds,
+        dailyOrders: myDailyOrders
       });
     }
 
     /* ══════════════════════════════════════════════════
-       ANALYTICS — AFFILIATE (own commission stats - Filtered)
+       ANALYTICS — AFFILIATE (Individual Balance Fix)
     ══════════════════════════════════════════════════ */
     if (action === 'analytics-affiliate') {
       const userId = req.query.userId || '';
@@ -275,66 +214,29 @@ module.exports = async function handler(req, res) {
       const userRows = await sql`SELECT aff_code FROM users WHERE id::text = ${String(userId)} LIMIT 1`;
       const affCode  = userRows[0]?.aff_code || '';
 
-      const [myOrdersRow] = affCode
-        ? await sql`SELECT COUNT(*) AS count FROM orders WHERE aff_code = ${affCode} AND status != 'refunded'`
-        : [{ count: 0 }];
-      const [myPendingRow] = affCode
-        ? await sql`SELECT COUNT(*) AS count FROM orders WHERE aff_code = ${affCode} AND status = 'pending'`
-        : [{ count: 0 }];
+      const [myOrdersRow] = affCode ? await sql`SELECT COUNT(*) AS count FROM orders WHERE aff_code = ${affCode} AND status != 'refunded'` : [{ count: 0 }];
+      const [myPendingRow] = affCode ? await sql`SELECT COUNT(*) AS count FROM orders WHERE aff_code = ${affCode} AND status = 'pending'` : [{ count: 0 }];
 
       const commRows = await sql`
         SELECT ac.* FROM affiliate_commissions ac
         JOIN orders o ON ac.order_id = o.id::text
-        WHERE ac.aff_user_id::text = ${String(userId)}
-        AND o.status != 'refunded'
+        WHERE ac.aff_user_id::text = ${String(userId)} AND o.status != 'refunded'
         ORDER BY ac.created_at DESC
       `;
-      const totalEarned = commRows.filter(r => r.status === 'paid').reduce((s,r) => s + parseFloat(r.commission||0), 0);
-      const pendingComm = commRows.filter(r => r.status === 'pending').reduce((s,r) => s + parseFloat(r.commission||0), 0);
 
       const walletRows = await sql`
-        SELECT COALESCE(referral_earnings,0) AS referral_earnings,
-               COALESCE(pending_balance,0)   AS pending_balance,
-               COALESCE(balance,0)           AS balance
-        FROM wallets WHERE user_id::text = ${String(userId)} LIMIT 1
+        SELECT referral_earnings, pending_balance, balance FROM wallets WHERE user_id::text = ${String(userId)} LIMIT 1
       `;
-      const wallet = walletRows[0] || {};
-      const walletEarned  = parseFloat(wallet.referral_earnings || 0);
-      const walletPending = parseFloat(wallet.pending_balance   || 0);
-      const walletBalance = parseFloat(wallet.balance           || 0);
-
-      const displayEarned  = walletEarned  > 0 ? Math.round(walletEarned)  : Math.round(totalEarned);
-      const displayPending = walletPending > 0 ? Math.round(walletPending) : Math.round(pendingComm);
-      const displayBalance = walletBalance > 0 ? Math.round(walletBalance) : Math.round(totalEarned - pendingComm);
-
-      const dailyComm = await sql`
-        SELECT TO_CHAR(DATE(ac.created_at),'Mon DD') AS day,
-               COUNT(*) AS orders,
-               COALESCE(SUM(ac.commission),0) AS revenue
-        FROM affiliate_commissions ac
-        JOIN orders o ON ac.order_id = o.id::text
-        WHERE ac.aff_user_id::text = ${String(userId)}
-        AND o.status != 'refunded'
-        AND ac.created_at >= NOW() - INTERVAL '30 days'
-        GROUP BY DATE(ac.created_at), day
-        ORDER BY DATE(ac.created_at) ASC
-      `;
-
-      const commByStatus = [
-        { status: 'paid',    count: commRows.filter(r=>r.status==='paid').length },
-        { status: 'pending', count: commRows.filter(r=>r.status==='pending').length }
-      ].filter(r => r.count > 0);
+      const wallet = walletRows[0] || { referral_earnings: 0, pending_balance: 0, balance: 0 };
 
       return res.status(200).json({
-        totalOrders:    parseInt(myOrdersRow.count || 0),
-        pendingOrders:  parseInt(myPendingRow.count || 0),
+        totalOrders: parseInt(myOrdersRow.count || 0),
+        pendingOrders: parseInt(myPendingRow.count || 0),
         totalReferrals: commRows.length,
-        totalEarned:    displayEarned,
-        pendingComm:    displayPending,
-        walletBalance:  displayBalance,
-        commissions:    commRows,
-        dailyOrders:    dailyComm,
-        commByStatus
+        totalEarned: Math.round(parseFloat(wallet.referral_earnings || 0)),
+        pendingComm: Math.round(parseFloat(wallet.pending_balance || 0)),
+        walletBalance: Math.round(parseFloat(wallet.balance || 0)),
+        commissions: commRows
       });
     }
 
