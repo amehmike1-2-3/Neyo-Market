@@ -4368,60 +4368,27 @@ nav:not(.bottom-nav){
   </div>
   <!-- ═══ /HOW NEYOMARKET WORKS ═══════════════════════════════════════════ -->
 
-  <!-- ═══ PLATFORM REVIEWS ══════════════════════════════════════════════ -->
-  <div class="pr-section">
-    <div class="pr-inner">
 
-      <div class="pr-badge">⭐ Verified User Reviews</div>
-      <h2 class="pr-title">What People Say About <span>NeyoMarket</span></h2>
-      <p class="pr-sub">Real reviews from real buyers, sellers, and affiliates who use NeyoMarket every day.</p>
-
-      <!-- Overall rating -->
-      <div class="pr-overall">
-        <div>
-          <div class="pr-overall-score" id="pr-score">—</div>
-          <div class="pr-overall-stars" id="pr-stars">☆☆☆☆☆</div>
-          <div class="pr-overall-count" id="pr-count">No reviews yet</div>
-        </div>
-        <div class="pr-overall-bars" id="pr-bars">
-          <div class="pr-bar-row"><span class="pr-bar-label">5 ⭐</span><div class="pr-bar-track"><div class="pr-bar-fill" id="pr-b5" style="width:0%"></div></div><span class="pr-bar-pct" id="pr-p5">0%</span></div>
-          <div class="pr-bar-row"><span class="pr-bar-label">4 ⭐</span><div class="pr-bar-track"><div class="pr-bar-fill" id="pr-b4" style="width:0%"></div></div><span class="pr-bar-pct" id="pr-p4">0%</span></div>
-          <div class="pr-bar-row"><span class="pr-bar-label">3 ⭐</span><div class="pr-bar-track"><div class="pr-bar-fill" id="pr-b3" style="width:0%"></div></div><span class="pr-bar-pct" id="pr-p3">0%</span></div>
-          <div class="pr-bar-row"><span class="pr-bar-label">2 ⭐</span><div class="pr-bar-track"><div class="pr-bar-fill" id="pr-b2" style="width:0%"></div></div><span class="pr-bar-pct" id="pr-p2">0%</span></div>
-          <div class="pr-bar-row"><span class="pr-bar-label">1 ⭐</span><div class="pr-bar-track"><div class="pr-bar-fill" id="pr-b1" style="width:0%"></div></div><span class="pr-bar-pct" id="pr-p1">0%</span></div>
-        </div>
+  <!-- ═══ REVIEWS REDIRECT ══════════════════════════════════════════════ -->
+  <div style="padding:0 16px 28px;max-width:900px;margin:0 auto">
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:18px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;box-shadow:var(--shadow,0 2px 12px rgba(0,0,0,.06))">
+      <div style="flex-shrink:0;text-align:center;min-width:52px">
+        <div style="font-size:2rem;line-height:1;margin-bottom:2px">⭐</div>
+        <div id="pr-teaser-score" style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:700;color:var(--gold);line-height:1">—</div>
+        <div id="pr-teaser-count" style="font-size:.6rem;color:var(--muted);font-weight:500;white-space:nowrap">loading…</div>
       </div>
-
-      <!-- Write review -->
-      <div class="pr-write-wrap">
-        <button class="bg" style="padding:11px 24px;font-size:.82rem" onclick="togglePRForm()">✍️ Leave a Review</button>
-        <div class="pr-write-card" id="pr-write-card">
-          <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:600;color:var(--text);margin-bottom:14px">Rate NeyoMarket</h3>
-          <div class="pr-stars-select" id="pr-stars-select">
-            <button class="pr-star-btn" data-val="1" onclick="setPRStar(1)">⭐</button>
-            <button class="pr-star-btn" data-val="2" onclick="setPRStar(2)">⭐</button>
-            <button class="pr-star-btn" data-val="3" onclick="setPRStar(3)">⭐</button>
-            <button class="pr-star-btn" data-val="4" onclick="setPRStar(4)">⭐</button>
-            <button class="pr-star-btn" data-val="5" onclick="setPRStar(5)">⭐</button>
-          </div>
-          <textarea class="fi" id="pr-comment" placeholder="Share your experience with NeyoMarket — what did you love? What helped you?" style="min-height:90px;margin-bottom:12px"></textarea>
-          <div id="pr-form-err" style="color:var(--red);font-size:.76rem;margin-bottom:8px;min-height:14px"></div>
-          <div style="display:flex;gap:10px;flex-wrap:wrap">
-            <button class="sbtn" style="padding:10px 22px;font-size:.82rem" onclick="submitPlatformReview()">📨 Submit Review</button>
-            <button onclick="togglePRForm()" style="background:transparent;border:1.5px solid var(--border);color:var(--muted);padding:10px 18px;border-radius:6px;font-size:.82rem;cursor:pointer;font-family:inherit">Cancel</button>
-          </div>
-        </div>
+      <div style="flex:1;min-width:140px">
+        <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--gold);margin-bottom:3px">Verified User Reviews</div>
+        <div style="font-size:.88rem;font-weight:600;color:var(--text);margin-bottom:2px">See what buyers &amp; sellers say</div>
+        <div style="font-size:.75rem;color:var(--muted);font-weight:300;line-height:1.5">Real reviews from real people on NeyoMarket.</div>
       </div>
-
-      <!-- Reviews grid -->
-      <div class="pr-grid" id="pr-grid">
-        <div class="pr-empty">⏳ Loading reviews…</div>
+      <div style="display:flex;flex-direction:column;gap:7px;flex-shrink:0">
+        <button onclick="go('reviews')" class="bg" style="padding:9px 16px;font-size:.76rem;white-space:nowrap">📖 Read Reviews</button>
+        <button onclick="go('reviews');setTimeout(togglePRForm,350)" style="background:transparent;border:1.5px solid var(--border);color:var(--muted);padding:8px 16px;border-radius:6px;font-size:.74rem;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap">✍️ Leave a Review</button>
       </div>
-      <button class="pr-load-more" id="pr-load-more" style="display:none" onclick="loadMorePR()">Load More Reviews</button>
-
     </div>
   </div>
-  <!-- ═══ /PLATFORM REVIEWS ══════════════════════════════════════════════ -->
+  <!-- ═══ /REVIEWS REDIRECT ══════════════════════════════════════════════ -->
 
   <!-- ═══ HERO SLIDER ════════════════════════════════════════════════════ -->
   <div class="nyo-slider-wrap" id="nyo-slider-wrap">
@@ -4542,7 +4509,7 @@ nav:not(.bottom-nav){
     <div class="shd"><h2>Featured <span class="gld">Products</span></h2><p>Hand-verified, escrow-protected for you</p></div>
 
     <!-- FLASH SALE COUNTDOWN BANNER -->
-    <div class="flash-banner" id="flash-sale-banner" onclick="go('market')">
+    <div class="flash-banner" id="flash-sale-banner" onclick="go('flash')">
       <div class="flash-banner-inner">
         <div class="flash-banner-icon">⚡</div>
         <div class="flash-banner-text">
@@ -4909,7 +4876,7 @@ nav:not(.bottom-nav){
      REVIEWS PAGE
 ═══════════════════════════════════════ -->
 <div class="page" id="page-reviews">
-  <div style="background:var(--bg);padding:20px 0 60px">
+  <div class="pr-section" style="min-height:calc(100vh - var(--nh))">
     <div class="pr-inner">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
         <button onclick="go('home')" style="background:none;border:none;color:var(--muted);font-size:1.1rem;cursor:pointer;padding:4px 8px;border-radius:6px;line-height:1">←</button>
@@ -14113,11 +14080,11 @@ function renderHotDeals(products) {
   var now   = Date.now();
   var deals = (products || window.prods || []).filter(function(p) {
     if (p.status !== 'active') return false;
-    var hasDiscount = !!(p.discountPrice || p.discount_price);
-    var isOnSale    = !!(p.isOnSale     || p.is_on_sale);
-    var saleEnds    = p.saleEndsAt      || p.sale_ends_at;
-    var notExpired  = !saleEnds || new Date(saleEnds).getTime() > now;
-    return hasDiscount && isOnSale && notExpired;
+    var dp = parseFloat(p.discountPrice || p.discount_price || 0);
+    if (!dp || dp <= 0 || dp >= parseFloat(p.price || 0)) return false;
+    var saleEnds   = p.saleEndsAt || p.sale_ends_at;
+    var notExpired = !saleEnds || new Date(saleEnds).getTime() > now;
+    return notExpired;
   });
 
   if (!deals.length) {
@@ -16523,17 +16490,24 @@ function updatePROverall(reviews) {
   var counts = {1:0,2:0,3:0,4:0,5:0};
   reviews.forEach(function(r) { counts[r.rating] = (counts[r.rating]||0) + 1; });
 
-  var scoreEl = document.getElementById('pr-score');
-  var starsEl = document.getElementById('pr-stars');
-  var countEl = document.getElementById('pr-count');
+  /* Home page teaser card */
+  var tScore = document.getElementById('pr-teaser-score');
+  var tCount = document.getElementById('pr-teaser-count');
+  if (tScore) tScore.textContent = avg;
+  if (tCount) tCount.textContent = total + ' review' + (total !== 1 ? 's' : '');
+
+  /* Full reviews page (rp-* IDs) */
+  var scoreEl = document.getElementById('pr-score')  || document.getElementById('rp-score');
+  var starsEl = document.getElementById('pr-stars')  || document.getElementById('rp-stars');
+  var countEl = document.getElementById('pr-count')  || document.getElementById('rp-count');
   if (scoreEl) scoreEl.textContent = avg;
   if (starsEl) starsEl.textContent = starsHTML(Math.round(avg));
   if (countEl) countEl.textContent = total + ' review' + (total !== 1 ? 's' : '');
 
   for (var s = 1; s <= 5; s++) {
     var pct = total ? Math.round((counts[s]/total)*100) : 0;
-    var bEl = document.getElementById('pr-b'+s);
-    var pEl = document.getElementById('pr-p'+s);
+    var bEl = document.getElementById('pr-b'+s) || document.getElementById('rp-b'+s);
+    var pEl = document.getElementById('pr-p'+s) || document.getElementById('rp-p'+s);
     if (bEl) bEl.style.width = pct + '%';
     if (pEl) pEl.textContent = pct + '%';
   }
@@ -16754,25 +16728,25 @@ function renderFlashSales() {
   /* Reuse the same rGrid() renderer but inject discount badges */
   if (typeof rGrid === 'function') {
     rGrid('flash-grid', deals);
-    /* After render, overlay the discount % badge on each card */
+    /* After render, overlay the discount % badge on each card by position */
     setTimeout(function() {
-      deals.forEach(function(p) {
-        var card = grid.querySelector('[data-pid="' + p.id + '"]');
+      var cards = grid.querySelectorAll('.pcard');
+      deals.forEach(function(p, i) {
+        var card = cards[i];
         if (!card) return;
         var dp  = parseFloat(p.discountPrice || p.discount_price);
         var bp  = parseFloat(p.price);
         var pct = Math.round((1 - dp / bp) * 100);
-        /* Only add badge if not already there */
         if (!card.querySelector('.flash-pct-badge')) {
           var badge = document.createElement('div');
           badge.className = 'flash-pct-badge';
           badge.textContent = '-' + pct + '%';
-          badge.style.cssText = 'position:absolute;top:8px;left:8px;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;padding:3px 8px;border-radius:4px;font-size:.62rem;font-weight:800;letter-spacing:.5px;text-transform:uppercase;box-shadow:0 2px 6px rgba(220,38,38,.4);z-index:3';
+          badge.style.cssText = 'position:absolute;top:8px;left:8px;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;padding:3px 8px;border-radius:4px;font-size:.62rem;font-weight:800;letter-spacing:.5px;text-transform:uppercase;box-shadow:0 2px 6px rgba(220,38,38,.4);z-index:5;pointer-events:none';
           card.style.position = 'relative';
           card.insertBefore(badge, card.firstChild);
         }
       });
-    }, 80);
+    }, 120);
   } else {
     /* Fallback if rGrid not available yet */
     grid.innerHTML = deals.map(function(p) {
@@ -16882,10 +16856,10 @@ function loadMoreRP() {
 }
 window.loadMoreRP = loadMoreRP;
 
-/* Load reviews only when user scrolls to the section — not on page load */
+/* Load review summary when teaser card scrolls into view */
 (function initPRLazy() {
   function tryLoad() {
-    var section = document.getElementById('pr-grid');
+    var section = document.getElementById('pr-teaser-score') || document.getElementById('rp-grid');
     if (!section) return;
     var io = new IntersectionObserver(function(entries) {
       entries.forEach(function(e) {
