@@ -16847,6 +16847,7 @@ function renderRPCards(reviews, append) {
   });
 }
 
+  
 function loadMoreRP() {
   var next = RP_ALL.slice(RP_PAGE * RP_LIMIT, (RP_PAGE + 1) * RP_LIMIT);
   renderRPCards(next, true);
@@ -16898,5 +16899,22 @@ window.loadMoreRP = loadMoreRP;
     run();
   }
 })();
+
+  document.addEventListener('click', function(event) {
+    // 1. We look for the button class. 
+    // IMPORTANT: Right-click your button in your browser, select "Inspect", 
+    // and see what the 'class' name is. Replace 'YOUR-BUTTON-CLASS' with that name.
+    if (event.target && event.target.matches('.YOUR-BUTTON-CLASS')) {
+        event.preventDefault();
+        
+        // 2. We trigger the popup function.
+        // If your function name is different, change 'openReviewPopup' to your function name.
+        if (typeof openReviewPopup === 'function') {
+            openReviewPopup();
+        } else {
+            console.log("Button clicked, but function 'openReviewPopup' was not found. Check your script names!");
+        }
+    }
+});
 
 </script>
