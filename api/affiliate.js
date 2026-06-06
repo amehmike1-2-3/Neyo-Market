@@ -63,9 +63,11 @@ module.exports = async function handler(req, res) {
       if (!affCode) return res.status(200).json({ totalEarned: 0, pendingComm: 0, sales: 0, referrals: 0, commissions: [] });
 
       const rows = await sql`
-        SELECT * FROM affiliate_commissions
-        WHERE aff_code = ${affCode}
-        ORDER BY created_at DESC
+        SELECT * FROM affiliate_commissions ac
+        LEFT JOIN orders o ON ac.order_id = o.id
+        WHERE ac.aff_code = ${affCode}
+          AND (o.status IS NULL OR o.status != 'refunded')
+        ORDER BY ac.created_at DESC
       `;
 
       const totalEarned = rows
@@ -95,9 +97,9 @@ module.exports = async function handler(req, res) {
       // Totals
       const [usersRow]    = await sql`SELECT COUNT(*) AS count FROM users`;
       const [prodsRow]    = await sql`SELECT COUNT(*) AS count FROM products WHERE status = 'active'`;
-      const [ordersRow]   = await sql`SELECT COUNT(*) AS count FROM orders`;
+      const [ordersRow]   = await sql`SELECT COUNT(*) AS count FROM orders WHERE status != 'refunded'`;
       const [revenueRow]  = await sql`
-        SELECT COALESCE(SUM(total),0) AS total FROM orders
+        SELECT COALESCE(SUM(total),0) AS total FROM orders WHERE status != 'refunded'
       `;
       // Wrap in try/catch — created_at may not exist on users table
       let newUsersRow = { count: 0 };
@@ -109,15 +111,19 @@ module.exports = async function handler(req, res) {
         newUsersRow = r;
       } catch(e) { /* created_at column absent — skip */ }
       const [affPaidRow]  = await sql`
-        SELECT COALESCE(SUM(commission),0) AS total FROM affiliate_commissions WHERE status = 'paid'
+        SELECT COALESCE(SUM(commission),0) AS total FROM affiliate_commissions ac
+        LEFT JOIN orders o ON ac.order_id = o.id
+        WHERE ac.status = 'paid' AND (o.status IS NULL OR o.status != 'refunded')
       `;
       const [affPendRow]  = await sql`
-        SELECT COALESCE(SUM(commission),0) AS total FROM affiliate_commissions WHERE status = 'pending'
+        SELECT COALESCE(SUM(commission),0) AS total FROM affiliate_commissions ac
+        LEFT JOIN orders o ON ac.order_id = o.id
+        WHERE ac.status = 'pending' AND (o.status IS NULL OR o.status != 'refunded')
       `;
 
       // Orders by status
       const ordersByStatus = await sql`
-        SELECT status, COUNT(*) AS count FROM orders GROUP BY status ORDER BY count DESC
+        SELECT status, COUNT(*) AS count FROM orders WHERE status != 'refunded' GROUP BY status ORDER BY count DESC
       `;
 
       // Top 5 products by sales
@@ -126,6 +132,7 @@ module.exports = async function handler(req, res) {
                COALESCE(SUM(o.total),0) AS revenue
         FROM orders o
         JOIN products p ON o.product_id::text = p.id::text
+        WHERE o.status != 'refunded'
         GROUP BY p.id, p.name, p.price
         ORDER BY sales DESC LIMIT 5
       `;
@@ -137,6 +144,7 @@ module.exports = async function handler(req, res) {
                COALESCE(SUM(total),0) AS revenue
         FROM orders
         WHERE date::date >= (NOW() - INTERVAL '30 days')::date
+          AND status != 'refunded'
         GROUP BY date::date, day
         ORDER BY date::date ASC
       `;
@@ -145,7 +153,9 @@ module.exports = async function handler(req, res) {
       const topAffiliates = await sql`
         SELECT aff_code, COUNT(*) AS referrals,
                COALESCE(SUM(commission),0) AS earned
-        FROM affiliate_commissions
+        FROM affiliate_commissions ac
+        LEFT JOIN orders o ON ac.order_id = o.id
+        WHERE (o.status IS NULL OR o.status != 'refunded')
         GROUP BY aff_code
         ORDER BY earned DESC LIMIT 5
       `;
@@ -199,16 +209,16 @@ module.exports = async function handler(req, res) {
       `;
       const [myOrders] = await sql`
         SELECT COUNT(*) AS count FROM orders
-        WHERE seller_id = ${parseInt(userId)}
+        WHERE seller_id = ${parseInt(userId)} AND status != 'refunded'
       `;
       const [myPending] = await sql`
         SELECT COUNT(*) AS count FROM orders
         WHERE seller_id = ${parseInt(userId)}
-        AND LOWER(status) LIKE '%pending%'
+        AND LOWER(status) LIKE '%pending%' AND status != 'refunded'
       `;
       const [myRevenue] = await sql`
         SELECT COALESCE(SUM(amount * 0.9),0) AS total FROM orders
-        WHERE seller_id = ${parseInt(userId)}
+        WHERE seller_id = ${parseInt(userId)} AND status != 'refunded'
       `;
 
       // Also fetch wallet balance for this seller
@@ -227,7 +237,7 @@ module.exports = async function handler(req, res) {
                COALESCE(SUM(o.amount * 0.9),0) AS revenue
         FROM orders o
         JOIN products p ON o.product_id::text = p.id::text
-        WHERE o.seller_id = ${parseInt(userId)}
+        WHERE o.seller_id = ${parseInt(userId)} AND o.status != 'refunded'
         GROUP BY p.id, p.name, p.price
         ORDER BY sales DESC LIMIT 5
       `;
@@ -239,7 +249,8 @@ module.exports = async function handler(req, res) {
                COALESCE(SUM(amount * 0.9),0) AS revenue
         FROM orders
         WHERE seller_id = ${parseInt(userId)}
-        AND date::date >= (NOW() - INTERVAL '30 days')::date
+          AND date::date >= (NOW() - INTERVAL '30 days')::date
+          AND status != 'refunded'
         GROUP BY date::date, day
         ORDER BY date::date ASC
       `;
@@ -280,20 +291,20 @@ module.exports = async function handler(req, res) {
 
       // Count orders referred via this affiliate's aff_code
       const [myOrdersRow] = affCode
-        ? await sql`SELECT COUNT(*) AS count FROM orders WHERE aff_code = ${affCode}`
+        ? await sql`SELECT COUNT(*) AS count FROM orders WHERE aff_code = ${affCode} AND status != 'refunded'`
         : [{ count: 0 }];
       const [myPendingRow] = affCode
-        ? await sql`SELECT COUNT(*) AS count FROM orders WHERE aff_code = ${affCode} AND status = 'pending'`
+        ? await sql`SELECT COUNT(*) AS count FROM orders WHERE aff_code = ${affCode} AND status = 'pending' AND status != 'refunded'`
         : [{ count: 0 }];
 
       // Commission rows from affiliate_commissions table
       const commRows = await sql`
-        SELECT * FROM affiliate_commissions
-        WHERE aff_user_id::text = ${String(userId)}
-        ORDER BY created_at DESC
+        SELECT * FROM affiliate_commissions ac
+        LEFT JOIN orders o ON ac.order_id = o.id
+        WHERE ac.aff_user_id::text = ${String(userId)}
+          AND (o.status IS NULL OR o.status != 'refunded')
+        ORDER BY ac.created_at DESC
       `;
-      const totalEarned = commRows.filter(r => r.status === 'paid').reduce((s,r) => s + parseFloat(r.commission||0), 0);
-      const pendingComm = commRows.filter(r => r.status === 'pending').reduce((s,r) => s + parseFloat(r.commission||0), 0);
 
       // Wallet for this affiliate
       const walletRows = await sql`
@@ -307,20 +318,23 @@ module.exports = async function handler(req, res) {
       const walletPending = parseFloat(wallet.pending_balance   || 0);
       const walletBalance = parseFloat(wallet.balance           || 0);
 
-      const displayEarned  = walletEarned  > 0 ? Math.round(walletEarned)  : Math.round(totalEarned);
-      const displayPending = walletPending > 0 ? Math.round(walletPending) : Math.round(pendingComm);
-      const displayBalance = walletBalance > 0 ? Math.round(walletBalance) : Math.round(totalEarned - pendingComm);
+      // Fixed to pull directly from wallets table for this user ID
+      const displayEarned  = Math.round(walletEarned);
+      const displayPending = Math.round(walletPending);
+      const displayBalance = Math.round(walletBalance);
 
       // Daily commission history last 30 days
       const dailyComm = await sql`
         SELECT TO_CHAR(DATE(created_at),'Mon DD') AS day,
                COUNT(*) AS orders,
                COALESCE(SUM(commission),0) AS revenue
-        FROM affiliate_commissions
-        WHERE aff_user_id::text = ${String(userId)}
-        AND created_at >= NOW() - INTERVAL '30 days'
-        GROUP BY DATE(created_at), day
-        ORDER BY DATE(created_at) ASC
+        FROM affiliate_commissions ac
+        LEFT JOIN orders o ON ac.order_id = o.id
+        WHERE ac.aff_user_id::text = ${String(userId)}
+          AND ac.created_at >= NOW() - INTERVAL '30 days'
+          AND (o.status IS NULL OR o.status != 'refunded')
+        GROUP BY DATE(ac.created_at), day
+        ORDER BY DATE(ac.created_at) ASC
       `;
 
       const commByStatus = [
