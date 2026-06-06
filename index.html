@@ -16900,23 +16900,27 @@ window.loadMoreRP = loadMoreRP;
   }
 })();
 
-  // Universal click listener
+  // This listener watches the WHOLE page for clicks
   document.addEventListener('click', function(event) {
-    // We check if the clicked element has the class 'eg-cta'
-    // If your button uses a different class, change '.eg-cta' to that class name.
+    
+    // We target the button using its CSS class. 
+    // I have set this to '.eg-cta' as a placeholder.
+    // IMPORTANT: Right-click your button in your browser, select "Inspect", 
+    // and copy the class name inside the quotes. Replace '.eg-cta' with that name.
     if (event.target && event.target.matches('.eg-cta')) {
       event.preventDefault();
       
-      console.log("Button clicked and detected via delegation!");
-
-      // Trigger the function your button is supposed to call
-      // Ensure 'openReviewPopup' is the correct name of your modal function
+      // This prints to your Console (F12) to verify it's working
+      console.log("Button clicked! Triggering review popup...");
+      
+      // Trigger the function that opens your modal.
+      // If your function has a different name, replace 'openReviewPopup()' with it.
       if (typeof openReviewPopup === 'function') {
         openReviewPopup();
       } else {
-        console.error("Function 'openReviewPopup' not found.");
+        console.error("The function 'openReviewPopup' was not found. Please check your JS file for the correct function name.");
       }
     }
   });
-  
+
 </script>
