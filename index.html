@@ -11770,8 +11770,15 @@ function loadSellerOrders(callback) {
 window.loadSellerOrders = loadSellerOrders;
 
 /* ═══ SELLER DASHBOARD PAGE RENDERER ═══ */
-function renderSellerPage() {
-  if (!CU) return;
+function renderSellerPage(forceFresh = false) {
+    if (!CU) return;
+
+    // If forceFresh is true, reload data from server before calculating
+    if (forceFresh) {
+        return loadSellerOrders(function() {
+            renderSellerPage(false); // Call again with fresh data
+        });
+    }
 
   /* Stats */
   var myProds = prods.filter(function (p) {
