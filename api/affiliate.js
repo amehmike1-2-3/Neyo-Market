@@ -38,6 +38,7 @@ module.exports = async function handler(req, res) {
         ON CONFLICT (order_id) DO NOTHING
       `;
 
+      /* Award referrer 50 loyalty points for successful referral */
       try {
         const currentPts = parseInt(users[0].loyalty_points || 0);
         const newPts     = currentPts + 50;
@@ -62,11 +63,9 @@ module.exports = async function handler(req, res) {
       if (!affCode) return res.status(200).json({ totalEarned: 0, pendingComm: 0, sales: 0, referrals: 0, commissions: [] });
 
       const rows = await sql`
-        SELECT ac.* FROM affiliate_commissions ac
-        JOIN orders o ON ac.order_id = o.id::text
-        WHERE ac.aff_code = ${affCode}
-        AND o.status != 'refunded'
-        ORDER BY ac.created_at DESC
+        SELECT * FROM affiliate_commissions
+        WHERE aff_code = ${affCode}
+        ORDER BY created_at DESC
       `;
 
       const totalEarned = rows
@@ -93,6 +92,7 @@ module.exports = async function handler(req, res) {
       const role = req.query.role || '';
       if (role !== 'admin') return res.status(403).json({ error: 'Admin only.' });
 
+      // Totals (Filtered)
       const [usersRow]    = await sql`SELECT COUNT(*) AS count FROM users`;
       const [prodsRow]    = await sql`SELECT COUNT(*) AS count FROM products WHERE status = 'active'`;
       const [ordersRow]   = await sql`SELECT COUNT(*) AS count FROM orders WHERE status != 'refunded'`;
@@ -108,7 +108,7 @@ module.exports = async function handler(req, res) {
         `;
         newUsersRow = r;
       } catch(e) {}
-
+      
       const [affPaidRow]  = await sql`
         SELECT COALESCE(SUM(commission),0) AS total FROM affiliate_commissions WHERE status = 'paid'
       `;
@@ -120,6 +120,7 @@ module.exports = async function handler(req, res) {
         SELECT status, COUNT(*) AS count FROM orders GROUP BY status ORDER BY count DESC
       `;
 
+      // Top 5 products (Filtered)
       const topProducts = await sql`
         SELECT p.name, p.price, COUNT(o.id) AS sales,
                COALESCE(SUM(o.total),0) AS revenue
@@ -130,13 +131,13 @@ module.exports = async function handler(req, res) {
         ORDER BY sales DESC LIMIT 5
       `;
 
+      // Daily orders + revenue (Filtered)
       const dailyOrders = await sql`
         SELECT TO_CHAR(date::date,'Mon DD') AS day,
                COUNT(*) AS orders,
                COALESCE(SUM(total),0) AS revenue
         FROM orders
-        WHERE status != 'refunded'
-        AND date::date >= (NOW() - INTERVAL '30 days')::date
+        WHERE status != 'refunded' AND date::date >= (NOW() - INTERVAL '30 days')::date
         GROUP BY date::date, day
         ORDER BY date::date ASC
       `;
@@ -156,13 +157,14 @@ module.exports = async function handler(req, res) {
         WHERE user_id = 'master_admin_001'
         LIMIT 1
       `;
-      
       const adminWallet = adminWalletRows[0] || {};
       const totalRevenueFromOrders = parseFloat(revenueRow.total || 0);
       const adminBalance = parseFloat(adminWallet.total_balance || 0);
       const adminPending = parseFloat(adminWallet.total_pending || 0);
 
-      const platformRevenue = adminBalance > 0 ? Math.round(adminBalance) : Math.round(totalRevenueFromOrders * 0.10);
+      const platformRevenue = adminBalance > 0
+        ? Math.round(adminBalance)
+        : Math.round(totalRevenueFromOrders * 0.10);
       const platformPending = adminPending > 0 ? Math.round(adminPending) : 0;
 
       return res.status(200).json({
@@ -183,7 +185,7 @@ module.exports = async function handler(req, res) {
     }
 
     /* ══════════════════════════════════════════════════
-       ANALYTICS — SELLER (own stats only)
+       ANALYTICS — SELLER (own stats only - Filtered)
     ══════════════════════════════════════════════════ */
     if (action === 'analytics-seller') {
       const userId = req.query.userId || '';
@@ -264,7 +266,7 @@ module.exports = async function handler(req, res) {
     }
 
     /* ══════════════════════════════════════════════════
-       ANALYTICS — AFFILIATE (own commission stats)
+       ANALYTICS — AFFILIATE (own commission stats - Filtered)
     ══════════════════════════════════════════════════ */
     if (action === 'analytics-affiliate') {
       const userId = req.query.userId || '';
