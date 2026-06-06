@@ -4904,7 +4904,19 @@ nav:not(.bottom-nav){
       <!-- Write review button -->
       <div class="pr-write-wrap">
         <button class="bg" style="padding:11px 24px;font-size:.82rem" onclick="togglePRForm()">✍️ Leave a Review</button>
-        <!-- Reuses same #pr-write-card from home section -->
+        <div class="pr-write-card" id="pr-write-card">
+          <p style="font-size:.85rem;font-weight:600;color:var(--text);margin:0 0 12px">Rate NeyoMarket</p>
+          <div class="pr-stars-select">
+            <button class="pr-star-btn" data-val="1" onclick="setPRStar(1)">⭐</button>
+            <button class="pr-star-btn" data-val="2" onclick="setPRStar(2)">⭐</button>
+            <button class="pr-star-btn" data-val="3" onclick="setPRStar(3)">⭐</button>
+            <button class="pr-star-btn" data-val="4" onclick="setPRStar(4)">⭐</button>
+            <button class="pr-star-btn" data-val="5" onclick="setPRStar(5)">⭐</button>
+          </div>
+          <textarea id="pr-comment" rows="4" placeholder="Share your experience with NeyoMarket…" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-family:inherit;font-size:.82rem;line-height:1.6;resize:vertical;outline:none"></textarea>
+          <div id="pr-form-err" style="color:#ef4444;font-size:.75rem;margin-top:6px;min-height:16px"></div>
+          <button class="sbtn" style="margin-top:10px;width:100%;background:var(--gold);color:#fff;border:none;padding:11px;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer;font-family:inherit" onclick="submitPlatformReview()">📨 Submit Review</button>
+        </div>
       </div>
       <!-- Reviews grid (populated when page loads) -->
       <div class="pr-grid" id="rp-grid">
