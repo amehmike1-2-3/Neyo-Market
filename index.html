@@ -16899,4 +16899,28 @@ window.loadMoreRP = loadMoreRP;
   }
 })();
 
+  // === LEAVE REVIEW BUTTON FIX ===
+console.log('✅ Reviews script loaded - attaching leave review button');
+
+document.addEventListener('click', function(e) {
+  // Adjust selector to match your button
+  if (e.target.closest('#leave-review-btn, button[data-action="leave-review"], .leave-review-btn')) {
+    e.preventDefault();
+    console.log('🎯 Leave Review button clicked!');
+    
+    // === OPTION 1: Simple alert test ===
+    // alert("Leave review modal should open here");
+    
+    // === OPTION 2: Show modal (uncomment the one you use) ===
+    // const modal = document.getElementById('review-modal');
+    // if (modal) modal.style.display = 'block';  // or classList.add('show')
+    
+    // === OPTION 3: Bootstrap ===
+    // const modalEl = document.getElementById('reviewModal');
+    // if (modalEl) new bootstrap.Modal(modalEl).show();
+    
+    // TODO: Call your actual open review function here
+  }
+});
+
 </script>
