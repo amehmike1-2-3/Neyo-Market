@@ -11770,15 +11770,8 @@ function loadSellerOrders(callback) {
 window.loadSellerOrders = loadSellerOrders;
 
 /* ═══ SELLER DASHBOARD PAGE RENDERER ═══ */
-function renderSellerPage(forceFresh = false) {
-    if (!CU) return;
-
-    // If forceFresh is true, reload data from server before calculating
-    if (forceFresh) {
-        return loadSellerOrders(function() {
-            renderSellerPage(false); // Call again with fresh data
-        });
-    }
+function renderSellerPage() {
+  if (!CU) return;
 
   /* Stats */
   var myProds = prods.filter(function (p) {
@@ -13654,16 +13647,15 @@ function adminApprovePayout(withdrawalId, userId, amount) {
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ userId: userId, amount: amt, reason: 'Paystack transfer failed' })
             })
+            .then(function(r) { return r.json(); })
             .then(function(rData) {
-    if (rData.ok) {
-        toast('💰 Refund successful!', 'ok');
-        
-        // This triggers the fresh fetch and redraw
-        renderSellerPage(true); 
-    }
-})
-  
-         .catch(function(e) {
+              if (rData.ok) {
+                toast('💰 ₦' + amt.toLocaleString() + ' refunded to user balance', 'ok');
+              } else {
+                toast('⚠️ Manual refund needed: ' + rData.error, 'warn');
+              }
+            })
+            .catch(function(e) {
               toast('⚠️ Could not auto-refund: ' + e.message, 'warn');
             });
           }
