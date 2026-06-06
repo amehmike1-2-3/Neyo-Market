@@ -244,6 +244,7 @@ module.exports = async function handler(req, res) {
                COALESCE(SUM(amount * 0.9),0) AS revenue
         FROM orders
         WHERE seller_id = ${parseInt(userId)}
+        AND status != 'refunded'
         AND date::date >= (NOW() - INTERVAL '30 days')::date
         GROUP BY date::date, day
         ORDER BY date::date ASC
