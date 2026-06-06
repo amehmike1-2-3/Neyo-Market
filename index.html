@@ -180,6 +180,15 @@
 
 <!-- ═══ EMAIL SERVICE: Gmail SMTP (backend only) — password reset & verification ═══ -->
 
+<!-- Early theme apply — prevents flash on refresh -->
+<script>
+(function(){
+  try{
+    var t=localStorage.getItem('nm_theme')||'light';
+    document.documentElement.setAttribute('data-theme',t);
+  }catch(e){}
+})();
+</script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap');
 
@@ -1039,14 +1048,14 @@ textarea.fi{resize:vertical;min-height:88px}
 .wishlist-btn:hover{transform:scale(1.1)}
 .follow-btn{display:inline-flex;align-items:center;gap:5px;padding:5px 14px;border-radius:20px;font-size:.72rem;font-weight:700;cursor:pointer;border:1.5px solid var(--gold);color:var(--gold);background:transparent;transition:all .2s;font-family:inherit}
 .follow-btn.following{background:var(--gold);color:#000}
-.order-track{display:flex;align-items:flex-start;gap:0;margin:10px 0;padding-bottom:4px}
+.order-track{display:flex;align-items:flex-start;gap:0;margin:10px 0 6px;padding-bottom:4px}
 .order-track-step{display:flex;flex-direction:column;align-items:center;flex:1;min-width:55px}
-.order-track-dot{width:22px;height:22px;border-radius:50%;border:2px solid var(--border);background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:.65rem;transition:.3s;flex-shrink:0}
-.order-track-dot.done{background:var(--green);border-color:var(--green);color:#fff}
-.order-track-dot.active{background:var(--gold);border-color:var(--gold);color:#fff}
-.order-track-line{height:2px;flex:1;background:var(--border);margin-top:11px;transition:.3s}
+.order-track-dot{width:28px;height:28px;border-radius:50%;border:2px solid var(--border);background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:.75rem;transition:.3s;flex-shrink:0}
+.order-track-dot.done{background:var(--green);border-color:var(--green);color:#fff;box-shadow:0 0 0 3px rgba(5,150,105,.15)}
+.order-track-dot.active{background:var(--gold);border-color:var(--gold);color:#fff;box-shadow:0 0 0 4px rgba(201,146,42,.2)}
+.order-track-line{height:2.5px;flex:1;background:var(--border);margin-top:13px;border-radius:2px;transition:.3s}
 .order-track-line.done{background:var(--green)}
-.order-track-label{font-size:.55rem;color:var(--muted);margin-top:4px;text-align:center;line-height:1.3}
+.order-track-label{font-size:.58rem;color:var(--muted);margin-top:5px;text-align:center;line-height:1.3;font-weight:600}
 .search-filter-bar{display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
 .search-input-wrap{flex:1;min-width:180px;position:relative}
 .search-input-wrap input{width:100%;padding:10px 14px 10px 36px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg2);color:var(--text);font-size:.88rem;box-sizing:border-box;font-family:inherit}
@@ -1750,7 +1759,8 @@ footer{background:var(--text);color:#fff;border-top:1px solid rgba(255,255,255,.
   color: rgba(255,255,255,.55) !important;
 }
 [data-theme="dark"] .hiw-dstep {
-  background: rgba(255,255,255,.04) !important;
+  background: rgba(255,255,255,.05) !important;
+  border-color: rgba(255,255,255,.08) !important;
 }
 
 /* ── DARK MODE: Orders page card text fix ── */
@@ -2593,13 +2603,13 @@ footer{background:var(--text);color:#fff;border-top:1px solid rgba(255,255,255,.
 }
 .hiw-dispute-title{
   font-family:'Cormorant Garamond',serif;
-  font-size:1.1rem;font-weight:600;color:#fff;
+  font-size:1.1rem;font-weight:600;color:var(--text);
   margin-bottom:16px;display:flex;align-items:center;gap:8px;
 }
 .hiw-dispute-steps{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap}
 .hiw-dstep{
   display:flex;flex-direction:column;align-items:center;text-align:center;
-  gap:8px;background:rgba(255,255,255,.03);border-radius:10px;
+  gap:8px;background:rgba(0,0,0,.04);border:1px solid rgba(0,0,0,.08);border-radius:10px;
   padding:14px 10px;flex:1;min-width:100px;
   opacity:0;transform:translateY(12px);
   transition:opacity .4s ease,transform .4s ease;
@@ -2610,7 +2620,8 @@ footer{background:var(--text);color:#fff;border-top:1px solid rgba(255,255,255,.
 .hiw-dstep:nth-child(3){transition-delay:.4s}
 .hiw-dstep:nth-child(4){transition-delay:.55s}
 .hiw-dstep-icon{font-size:1.4rem}
-.hiw-dstep h5{font-size:.72rem;font-weight:700;color:#fff;line-height:1.3}
+.hiw-dstep h5{font-size:.72rem;font-weight:700;color:var(--text);line-height:1.3}
+.hiw-dstep p{font-size:.7rem;color:var(--muted);line-height:1.55;margin:0}
 .hiw-illus-card svg{
   will-change:auto;
   contain:strict;
@@ -3667,7 +3678,7 @@ nav:not(.bottom-nav){
 }
 .swal2-cancel{border-radius:var(--radius-md)!important;font-weight:var(--fw-semibold)!important}
 /* Order tracker */
-.order-track-dot.active{box-shadow:0 0 0 3px rgba(200,135,26,.2)!important}
+/* order-track-dot.active glow handled in base CSS */
 /* Auth card logo */
 .alo .lm{box-shadow:0 4px 12px rgba(200,135,26,.3)!important}
 /* Checkout summary */
@@ -5704,48 +5715,6 @@ nav:not(.bottom-nav){
         </div>
       </div>
 
-      <!-- Change Password -->
-      <div class="dc">
-        <h3>🔒 Change Password</h3>
-        <div class="settings-icon-card" style="margin-bottom:16px">
-          <div class="sic-icon" style="background:var(--orange-bg)">🔒</div>
-          <div class="sic-body">
-            <div class="sic-title" id="pw-section-title">Update Your Password</div>
-            <div class="sic-desc" id="pw-section-desc">Got a temporary password? Set your own secure password here.</div>
-          </div>
-        </div>
-        <div class="fg" id="cp-current-wrap">
-          <label>Current Password <span style="color:var(--red)">*</span></label>
-          <div style="position:relative">
-            <input class="fi" type="password" id="cp-current" placeholder="Your current or temp password" autocomplete="current-password" style="padding-right:42px"/>
-            <button onclick="togglePwVis('cp-current',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);font-size:.95rem;cursor:pointer;padding:4px">👁</button>
-          </div>
-        </div>
-        <div class="fg">
-          <label>New Password <span style="color:var(--red)">*</span></label>
-          <div style="position:relative">
-            <input class="fi" type="password" id="cp-new" placeholder="Min 8 characters" autocomplete="new-password" oninput="checkPwStrength(this.value)" style="padding-right:42px"/>
-            <button onclick="togglePwVis('cp-new',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);font-size:.95rem;cursor:pointer;padding:4px">👁</button>
-          </div>
-          <div style="display:flex;gap:4px;margin-top:7px" id="pw-bars">
-            <div id="bar1" style="height:4px;flex:1;border-radius:2px;background:var(--border);transition:.3s"></div>
-            <div id="bar2" style="height:4px;flex:1;border-radius:2px;background:var(--border);transition:.3s"></div>
-            <div id="bar3" style="height:4px;flex:1;border-radius:2px;background:var(--border);transition:.3s"></div>
-            <div id="bar4" style="height:4px;flex:1;border-radius:2px;background:var(--border);transition:.3s"></div>
-          </div>
-          <div id="pw-strength-txt" style="font-size:.73rem;color:var(--muted);margin-top:4px"></div>
-        </div>
-        <div class="fg">
-          <label>Confirm New Password <span style="color:var(--red)">*</span></label>
-          <input class="fi" type="password" id="cp-confirm" placeholder="Type new password again" autocomplete="new-password"/>
-        </div>
-        <div id="cp-err" style="font-size:.8rem;color:var(--red);margin-bottom:10px;min-height:16px"></div>
-        <div id="cp-ok" style="display:none;background:rgba(30,216,128,.08);border:1px solid rgba(30,216,128,.22);border-radius:9px;padding:11px 14px;font-size:.84rem;color:var(--green);margin-bottom:12px">
-          ✅ Password changed successfully! Use your new password next time you sign in.
-        </div>
-        <button class="bg" style="padding:10px 22px;width:100%" onclick="changePassword()">🔒 Update Password</button>
-      </div>
-
       <!-- Sign out -->
       <button class="so-btn" onclick="doSignOut()" style="margin-top:6px;width:100%;border-radius:10px">Sign Out</button>
     </div>
@@ -5856,15 +5825,6 @@ nav:not(.bottom-nav){
         <button onclick="copyStoreLink()" style="background:var(--gold);color:#fff;border:none;padding:6px 12px;border-radius:6px;font-size:.72rem;font-weight:700;cursor:pointer;white-space:nowrap">Copy</button>
       </div>
       <button onclick="shareStoreLink()" style="width:100%;background:var(--bg2);border:1.5px solid var(--gold);color:var(--gold);padding:10px;border-radius:8px;font-weight:700;font-size:.82rem;cursor:pointer">📤 Share Store Link</button>
-    </div>
-
-    <!-- Affiliate Links for own products -->
-    <div class="dc">
-      <h3>🔗 Promote Your Products</h3>
-      <p style="color:var(--muted);font-size:.82rem;margin-bottom:14px">Share affiliate links to your own products and earn an extra commission on top of your seller earnings.</p>
-      <div id="sel-aff-links">
-        <p style="color:var(--muted);font-size:.84rem">Your products will appear here once they are approved.</p>
-      </div>
     </div>
 
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">
@@ -10129,10 +10089,10 @@ function renderOrders() {
         if (isPhys && o.customer) {
           var addr = o.customer.address || ''; var phone = o.customer.whatsapp || '';
           if (addr || phone) {
-            addrRow = '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:10px;margin:8px 0;font-size:.79rem">'
-              + '<div style="color:#1d4ed8;font-weight:600;margin-bottom:3px">📦 Delivery</div>'
-              + (phone ? '<div>📞 ' + phone + '</div>' : '')
-              + (addr  ? '<div>📍 ' + addr  + '</div>' : '')
+            addrRow = '<div style="background:var(--blue-bg);border:1.5px solid var(--blue);border-radius:10px;padding:12px 14px;margin:8px 0;font-size:.8rem">'
+              + '<div style="color:var(--blue);font-weight:700;font-size:.78rem;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;display:flex;align-items:center;gap:6px">📦 <span>Delivery Info</span></div>'
+              + (phone ? '<div style="display:flex;align-items:center;gap:8px;color:var(--text);margin-bottom:5px;font-weight:500"><span style="font-size:.9rem">📞</span><span>' + phone + '</span></div>' : '')
+              + (addr  ? '<div style="display:flex;align-items:flex-start;gap:8px;color:var(--text);font-weight:500;line-height:1.5"><span style="font-size:.9rem;flex-shrink:0;margin-top:1px">📍</span><span>' + addr  + '</span></div>' : '')
               + '</div>';
           }
         }
@@ -10147,35 +10107,35 @@ function renderOrders() {
           }
         } catch(e){}
 
-        return '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,0,0,.07)">'
+        return '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:18px;overflow:hidden;margin-bottom:16px;box-shadow:0 4px 20px rgba(0,0,0,.09);transition:.2s">'
 
           /* ── Top stripe: order ID + status badge ── */
-          + '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--bg3)">'
-          + '<div style="display:flex;align-items:center;gap:8px">'
-          + '<span style="font-size:.62rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Order</span>'
-          + '<span style="font-weight:800;font-size:.9rem;color:var(--text);letter-spacing:.3px">' + o.id + '</span>'
+          + '<div style="display:flex;justify-content:space-between;align-items:center;padding:13px 16px;border-bottom:1px solid var(--border);background:var(--bg3)">'
+          + '<div style="display:flex;align-items:center;gap:6px">'
+          + '<span style="font-size:.58rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">ORDER</span>'
+          + '<span style="font-weight:800;font-size:.92rem;color:var(--text);letter-spacing:.4px;font-family:monospace">' + o.id + '</span>'
           + '</div>'
-          + '<span style="background:' + statusBg + ';color:' + statusColor + ';padding:4px 12px;border-radius:50px;font-size:.65rem;font-weight:800;letter-spacing:.3px">' + statusLabel + '</span>'
+          + '<span style="background:' + statusBg + ';color:' + statusColor + ';padding:5px 13px;border-radius:50px;font-size:.66rem;font-weight:800;letter-spacing:.4px;border:1.5px solid ' + statusColor + '22">' + statusLabel + '</span>'
           + '</div>'
 
           /* ── Progress tracker (physical) ── */
-          + (isPhys ? '<div style="padding:12px 16px 0">' + buildOrderTracker(o.status) + '</div>' : '')
+          + (isPhys ? '<div style="padding:14px 16px 2px">' + buildOrderTracker(o.status) + '</div>' : '')
 
           /* ── Product row ── */
-          + '<div style="display:flex;align-items:center;gap:12px;padding:14px 16px">'
+          + '<div style="display:flex;align-items:center;gap:13px;padding:14px 16px">'
           + (itemThumb
-            ? '<img src="' + itemThumb + '" alt="product" style="width:54px;height:54px;border-radius:10px;object-fit:cover;flex-shrink:0;border:1px solid var(--border)">'
-            : '<div style="width:54px;height:54px;border-radius:10px;background:var(--bg3);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.5rem">' + (o.items[0]&&o.items[0].emoji||'📦') + '</div>')
+            ? '<img src="' + itemThumb + '" alt="product" style="width:58px;height:58px;border-radius:12px;object-fit:cover;flex-shrink:0;border:1.5px solid var(--border);box-shadow:0 2px 8px rgba(0,0,0,.12)">'
+            : '<div style="width:58px;height:58px;border-radius:12px;background:var(--bg3);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.6rem;border:1.5px solid var(--border)">' + (o.items[0]&&o.items[0].emoji||'📦') + '</div>')
           + '<div style="flex:1;min-width:0">'
-          + '<div style="font-size:.84rem;font-weight:700;color:var(--text);line-height:1.3;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'
+          + '<div style="font-size:.86rem;font-weight:700;color:var(--text);line-height:1.35;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'
           + o.items.map(function(i){
-              var vb = i.variant ? ' <span style="background:rgba(201,146,42,.12);color:var(--gold);border-radius:4px;padding:1px 5px;font-size:.65rem;font-weight:700">' + i.variant + '</span>' : '';
-              return i.name.substring(0,32) + vb;
+              var vb = i.variant ? ' <span style="background:rgba(201,146,42,.15);color:var(--gold);border-radius:4px;padding:1px 6px;font-size:.65rem;font-weight:700">' + i.variant + '</span>' : '';
+              return i.name.substring(0,34) + vb;
             }).join(' &amp; ')
           + '</div>'
           + '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
-          + '<span style="font-size:1.05rem;font-weight:800;color:var(--gold);font-family:serif">' + currSymbol(o.currency) + o.total.toLocaleString() + '</span>'
-          + '<span style="font-size:.7rem;color:var(--muted)">' + (o.date||'') + '</span>'
+          + '<span style="font-size:1.08rem;font-weight:800;color:var(--gold);font-family:serif">' + currSymbol(o.currency) + o.total.toLocaleString() + '</span>'
+          + '<span style="font-size:.7rem;color:var(--muted);background:var(--bg3);padding:2px 8px;border-radius:20px">' + (o.date||'') + '</span>'
           + '</div>'
           + '</div>'
           + '</div>'
@@ -11807,22 +11767,36 @@ function renderSellerDash() {
 
   var active  = myProds.filter(function (p) { return p.status === 'active'; }).length;
   var pending = myProds.filter(function (p) { return p.status === 'pending'; }).length;
-  var totalRevenue = sellerOrds.reduce(function (sum, o) {
-    return sum + parseFloat(o.sellerPayout || o.seller_payout || 0);
-  }, 0);
 
   var myOrds        = sellerOrds;
   var completedOrds = myOrds.filter(function(o){ return o.status === 'completed'; }).length;
   var topProd      = myProds.sort(function(a,b){ return (b.reviews||0)-(a.reviews||0); })[0];
 
-  /* stats row */
+  /* stats row — fetch fresh revenue from Neon to match analytics */
   var statsEl = document.getElementById('seller-stats');
   if (statsEl) {
+    /* Show local figures immediately, then update with Neon data */
+    var localRevenue = sellerOrds.reduce(function (sum, o) {
+      return sum + parseFloat(o.sellerPayout || o.seller_payout || 0);
+    }, 0);
     statsEl.innerHTML =
       '<div class="sm"><div class="sl">Total Listed</div><div class="sv">' + myProds.length + '</div></div>' +
       '<div class="sm"><div class="sl">Live</div><div class="sv" style="color:var(--green)">' + active + '</div></div>' +
       '<div class="sm"><div class="sl">Pending</div><div class="sv" style="color:var(--orange)">' + pending + '</div></div>' +
-      '<div class="sm"><div class="sl">Earnings</div><div class="sv">₦' + totalRevenue.toLocaleString() + '</div></div>';
+      '<div class="sm"><div class="sl">Earnings</div><div class="sv" id="seller-dash-earnings">₦' + localRevenue.toLocaleString() + '</div></div>';
+    /* Sync earnings from Neon (same source as analytics page) */
+    fetch('/api/affiliate?action=analytics-seller&userId=' + encodeURIComponent(CU.id))
+      .then(function(r){ return r.json(); })
+      .then(function(d) {
+        var el = document.getElementById('seller-dash-earnings');
+        if (el && d && typeof d.totalRevenue !== 'undefined') {
+          el.textContent = '₦' + Number(d.totalRevenue || 0).toLocaleString();
+        }
+        /* Also sync completed orders count */
+        var aoEl = document.getElementById('seller-analytics-completed');
+        if (aoEl && d) aoEl.textContent = d.completedOrders || d.completedOrds || 0;
+      })
+      .catch(function(){});
   }
 
   /* Analytics summary */
@@ -11832,7 +11806,7 @@ function renderSellerDash() {
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">'
       + '<div style="background:var(--bg3);border-radius:10px;padding:12px;border:1px solid var(--border)">'
       + '<div style="font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Orders Completed</div>'
-      + '<div style="font-family:serif;font-size:1.5rem;font-weight:700;color:var(--green)">' + completedOrds + '</div>'
+      + '<div style="font-family:serif;font-size:1.5rem;font-weight:700;color:var(--green)" id="seller-analytics-completed">' + completedOrds + '</div>'
       + '</div>'
       + '<div style="background:var(--bg3);border-radius:10px;padding:12px;border:1px solid var(--border)">'
       + '<div style="font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Top Product</div>'
@@ -13613,9 +13587,8 @@ function refreshAnalytics() {
     });
   }
 
-  /* 2. Refresh admin analytics tab if we're on it */
-  if (typeof loadAnalytics === 'function' && document.getElementById('page-analytics') &&
-      document.getElementById('page-analytics').classList.contains('active')) {
+  /* 2. Always refresh analytics data from Neon so it stays in sync */
+  if (typeof loadAnalytics === 'function') {
     loadAnalytics();
   }
 
@@ -13917,7 +13890,7 @@ function toggleTheme() {
   document.body.setAttribute('data-theme', next);
   localStorage.setItem('nm_theme', next);
   var btn = document.getElementById('theme-btn');
-  if (btn) btn.textContent = next === 'dark' ? '🌙' : '☀️';
+  if (btn) btn.textContent = next === 'dark' ? '☀️' : '🌙';
   var _i=document.getElementById('ham-theme-icon');  if(_i)  _i.textContent  = next==='dark'?'☀️':'🌙';
   var _l=document.getElementById('ham-theme-label'); if(_l)  _l.textContent  = next==='dark'?'Light Mode':'Dark Mode';
 }
@@ -14072,7 +14045,7 @@ window.hamFilterCat = hamFilterCat;
   // Update button immediately AND after DOM ready
   function syncBtn() {
     var btn = document.getElementById('theme-btn');
-    if (btn) btn.textContent = saved === 'dark' ? '🌙' : '☀️';
+    if (btn) btn.textContent = saved === 'dark' ? '☀️' : '🌙';
   }
   syncBtn();
   document.addEventListener('DOMContentLoaded', syncBtn);
@@ -16663,12 +16636,31 @@ function initFlashCountdown() {
   /* Reset any existing timer */
   if (flashCountdownTimer) clearInterval(flashCountdownTimer);
 
-  /* Target: end of today at 23:59:59 (daily flash sale window) */
-  var now    = new Date();
-  var target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 0);
+  /* Target: soonest sale_ends_at among active flash deals; fallback to end of today */
+  var all = (typeof getActive === 'function') ? getActive() : (window.prods || []);
+  var deals = all.filter(function(p) {
+    var dp = parseFloat(p.discountPrice || p.discount_price || 0);
+    var bp = parseFloat(p.price || 0);
+    if (dp <= 0 || dp >= bp) return false;
+    var ends = p.saleEndsAt || p.sale_ends_at || null;
+    if (ends && new Date(ends) < new Date()) return false;
+    return true;
+  });
+  var now = new Date();
+  var target;
+  if (deals.length) {
+    var earliest = deals.reduce(function(best, p) {
+      var ends = p.saleEndsAt || p.sale_ends_at || null;
+      if (!ends) return best;
+      var d = new Date(ends);
+      return (!best || d < best) ? d : best;
+    }, null);
+    target = earliest || new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 0);
+  } else {
+    target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 0);
+  }
   if (now >= target) {
-    /* Move to next day */
-    target.setDate(target.getDate() + 1);
+    target = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 23, 59, 59, 0);
   }
 
   function tick() {
@@ -16769,7 +16761,7 @@ function renderFlashSales() {
       var img = (p.imgs && p.imgs[0])
         ? '<img src="' + p.imgs[0] + '" style="width:100%;height:140px;object-fit:cover;border-radius:8px;margin-bottom:8px" loading="lazy"/>'
         : '<div style="width:100%;height:140px;border-radius:8px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:2.5rem;margin-bottom:8px">' + (p.emoji || '📦') + '</div>';
-      return '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px;cursor:pointer;position:relative" onclick="openPD(' + p.id + ')">'
+      return '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px;cursor:pointer;position:relative" onclick="opn(' + p.id + ')">'
         + '<div style="position:absolute;top:8px;left:8px;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;padding:3px 8px;border-radius:4px;font-size:.62rem;font-weight:800;z-index:3">-' + pct + '%</div>'
         + img
         + '<div style="font-size:.84rem;font-weight:600;color:var(--text);margin-bottom:4px;line-height:1.3">' + p.name.substring(0,40) + '</div>'
