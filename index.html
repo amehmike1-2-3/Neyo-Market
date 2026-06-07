@@ -7016,6 +7016,21 @@ window.go = go;
    PSK is NEVER stored in code — sessionStorage only
    ════════════════════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', function () {
+  /* ── Handle redirect from admin.html ── */
+  if (window.location.search.indexOf('admin=1') !== -1) {
+    try {
+      var _adm = JSON.parse(localStorage.getItem('nm_current_user') || '{}');
+      if (_adm && _adm.role === 'admin') {
+        CU = _adm;
+        updNav();
+        setTimeout(function() {
+          go('admin');
+          history.replaceState(null, '', '/');
+        }, 300);
+      }
+    } catch(e) {}
+  }
+
   var logo = document.getElementById('nav-logo');
   if (!logo) return;
 

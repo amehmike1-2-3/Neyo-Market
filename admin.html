@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NeyoMarket Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gold:    #C9A84C;
+      --gold2:   #E8C96A;
+      --dark:    #0D0D0D;
+      --dark2:   #151515;
+      --dark3:   #1E1E1E;
+      --border:  rgba(201,168,76,0.2);
+      --red:     #E53E3E;
+      --text:    #F0EDE6;
+      --muted:   #888;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--dark);
+      font-family: 'Syne', sans-serif;
+      color: var(--text);
+      overflow: hidden;
+    }
+
+    /* ── Background grid ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(201,168,76,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(201,168,76,0.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Glow orb ── */
+    body::after {
+      content: '';
+      position: fixed;
+      top: -200px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(201,168,76,0.12) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .wrap {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    /* ── Card ── */
+    .card {
+      width: 100%;
+      max-width: 400px;
+      background: var(--dark2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 40px 36px;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(201,168,76,0.08) inset;
+      animation: slideUp 0.5s cubic-bezier(0.16,1,0.3,1) both;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Logo ── */
+    .logo-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 28px;
+    }
+
+    .logo-icon {
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, var(--gold), var(--gold2));
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .logo-text {
+      font-size: 1.1rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+
+    .logo-text span {
+      color: var(--gold);
+    }
+
+    /* ── Heading ── */
+    .heading {
+      font-size: 1.65rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      margin-bottom: 6px;
+    }
+
+    .subheading {
+      font-size: .82rem;
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+      margin-bottom: 32px;
+      letter-spacing: 0.02em;
+    }
+
+    /* ── Form ── */
+    .field {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: .72rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 7px;
+    }
+
+    input {
+      width: 100%;
+      background: var(--dark3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: .95rem;
+      font-family: 'DM Mono', monospace;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(201,168,76,0.12);
+    }
+
+    input::placeholder { color: #444; }
+
+    /* ── Button ── */
+    .btn {
+      width: 100%;
+      margin-top: 8px;
+      padding: 13px;
+      background: linear-gradient(135deg, var(--gold), var(--gold2));
+      border: none;
+      border-radius: 8px;
+      font-family: 'Syne', sans-serif;
+      font-size: .9rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--dark);
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s;
+    }
+
+    .btn:hover  { opacity: 0.9; transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    /* ── Error ── */
+    .err {
+      display: none;
+      background: rgba(229,62,62,0.1);
+      border: 1px solid rgba(229,62,62,0.3);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: .82rem;
+      color: #FC8181;
+      margin-bottom: 16px;
+      font-family: 'DM Mono', monospace;
+    }
+    .err.show { display: block; }
+
+    /* ── Footer tag ── */
+    .tag {
+      margin-top: 24px;
+      font-size: .72rem;
+      font-family: 'DM Mono', monospace;
+      color: #333;
+      letter-spacing: 0.06em;
+      text-align: center;
+    }
+
+    /* ── Lock icon animation ── */
+    .lock {
+      font-size: 2rem;
+      margin-bottom: 10px;
+      display: block;
+      animation: pulse 2.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.5; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="card">
+
+    <div class="logo-row">
+      <div class="logo-icon">🛡️</div>
+      <div class="logo-text">Neyo<span>Market</span></div>
+    </div>
+
+    <span class="lock">🔐</span>
+    <div class="heading">Admin Access</div>
+    <div class="subheading">// RESTRICTED — AUTHORIZED ONLY</div>
+
+    <div class="err" id="err"></div>
+
+    <div class="field">
+      <label>Admin Email</label>
+      <input type="email" id="adm-email" placeholder="admin@neyomarket.com" autocomplete="off" />
+    </div>
+
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="adm-pass" placeholder="••••••••••" autocomplete="off"
+             onkeydown="if(event.key==='Enter') doLogin()" />
+    </div>
+
+    <button class="btn" id="login-btn" onclick="doLogin()">Enter Admin Panel</button>
+
+  </div>
+  <div class="tag">NEYOMARKET INTERNAL · DO NOT SHARE THIS URL</div>
+</div>
+
+<script>
+  var ADMIN_EMAIL = 'admin@neyomarket.com';
+  var ADMIN_PASS  = 'NEYO2026';
+
+  /* Redirect if already logged in as admin */
+  try {
+    var _cu = JSON.parse(localStorage.getItem('nm_current_user') || '{}');
+    if (_cu && _cu.role === 'admin') {
+      window.location.href = '/?admin=1';
+    }
+  } catch(e) {}
+
+  function doLogin() {
+    var email = (document.getElementById('adm-email').value || '').trim().toLowerCase();
+    var pass  = (document.getElementById('adm-pass').value  || '').trim();
+    var err   = document.getElementById('err');
+    var btn   = document.getElementById('login-btn');
+
+    err.classList.remove('show');
+
+    if (!email || !pass) {
+      err.textContent = 'Please enter both email and password.';
+      err.classList.add('show');
+      return;
+    }
+
+    if (email !== ADMIN_EMAIL.toLowerCase() || pass !== ADMIN_PASS) {
+      err.textContent = 'Incorrect credentials. This attempt has been logged.';
+      err.classList.add('show');
+      document.getElementById('adm-pass').value = '';
+      return;
+    }
+
+    /* Credentials correct — set session and redirect */
+    btn.disabled     = true;
+    btn.textContent  = 'Authenticating...';
+
+    var CU = {
+      id:    'master_admin_001',
+      name:  'NeyoMarket Admin',
+      email: ADMIN_EMAIL,
+      role:  'admin'
+    };
+    var uStr = JSON.stringify(CU);
+    localStorage.setItem('nm_current_user', uStr);
+    sessionStorage.setItem('nm_session',    uStr);
+
+    /* Small delay so the button feedback is visible */
+    setTimeout(function() {
+      window.location.href = '/?admin=1';
+    }, 600);
+  }
+</script>
+
+</body>
+</html>
