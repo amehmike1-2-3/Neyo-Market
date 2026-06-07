@@ -11065,6 +11065,25 @@ var TIERS = [
 function renderTierGrid() {
   var container = document.getElementById('tier-grid-container');
   if (!container) return;
+
+  /* Fetch tierExpiresAt from server if missing for paid user */
+  if (CU && (CU.membershipTier||'free') !== 'free' && !CU.tierExpiresAt) {
+    apiCall('/auth?action=me&userId=' + CU.id, 'GET').then(function(d){
+      if (d.user && d.user.tierExpiresAt) {
+        CU.tierExpiresAt = d.user.tierExpiresAt;
+        localStorage.setItem('nm_current_user', JSON.stringify(CU));
+        renderTierGrid();
+      }
+    }).catch(function(){});
+  }
+  /* Auto-downgrade if expired */
+  if (CU && (CU.membershipTier||'free') !== 'free' && CU.tierExpiresAt && new Date(CU.tierExpiresAt) < new Date()) {
+    CU.membershipTier = 'free'; CU.tierExpiresAt = null; CU.tierRef = '';
+    localStorage.setItem('nm_current_user', JSON.stringify(CU));
+    apiCall('/auth?action=update-profile', 'POST', { userId: CU.id, membershipTier: 'free', tierRef: '' }).catch(function(){});
+    toast('Your membership plan has expired. You have been moved to the Free plan.', 'warn');
+  }
+
   var currentTier = (CU && CU.membershipTier) || 'free';
 
   /* update tier badges */
@@ -11075,7 +11094,17 @@ function renderTierGrid() {
     if (el) el.textContent = label;
   });
 
-  container.innerHTML = TIERS.map(function(tier) {
+  /* Expiry countdown banner */
+  var expiryHtml = '';
+  if (CU && CU.tierExpiresAt && currentTier !== 'free') {
+    var _exp = new Date(CU.tierExpiresAt);
+    var _days = Math.ceil((_exp - new Date()) / 86400000);
+    var _col = _days <= 5 ? '#e53e3e' : '#888';
+    expiryHtml = '<div style="font-size:.78rem;color:'+_col+';margin-bottom:10px;text-align:center;padding:4px 0">'
+      + (_days <= 0 ? 'Plan expired' : 'Renews in <strong>'+_days+' day'+(_days!==1?'s':'')+'</strong> ('+_exp.toLocaleDateString()+')')
+      + '</div>';
+  }
+  container.innerHTML = expiryHtml + TIERS.map(function(tier) {
     var isActive = currentTier === tier.id;
     var isFree   = tier.price === 0;
     return '<div class="tier-card' + (isActive ? ' active-tier' : '') + '">' +
@@ -11114,6 +11143,7 @@ function buyTier(tierId, price) {
         .then(function(data) {
           if (data.ok || data.user) {
             CU.membershipTier = tierId;
+            CU.tierExpiresAt = (data.user && data.user.tierExpiresAt) ? data.user.tierExpiresAt : new Date(Date.now() + 30*24*60*60*1000).toISOString();
             localStorage.setItem('nm_current_user', JSON.stringify(CU));
             toast('🎉 Welcome to ' + tier.name + ' plan! Your benefits are now active.', 'ok');
             renderTierGrid();
