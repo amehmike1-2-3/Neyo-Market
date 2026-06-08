@@ -38,7 +38,7 @@ const RATE_LIMIT = {
   maxAttempts: 5,
   windowMs:    15 * 60 * 1000,
   blockMs:     30 * 60 * 1000,
-};
+ };
 
 function getRateLimitKey(req, email) {
   const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 'unknown';
@@ -829,7 +829,6 @@ module.exports = async function handler(req, res) {
   <meta charset="utf-8"/>
   <title>${name} — NeyoMarket</title>
 
-  <!-- Open Graph -->
   <meta property="og:type"         content="product"/>
   <meta property="og:url"          content="${prodUrl}"/>
   <meta property="og:title"        content="${name} — ${priceStr}"/>
@@ -840,16 +839,13 @@ module.exports = async function handler(req, res) {
   <meta property="og:image:type"   content="image/jpeg"/>
   <meta property="og:site_name"    content="NeyoMarket"/>
 
-  <!-- Twitter Card -->
   <meta name="twitter:card"        content="summary_large_image"/>
   <meta name="twitter:title"       content="${name} — ${priceStr}"/>
   <meta name="twitter:description" content="${desc}"/>
   <meta name="twitter:image"       content="${imgProxyUrl}"/>
 
-  <!-- WhatsApp / general -->
   <meta name="description" content="${desc}"/>
 
-  <!-- Redirect human visitors to the real SPA -->
   <meta http-equiv="refresh" content="0;url=${prodUrl}"/>
 </head>
 <body>
@@ -988,7 +984,7 @@ module.exports = async function handler(req, res) {
       const { email } = req.query;
       const acct = STAFF_ACCOUNTS[(email||'').toLowerCase()];
       if (!acct || acct.role !== 'kyc_reviewer') return res.status(403).json({ ok: false, error: 'Not authorised.' });
-      const rows = await sql`SELECT id,name,email,phone,role,kyc_status,kyc_type,nin_number,joined,created_at FROM users WHERE kyc_status='pending' AND nin_number IS NOT NULL ORDER BY created_at ASC`;
+      const rows = await sql`SELECT id,name,email,phone,role,kyc_status,kyc_type,kyc_number,joined,created_at FROM users WHERE kyc_status='pending' AND kyc_number IS NOT NULL ORDER BY created_at ASC`;
       return res.status(200).json({ ok: true, users: rows });
     }
 
