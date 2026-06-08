@@ -3,6 +3,10 @@
     {
       "source": "/og/:id",
       "destination": "/api/auth?action=og&id=:id"
+    },
+    {
+      "source": "/admin",
+      "destination": "/admin.html"
     }
   ],
   "redirects": [

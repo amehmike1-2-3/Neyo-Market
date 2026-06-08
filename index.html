@@ -6748,14 +6748,13 @@ nav:not(.bottom-nav){
 /* Paystack LIVE public key — backend uses PAYSTACK_SECRET_KEY from Vercel env vars */
 var PK            = 'pk_live_aaf3faacd1ff2cb720a5f1afaf79112c3fc322ca';
 var PKS           = PK;  /* Alias for promote/promo functions */
-var ADMIN_EMAIL   = 'admin@neyomarket.com';
-var ADMIN_PASS    = 'NEYO2026';
+/* Admin credentials removed — validated server-side only */
 var SUPPORT_PHONE = '+2349072212496';
 
 /* ═══ MASTER ADMIN — always available on every device ═══ */
 var MASTER_ADMIN = {
   id: 'master_admin_001', name: 'NeyoMarket Admin',
-  email: ADMIN_EMAIL, password: ADMIN_PASS,
+  email: 'admin@neyomarket.com',
   phone: SUPPORT_PHONE, role: 'admin',
   joined: '2026-01-01', affCode: 'NEYO_ADMIN'
 };
@@ -7158,15 +7157,20 @@ document.addEventListener('DOMContentLoaded', function () {
       tapCount = 0; clearTimeout(tapTimer);
       var pw = prompt('🔐 Admin Access Required\n\nEnter the admin password:');
       if (pw === null) return;
-      if (pw === ADMIN_PASS) {
-        CU = { id: 'master_admin_001', name: 'NeyoMarket Admin', email: ADMIN_EMAIL, role: 'admin' };
-        var uStr = JSON.stringify(CU);
-        localStorage.setItem('nm_current_user', uStr);
-        sessionStorage.setItem('nm_session', uStr);
-        updNav(); toast('Admin access granted 🔐', 'ok'); go('admin');
-      } else {
-        toast('❌ Incorrect password. This attempt has been logged.', 'fail');
-      }
+      fetch('/api/auth?action=admin-login', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: 'admin@neyomarket.com', password: pw })
+      }).then(function(r){ return r.json(); }).then(function(d){
+        if (d.ok && d.user) {
+          CU = d.user;
+          var uStr = JSON.stringify(CU);
+          localStorage.setItem('nm_current_user', uStr);
+          sessionStorage.setItem('nm_session', uStr);
+          updNav(); toast('Admin access granted 🔐', 'ok'); go('admin');
+        } else {
+          toast('❌ Incorrect password. This attempt has been logged.', 'fail');
+        }
+      }).catch(function(){ toast('❌ Network error. Try again.', 'fail'); });
     }
   });
 });
@@ -7174,17 +7178,25 @@ document.addEventListener('DOMContentLoaded', function () {
 /* Admin gate modal verify */
 function vGate() {
   var v = document.getElementById('gate-pass').value;
-  if (v === ADMIN_PASS) {
-    cM('m-gate');
-    CU = { id: 'master_admin_001', name: 'NeyoMarket Admin', email: ADMIN_EMAIL, role: 'admin' };
-    var uStr = JSON.stringify(CU);
-    localStorage.setItem('nm_current_user', uStr);
-    sessionStorage.setItem('nm_session', uStr);
-    updNav(); toast('Admin access granted 🔐', 'ok'); go('admin');
-  } else {
-    document.getElementById('gate-err').textContent = 'Incorrect password. Try again.';
-    document.getElementById('gate-pass').value = '';
-  }
+  if (!v) return;
+  fetch('/api/auth?action=admin-login', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: 'admin@neyomarket.com', password: v })
+  }).then(function(r){ return r.json(); }).then(function(d){
+    if (d.ok && d.user) {
+      cM('m-gate');
+      CU = d.user;
+      var uStr = JSON.stringify(CU);
+      localStorage.setItem('nm_current_user', uStr);
+      sessionStorage.setItem('nm_session', uStr);
+      updNav(); toast('Admin access granted 🔐', 'ok'); go('admin');
+    } else {
+      document.getElementById('gate-err').textContent = 'Incorrect password. Try again.';
+      document.getElementById('gate-pass').value = '';
+    }
+  }).catch(function(){
+    document.getElementById('gate-err').textContent = 'Network error. Try again.';
+  });
 }
 window.vGate = vGate;
 
@@ -9535,7 +9547,7 @@ window.PROMO_CODES = {
   'NEYO10':   { type: 'percent', value: 10,   label: '10% off'      },
   'WELCOME':  { type: 'percent', value: 15,   label: '15% off'      },
   'SAVE500':  { type: 'fixed',   value: 500,  label: '₦500 off'     },
-  'NEYO2026': { type: 'percent', value: 20,   label: '20% off'      },
+  'NEYO25':   { type: 'percent', value: 20,   label: '20% off'      },
   'FREESHIP': { type: 'fixed',   value: 300,  label: '₦300 off'     },
 };
 var appliedPromo = null;
@@ -10672,7 +10684,7 @@ function doSignIn() {
   function restoreBtn() { if (btn) { btn.disabled = false; btn.textContent = 'Sign In Securely 🔐'; } }
 
   /* Master admin check */
-  if (email === ADMIN_EMAIL.toLowerCase() && pass === ADMIN_PASS) {
+  if (email === 'admin@neyomarket.com' && false) { /* moved to server */
     CU = MASTER_ADMIN;
     localStorage.setItem('nm_current_user', JSON.stringify(CU));
     sessionStorage.setItem('nm_session', JSON.stringify(CU));
