@@ -6,7 +6,7 @@
     },
     {
       "source": "/admin",
-      "destination": "/adminneyomarket.html"
+      "destination": "/admin.html"
     }
   ],
   "redirects": [
