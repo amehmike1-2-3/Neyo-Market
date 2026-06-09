@@ -11067,14 +11067,14 @@ function refreshProf() {
   /* Original profile page elements */
   var av = document.getElementById('pav'); if (av) av.textContent = initLetter;
   var pn = document.getElementById('p-name'); if (pn) pn.textContent = CU.name;
-  var pr = document.getElementById('p-role'); if (pr) pr.textContent = roleLabel + ' · Joined ' + (CU.joined || '2026');
+  var pr = document.getElementById('p-role'); if (pr) pr.innerHTML = roleLabel + ' · Joined ' + (CU.joined || '2026');
   var pe = document.getElementById('p-email'); if (pe) pe.textContent = maskedEmail;
 
   /* Settings card elements (new — unique IDs) */
   var sav = document.getElementById('settings-pav');       if (sav) sav.textContent = initLetter;
   var spn = document.getElementById('settings-p-name');    if (spn) spn.textContent = CU.name;
   var spe = document.getElementById('settings-p-email');   if (spe) spe.textContent = maskedEmail;
-  var spr = document.getElementById('settings-p-role');    if (spr) spr.textContent = roleLabel + ' · Joined ' + (CU.joined || '2026');
+  var spr = document.getElementById('settings-p-role');    if (spr) spr.innerHTML = roleLabel + ' · Joined ' + (CU.joined || '2026');
 
   /* Tier badges */
   var tb1 = document.getElementById('tier-badge-display');   if (tb1) tb1.textContent = tierLabel;
@@ -16725,7 +16725,7 @@ function updatePROverall(reviews) {
   var starsEl = document.getElementById('pr-stars')  || document.getElementById('rp-stars');
   var countEl = document.getElementById('pr-count')  || document.getElementById('rp-count');
   if (scoreEl) scoreEl.textContent = avg;
-  if (starsEl) starsEl.textContent = starsHTML(Math.round(avg));
+  if (starsEl) starsEl.innerHTML = starsHTML(Math.round(avg));
   if (countEl) countEl.textContent = total + ' review' + (total !== 1 ? 's' : '');
 
   for (var s = 1; s <= 5; s++) {
@@ -17055,7 +17055,7 @@ function updateRPOverall(reviews) {
   var starsEl = document.getElementById('rp-stars');
   var countEl = document.getElementById('rp-count');
   if (scoreEl) scoreEl.textContent = avg;
-  if (starsEl) starsEl.textContent = starsHTML(Math.round(avg));
+  if (starsEl) starsEl.innerHTML = starsHTML(Math.round(avg));
   if (countEl) countEl.textContent = total + ' review' + (total !== 1 ? 's' : '');
 
   for (var s = 1; s <= 5; s++) {
