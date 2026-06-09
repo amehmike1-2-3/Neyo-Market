@@ -13594,7 +13594,7 @@ function aTab(tab, btn) {
         + '<div class="fg"><label>Site Name</label><input class="fi" value="NeyoMarket"/></div>'
         + '<div class="fg"><label>Support Phone</label><input class="fi" value="'+SUPPORT_PHONE+'"/></div>'
         + '<div class="fg"><label>Platform Fee %</label><input class="fi" type="number" value="5" style="width:100px"/></div>'
-        + '<button class="bg" style="padding:9px 22px;margin-top:4px" onclick="toast(\'Settings saved\',\'ok\')"">Save Settings</button>'
+        + '<button class="bg" style="padding:9px 22px;margin-top:4px" onclick="toast(\'Settings saved\',\'ok\')">Save Settings</button>'
         + '</div>';
 
     } /* end if/else tab chain */
@@ -14825,7 +14825,7 @@ window.notifyVendorWA = notifyVendorWA;
 
 function toast(msg, type) {
   var t = document.getElementById('toast'); if (!t) return;
-  t.textContent = msg; t.className = 'toast ' + (type || ''); t.classList.add('show');
+  t.innerHTML = msg; t.className = 'toast ' + (type || ''); t.classList.add('show');
   setTimeout(function () { t.classList.remove('show'); }, 3000);
 }
 window.toast = toast;
