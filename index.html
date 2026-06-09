@@ -9961,7 +9961,135 @@ function processPaystack(mode) {
       });
     },
 
-    onClose: function () { toast('Payment window closed. Cart is still intact.', 'warn'); }
+    onClose: function () {
+      /* ── User closed the popup (went to bank app, etc.) ──
+         Verify the reference against our backend. If Paystack
+         already captured the payment, complete the order anyway. */
+      toast('<i class="fa-solid fa-hourglass-half"><\/i>  Verifying payment… please wait.', 'warn');
+
+      var verifyRef = trackId;
+      var verifyPayload = {
+        reference:    verifyRef,
+        orderId:      trackId,
+        userId:       CU ? String(CU.id) : '',
+        sellerUserId: sellerUserId || '',
+        items:        cart.map(function(i) {
+          var prod = (window.prods || []).find(function(p){ return Number(p.id) === Number(i.id); });
+          return {
+            id: i.id, name: i.name, type: i.type, price: i.price,
+            qty: i.qty || 1, emoji: i.emoji,
+            sellerId: i.sellerId || (prod && prod.sellerId) || null,
+            variant:  selectedVariants[i.id] || i.variant || null,
+            fileUrl:  (prod && (prod.fileUrl  || prod.file_url))  || null,
+            fileName: (prod && (prod.fileName || prod.file_name)) || null,
+            fileExt:  (prod && (prod.fileExt  || prod.file_ext))  || null
+          };
+        }),
+        total:    total,
+        customer: { name: name, email: (CU ? CU.email : email), whatsapp: wa || '', address: addr || '' },
+        mode:     mode,
+        affCode:  (function(){
+          try {
+            var refRaw = localStorage.getItem('nm_ref');
+            if (refRaw) {
+              var rd = JSON.parse(refRaw);
+              if (rd && rd.code && rd.expires && Date.now() < rd.expires) return rd.code;
+            }
+            return sessionStorage.getItem('nm_ref_session') || null;
+          } catch(e){ return null; }
+        })(),
+        shipping: addr ? { address: addr, whatsapp: wa } : null
+      };
+
+      /* Poll up to 8 times (40 seconds) — covers bank transfer delays */
+      var pollCount = 0;
+      var maxPolls  = 8;
+      var pollInterval = 5000; /* 5 seconds between checks */
+
+      function pollVerify() {
+        pollCount++;
+        fetch('/api/payment?action=verify&ref=' + encodeURIComponent(verifyRef) + '&orderId=' + encodeURIComponent(trackId), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(verifyPayload)
+        })
+        .then(function(r){ return r.json(); })
+        .then(function(data) {
+          if (data.ok && data.paid) {
+            /* ── Payment confirmed ── build order and show receipt ── */
+            var order = {
+              id:           trackId,
+              ref:          verifyRef,
+              customer:     verifyPayload.customer,
+              items:        verifyPayload.items,
+              total:        total,
+              platformFee:  data.platformFee  || Math.round(total * 0.05),
+              sellerPayout: data.sellerAmount || Math.round(total * 0.90),
+              affiliateFee: data.affiliateFee || 0,
+              status:       data.status || 'paid',
+              mode:         mode,
+              date:         new Date().toLocaleDateString(),
+              collected:    false,
+              fileUrl:      data.downloadUrl || data.fileUrl || (verifyPayload.items[0] && verifyPayload.items[0].fileUrl) || null
+            };
+            ords.push(order);
+            /* Decrement local stock */
+            cart.forEach(function(ci) {
+              var sp = prods.find(function(x){ return Number(x.id) === Number(ci.id); });
+              if (sp && sp.quantity !== null && sp.quantity !== undefined) {
+                sp.quantity = Math.max(0, parseInt(sp.quantity, 10) - (ci.qty || 1));
+                fetch('/api/products', {
+                  method: 'PATCH',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ id: sp.id, quantity: Math.max(0, parseInt(sp.quantity, 10)) })
+                }).catch(function(){});
+              }
+            });
+            cart = []; updBadge();
+            saveAll();
+            /* Show receipt */
+            var ri = document.getElementById('rec-id');
+            var rf = document.getElementById('rec-info');
+            if (ri) ri.textContent = trackId;
+            if (rf) rf.innerHTML =
+              '<div>Name: '         + name + '</div>' +
+              '<div>WhatsApp: '     + (wa || 'N/A') + '</div>' +
+              '<div>Amount Paid: ₦' + total.toLocaleString() + '</div>' +
+              (data.affiliateFee ? '<div>Affiliate: ₦' + data.affiliateFee.toLocaleString() + ' (5%)</div>' : '') +
+              '<div>Seller Gets: ₦' + (data.sellerAmount || Math.round(total * 0.90)).toLocaleString() + '</div>' +
+              '<div>Date: ' + new Date().toLocaleDateString() + '</div>' +
+              '<div style="margin-top:8px;color:var(--green)"><i class="fa-solid fa-circle-check"><\/i>  Payment confirmed & saved. Escrow active.</div>';
+            cM('m-cart'); cM('m-pd');
+            oM('m-rec');
+            toast('<i class="fa-solid fa-circle-check"><\/i>  Payment confirmed! Order ' + trackId, 'ok');
+            if (typeof awardLoyaltyPoints === 'function') awardLoyaltyPoints(10, 'Purchase: ' + trackId);
+
+          } else if (data.pending && pollCount < maxPolls) {
+            /* Still processing — try again */
+            toast('<i class="fa-solid fa-hourglass-half"><\/i>  Payment still processing… (' + pollCount + '/' + maxPolls + ')', 'warn');
+            setTimeout(pollVerify, pollInterval);
+
+          } else if (pollCount < maxPolls) {
+            /* Not confirmed yet — keep polling */
+            setTimeout(pollVerify, pollInterval);
+
+          } else {
+            /* Max polls reached — payment not confirmed, cart preserved */
+            toast('<i class="fa-solid fa-triangle-exclamation"><\/i>  Payment not confirmed yet. If you paid, check your Orders tab in a few minutes or contact support.', 'warn');
+          }
+        })
+        .catch(function() {
+          if (pollCount < maxPolls) {
+            setTimeout(pollVerify, pollInterval);
+          } else {
+            toast('Could not verify payment. If you paid, check your Orders tab or contact support.', 'warn');
+          }
+        });
+      }
+
+      /* Start polling immediately */
+      setTimeout(pollVerify, 3000);
+    }
   };
 
   /* ── Inject split if seller has a subaccount ── */
