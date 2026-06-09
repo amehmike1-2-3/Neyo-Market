@@ -10111,9 +10111,47 @@ function processPaystack(mode) {
   }
   } /* end openPaystackWithAmount */
 
+  /* ── Save cart to DB first, then open Paystack ──
+     This ensures webhook can restore full item details
+     even if buyer closes the browser after paying. ── */
+  function saveCartThenOpen(ngnAmount) {
+    var cartPayload = {
+      orderId:   trackId,
+      userId:    CU ? String(CU.id) : '',
+      items:     cart.map(function(i) {
+        var prod = (window.prods || []).find(function(p){ return Number(p.id) === Number(i.id); });
+        return {
+          id:       i.id,
+          name:     i.name,
+          type:     i.type,
+          price:    i.price,
+          qty:      i.qty || 1,
+          emoji:    i.emoji,
+          sellerId: i.sellerId || (prod && prod.sellerId) || null,
+          variant:  selectedVariants[i.id] || i.variant || null,
+          fileUrl:  (prod && (prod.fileUrl || prod.file_url)) || null,
+          fileName: (prod && (prod.fileName || prod.file_name)) || null,
+          fileExt:  (prod && (prod.fileExt  || prod.file_ext))  || null
+        };
+      }),
+      total:    total,
+      customer: { name: name, email: (CU ? CU.email : email), whatsapp: wa || '', address: addr || '' },
+      mode:     mode,
+      sellerUserId: sellerUserId || ''
+    };
+    /* Fire-and-forget — don't block Paystack opening if this fails */
+    fetch('/api/payment?action=save-cart', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(cartPayload)
+    }).catch(function(){});
+    /* Open Paystack immediately — no waiting */
+    openPaystackWithAmount(ngnAmount);
+  }
+
   /* ── Convert to NGN if needed, then open Paystack ── */
   if (cartCurrency === 'NGN') {
-    openPaystackWithAmount(total);
+    saveCartThenOpen(total);
   } else {
     toast('<i class="fa-solid fa-hourglass-half"><\/i>  Fetching live exchange rate…', 'ok');
     fetch('https://open.er-api.com/v6/latest/' + cartCurrency)
@@ -10121,22 +10159,20 @@ function processPaystack(mode) {
       .then(function(data) {
         var rate   = (data && data.rates && data.rates.NGN) ? data.rates.NGN : null;
         if (!rate) {
-          /* Fallback rates if API fails */
           var fallback = { USD: 1580, GBP: 2000, EUR: 1720, CAD: 1160, GHS: 105 };
           rate = fallback[cartCurrency] || 1580;
           toast('<i class="fa-solid fa-triangle-exclamation"><\/i>  Using estimated rate. Live rate unavailable.', 'warn');
         }
         var ngnTotal = Math.round(total * rate);
         toast('<i class="fa-solid fa-arrows-rotate"><\/i>  ' + currSymbol(cartCurrency) + total.toLocaleString() + ' = ₦' + ngnTotal.toLocaleString() + ' (live rate)', 'ok');
-        openPaystackWithAmount(ngnTotal);
+        saveCartThenOpen(ngnTotal);
       })
       .catch(function() {
-        /* Fallback rates if network fails */
         var fallback = { USD: 1580, GBP: 2000, EUR: 1720, CAD: 1160, GHS: 105 };
         var rate     = fallback[cartCurrency] || 1580;
         var ngnTotal = Math.round(total * rate);
         toast('<i class="fa-solid fa-triangle-exclamation"><\/i>  Using estimated rate. Paying ₦' + ngnTotal.toLocaleString(), 'warn');
-        openPaystackWithAmount(ngnTotal);
+        saveCartThenOpen(ngnTotal);
       });
   }
 } /* end processPaystack */
