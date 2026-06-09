@@ -23,9 +23,14 @@ async function sendPayoutEmails(user, grossAmt, paidOut, fee, manualRef) {
 
     var adminEmail = process.env.GMAIL_USER || 'amehmichael2336@gmail.com';
     var sellerName = user.payout_aname || user.name || 'Seller';
-    var acctNo     = user.payout_acct  || 'Not provided';
-    var bankCode   = user.payout_bank  || 'Not provided';
     var sellerEmail = user.email;
+
+    // Privacy Masking: Show only last 4 digits
+    var rawAcct    = String(user.payout_acct || 'Not provided');
+    var maskedAcct = rawAcct.length > 4 ? '******' + rawAcct.slice(-4) : rawAcct;
+    
+    // Bank Name Logic: Assumes user.payout_bank_name exists, otherwise fallback to code
+    var bankDisplay = user.payout_bank_name ? `${user.payout_bank_name} (${user.payout_bank})` : (user.payout_bank || 'Not provided');
 
     // Email to SELLER
     await transporter.sendMail({
@@ -39,8 +44,9 @@ async function sendPayoutEmails(user, grossAmt, paidOut, fee, manualRef) {
         + '<table style="width:100%;border-collapse:collapse;margin:16px 0">'
         + '<tr><td style="padding:8px;border:1px solid #eee;color:#888">Amount Requested</td><td style="padding:8px;border:1px solid #eee">₦' + grossAmt.toLocaleString() + '</td></tr>'
         + '<tr><td style="padding:8px;border:1px solid #eee;color:#888">Platform Fee</td><td style="padding:8px;border:1px solid #eee">₦' + fee.toLocaleString() + '</td></tr>'
-        + '<tr><td style="padding:8px;border:1px solid #eee;color:#888"><strong>Amount You Will Receive</strong></td><td style="padding:8px;border:1px solid #eee;color:#c9922a"><strong>₦' + paidOut.toLocaleString() + '</strong></td></tr>'
-        + '<tr><td style="padding:8px;border:1px solid #eee;color:#888">Account Number</td><td style="padding:8px;border:1px solid #eee">' + acctNo + '</td></tr>'
+        + '<tr><td style="padding:8px;border:1px solid #eee;color:#888"><strong>Amount You Will Receive</strong></td><td style="padding:8px;border:1px solid #eee"><strong>₦' + paidOut.toLocaleString() + '</strong></td></tr>'
+        + '<tr><td style="padding:8px;border:1px solid #eee;color:#888">Bank</td><td style="padding:8px;border:1px solid #eee">' + bankDisplay + '</td></tr>'
+        + '<tr><td style="padding:8px;border:1px solid #eee;color:#888">Account Number</td><td style="padding:8px;border:1px solid #eee">' + maskedAcct + '</td></tr>'
         + '<tr><td style="padding:8px;border:1px solid #eee;color:#888">Reference</td><td style="padding:8px;border:1px solid #eee">' + manualRef + '</td></tr>'
         + '</table>'
         + '<p>Funds will be sent to your registered bank account within <strong>24 hours</strong>.</p>'
@@ -60,8 +66,8 @@ async function sendPayoutEmails(user, grossAmt, paidOut, fee, manualRef) {
         + '<table style="width:100%;border-collapse:collapse;margin:16px 0">'
         + '<tr><td style="padding:8px;border:1px solid #eee;color:#888">Seller Name</td><td style="padding:8px;border:1px solid #eee"><strong>' + sellerName + '</strong></td></tr>'
         + '<tr><td style="padding:8px;border:1px solid #eee;color:#888">Seller Email</td><td style="padding:8px;border:1px solid #eee">' + sellerEmail + '</td></tr>'
-        + '<tr><td style="padding:8px;border:1px solid #eee;color:#888">Account Number</td><td style="padding:8px;border:1px solid #eee"><strong>' + acctNo + '</strong></td></tr>'
-        + '<tr><td style="padding:8px;border:1px solid #eee;color:#888">Bank Code</td><td style="padding:8px;border:1px solid #eee">' + bankCode + '</td></tr>'
+        + '<tr><td style="padding:8px;border:1px solid #eee;color:#888">Bank Details</td><td style="padding:8px;border:1px solid #eee"><strong>' + bankDisplay + '</strong></td></tr>'
+        + '<tr><td style="padding:8px;border:1px solid #eee;color:#888">Account Number</td><td style="padding:8px;border:1px solid #eee"><strong>' + rawAcct + '</strong></td></tr>'
         + '<tr><td style="padding:8px;border:1px solid #eee;color:#888">Amount to Send</td><td style="padding:8px;border:1px solid #eee;color:#c9922a;font-size:1.2rem"><strong>₦' + paidOut.toLocaleString() + '</strong></td></tr>'
         + '<tr><td style="padding:8px;border:1px solid #eee;color:#888">Reference</td><td style="padding:8px;border:1px solid #eee">' + manualRef + '</td></tr>'
         + '</table>'
@@ -76,7 +82,6 @@ async function sendPayoutEmails(user, grossAmt, paidOut, fee, manualRef) {
 }
 
 // ─── Commission Tiers ─────────────────────────────────────────────────────────
-// digital rate / physical rate per membership tier
 const TIER_RATES = {
   free:     { digital: 0.10, physical: 0.05 },
   starter:  { digital: 0.08, physical: 0.04 },
@@ -115,8 +120,6 @@ function jsonErr(res, status, msg, detail) {
 }
 
 // ─── Paystack API Helper ──────────────────────────────────────────────────────
-// All Paystack calls go through here.
-// Accepts an optional override key (used by approve-payout master key flow).
 async function callPaystack(path, method = 'GET', body = null, keyOverride = null) {
   const key = keyOverride || PSK;
   try {
@@ -147,7 +150,6 @@ async function callPaystack(path, method = 'GET', body = null, keyOverride = nul
 
 // ─── Input Validators ─────────────────────────────────────────────────────────
 function requireFields(obj, fields) {
-  // Returns the name of the first missing/falsy field, or null if all present
   return fields.find(f => !obj[f]) || null;
 }
 
@@ -189,11 +191,6 @@ module.exports = async function handler(req, res) {
 
   try {
 
-    // ──────────────────────────────────────────────────────────────────────────
-    // RESOLVE ACCOUNT
-    // GET ?action=resolve-account&accountNumber=...&bankCode=...
-    // Looks up account name from Paystack given bank code + account number.
-    // ──────────────────────────────────────────────────────────────────────────
     if (action === 'resolve-account') {
       const { accountNumber, bankCode } = req.query;
 
@@ -212,10 +209,6 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ error: result.message || 'Account not found.' });
     }
 
-    // ──────────────────────────────────────────────────────────────────────────
-    // KYC — Validate NIN / BVN via Paystack customer validation
-    // POST ?action=kyc  { userId, kycType, kycNumber }
-    // ──────────────────────────────────────────────────────────────────────────
     if (action === 'kyc') {
       if (req.method !== 'POST') return jsonErr(res, 405, 'POST only.');
 
@@ -232,7 +225,6 @@ module.exports = async function handler(req, res) {
       if (!users.length) return jsonErr(res, 404, 'User not found.');
       const user = users[0];
 
-      // Submit to Paystack customer validation endpoint
       const paystackRes = await callPaystack('/customer/validate', 'POST', {
         email:      user.email,
         first_name: user.name.split(' ')[0],
@@ -242,7 +234,6 @@ module.exports = async function handler(req, res) {
         country:    'NG',
       });
 
-      // Service warming up or empty response — treat as pending
       if (!paystackRes || paystackRes.message === 'Empty response from Paystack') {
         return res.status(200).json({
           ok:        true,
@@ -251,7 +242,6 @@ module.exports = async function handler(req, res) {
         });
       }
 
-      // Determine final KYC status from Paystack response
       let kycStatus = 'pending';
       if (paystackRes.status === true) {
         kycStatus = 'verified';
@@ -280,11 +270,6 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    // ──────────────────────────────────────────────────────────────────────────
-    // SELLER BALANCE
-    // GET ?action=balance&userId=...
-    // Returns seller's Paystack subaccount balance.
-    // ──────────────────────────────────────────────────────────────────────────
     if (action === 'balance') {
       const { userId } = req.query;
       if (!userId) return jsonErr(res, 400, 'userId is required.');
@@ -304,10 +289,6 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ balance });
     }
 
-    // ──────────────────────────────────────────────────────────────────────────
-    // REQUEST WITHDRAWAL — seller requests, admin approves later
-    // POST ?action=request-withdraw  { userId, amount }
-    // ──────────────────────────────────────────────────────────────────────────
     if (action === 'request-withdraw') {
       if (req.method !== 'POST') return jsonErr(res, 405, 'POST only.');
 
@@ -340,12 +321,6 @@ module.exports = async function handler(req, res) {
       return res.status(201).json({ ok: true, message: 'Withdrawal request submitted! Admin will process it shortly.' });
     }
 
-    // ──────────────────────────────────────────────────────────────────────────
-    // APPROVE PAYOUT — admin approves a single pending withdrawal
-    // POST ?action=approve-payout
-    // { withdrawalId, userId, amount, flatFee?, netAmount?, masterKey? }
-    // Flow: create recipient → transfer → deduct balance → mark success
-    // ──────────────────────────────────────────────────────────────────────────
     if (action === 'approve-payout') {
       if (req.method !== 'POST') return jsonErr(res, 405, 'POST only.');
 
@@ -367,14 +342,12 @@ module.exports = async function handler(req, res) {
 
       const manualRef = 'MANUAL-' + Date.now();
 
-      // Step 1: Deduct balance from seller
       await sql`
         UPDATE users
         SET seller_balance = GREATEST(0, COALESCE(seller_balance, 0) - ${grossAmt})
         WHERE id = ${String(userId)}
       `;
 
-      // Step 2: Deduct from wallets table too
       await sql`
         UPDATE wallets
         SET balance = GREATEST(0, COALESCE(balance, 0) - ${grossAmt}),
@@ -382,7 +355,6 @@ module.exports = async function handler(req, res) {
         WHERE user_id::text = ${String(userId)}
       `;
 
-      // Step 3: Mark withdrawal as approved — admin will send manually
       await sql`
         UPDATE withdrawals
         SET status    = 'approved',
@@ -392,7 +364,6 @@ module.exports = async function handler(req, res) {
 
       log.info('Manual payout approved — user ' + userId + ' N' + paidOut + ' ref ' + manualRef);
 
-      // Step 4: Send email to seller and admin
       await sendPayoutEmails(user, grossAmt, paidOut, fee, manualRef);
 
       return res.status(200).json({
@@ -405,12 +376,6 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    // ──────────────────────────────────────────────────────────────────────────
-    // BULK PAYOUT — admin approves ALL pending withdrawals in one call
-    // POST ?action=bulk-payout  { masterKey? }
-    // Processes each pending withdrawal independently — failures don't block others.
-    // Returns a detailed per-item results report.
-    // ──────────────────────────────────────────────────────────────────────────
     if (action === 'bulk-payout') {
       if (req.method !== 'POST') return jsonErr(res, 405, 'POST only.');
 
@@ -419,7 +384,6 @@ module.exports = async function handler(req, res) {
       if (!activeKey)
         return jsonErr(res, 403, 'Master Key required. Inject your Paystack secret key first.');
 
-      // Fetch all pending withdrawals with user bank details
       const pending = await sql`
         SELECT w.id AS withdrawal_id, w.user_id, w.amount,
                u.name, u.payout_aname, u.payout_acct, u.payout_bank,
@@ -448,7 +412,6 @@ module.exports = async function handler(req, res) {
         const paidOut  = grossAmt - fee;
         const bal      = parseFloat(row.seller_balance || 0);
 
-        // Per-item validations — skip rather than abort entire batch
         if (row.kyc_status !== 'verified') {
           results.push({ withdrawalId: wId, userId, status: 'skipped', reason: 'KYC not verified' });
           failCount++;
@@ -471,7 +434,6 @@ module.exports = async function handler(req, res) {
         }
 
         try {
-          // Create recipient
           const recipRes = await createRecipient(row, activeKey);
           if (!recipRes.status) {
             results.push({ withdrawalId: wId, userId, status: 'failed', reason: recipRes.message || 'Recipient creation failed' });
@@ -479,7 +441,6 @@ module.exports = async function handler(req, res) {
             continue;
           }
 
-          // Execute transfer
           const transferRes = await executeTransfer(
             recipRes.data.recipient_code,
             paidOut,
@@ -494,14 +455,12 @@ module.exports = async function handler(req, res) {
 
           const transferRef = (transferRes.data && transferRes.data.reference) || ('BULK-' + Date.now() + '-' + wId);
 
-          // Deduct from seller balance
           await sql`
             UPDATE users
             SET seller_balance = COALESCE(seller_balance, 0) - ${grossAmt}
             WHERE id = ${String(userId)}
           `;
 
-          // Mark withdrawal success
           await sql`
             UPDATE withdrawals
             SET status    = 'success',
@@ -540,10 +499,6 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    // ──────────────────────────────────────────────────────────────────────────
-    // WITHDRAW — admin-triggered immediate payout (legacy / direct flow)
-    // POST ?action=withdraw  { userId, amount }
-    // ──────────────────────────────────────────────────────────────────────────
     if (action === 'withdraw') {
       if (req.method !== 'POST') return jsonErr(res, 405, 'POST only.');
 
@@ -589,10 +544,6 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    // ──────────────────────────────────────────────────────────────────────────
-    // WITHDRAWAL HISTORY
-    // GET ?action=withdrawals&userId=...   (userId='all' returns full admin list)
-    // ──────────────────────────────────────────────────────────────────────────
     if (action === 'withdrawals') {
       const { userId } = req.query;
       if (!userId) return jsonErr(res, 400, 'userId is required.');
@@ -604,28 +555,19 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ withdrawals: rows });
     }
 
-    // ──────────────────────────────────────────────────────────────────────────
-    // DVC RELEASE — seller enters 6-digit delivery code to release escrow
-    // POST ?action=dvc-release  { orderId, dvcCode, sellerUserId? }
-    // Flow: validate code → compute tiered split → credit seller → loyalty points
-    //       → credit affiliate (if valid aff_code)
-    // ──────────────────────────────────────────────────────────────────────────
     if (action === 'dvc-release') {
       if (req.method !== 'POST') return jsonErr(res, 405, 'POST only.');
 
       const { orderId, dvcCode, sellerUserId } = req.body || {};
       if (!orderId || !dvcCode) return jsonErr(res, 400, 'orderId and dvcCode are required.');
 
-      // Load order
       const orders = await sql`SELECT * FROM orders WHERE id = ${String(orderId)} LIMIT 1`;
       if (!orders.length) return jsonErr(res, 404, 'Order not found.');
       const order = orders[0];
 
-      // Idempotency guard — already released
       if (order.status === 'completed' || order.collected)
         return res.status(200).json({ ok: true, released: 0, message: 'Already completed.' });
 
-      // ── Validate delivery code ──────────────────────────────────────────────
       const expectedCode = String(order.delivery_code || '').trim();
       const submittedCode = String(dvcCode).trim();
 
@@ -633,7 +575,6 @@ module.exports = async function handler(req, res) {
       if (expectedCode) {
         codeValid = submittedCode === expectedCode;
       } else {
-        // Fallback: regenerate from orderId using same deterministic algo as frontend
         const str = String(orderId);
         let hash  = 0;
         for (let i = 0; i < str.length; i++) {
@@ -647,14 +588,12 @@ module.exports = async function handler(req, res) {
       if (!codeValid)
         return jsonErr(res, 400, 'Incorrect delivery code. Ask the buyer to re-share it.');
 
-      // ── Parse order items ───────────────────────────────────────────────────
       let items = order.items;
       if (typeof items === 'string') {
         try { items = JSON.parse(items); } catch (_) { items = []; }
       }
       if (!Array.isArray(items)) items = [];
 
-      // ── Resolve seller membership tier ──────────────────────────────────────
       const dvcSellerId = sellerUserId || (items[0] && items[0].sellerId) || (items[0] && items[0].seller_id) || null;
       let   dvcTier     = 'free';
 
@@ -669,7 +608,6 @@ module.exports = async function handler(req, res) {
         }
       }
 
-      // ── Compute revenue split ───────────────────────────────────────────────
       const hasPhysical  = items.some(i => i.type === 'physical');
       const total        = parseFloat(order.total || 0);
       const rates        = TIER_RATES[dvcTier] || TIER_RATES.free;
@@ -684,7 +622,6 @@ module.exports = async function handler(req, res) {
       const sellerPayout = Math.round(total * sellerRate);
       const collectedAt  = new Date().toISOString();
 
-      // ── Mark order completed ────────────────────────────────────────────────
       await sql`
         UPDATE orders SET
           status        = 'completed',
@@ -696,7 +633,6 @@ module.exports = async function handler(req, res) {
         WHERE id = ${String(orderId)}
       `;
 
-      // ── Credit seller balance ───────────────────────────────────────────────
       let resolvedSellerId = null;
 
       if (dvcSellerId) {
@@ -709,7 +645,6 @@ module.exports = async function handler(req, res) {
         log.info(`DVC release — seller ${dvcSellerId} credited ₦${sellerPayout} (tier: ${dvcTier})`);
       }
 
-      // ── Award seller loyalty points ─────────────────────────────────────────
       if (resolvedSellerId) {
         try {
           const sRows = await sql`
@@ -735,7 +670,6 @@ module.exports = async function handler(req, res) {
         }
       }
 
-      // ── Credit affiliate — only if valid aff_code (FIX 4) ──────────────────
       const affCode = order.aff_code ? String(order.aff_code).trim() : '';
       if (affCode.length > 2 && affiliateFee > 0) {
         try {
@@ -759,17 +693,13 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    // ──────────────────────────────────────────────────────────────────────────
-    // REFUND — admin triggers Paystack refund for a disputed order
-    // POST ?action=refund  { orderId, reference, amount? }
-    // ──────────────────────────────────────────────────────────────────────────
     if (action === 'refund') {
       if (req.method !== 'POST') return jsonErr(res, 405, 'POST only.');
 
       const { orderId, reference, amount } = req.body || {};
       if (!orderId || !reference) return jsonErr(res, 400, 'orderId and reference are required.');
 
-      const refundKobo = Math.floor(parseFloat(amount || 0) * 100); // naira → kobo
+      const refundKobo = Math.floor(parseFloat(amount || 0) * 100);
 
       const refundRes = await callPaystack('/refund', 'POST', {
         transaction:   reference,
@@ -795,11 +725,9 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    // ── Unknown action ────────────────────────────────────────────────────────
     return jsonErr(res, 400, `Unknown action: ${action}`);
 
   } catch (err) {
-    // Global catch — always returns JSON, never an HTML 500 page
     log.error('Unhandled error:', err.message || err);
     return jsonErr(res, 500, 'Internal server error.', err.message);
   }
