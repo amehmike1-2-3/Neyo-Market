@@ -7954,6 +7954,7 @@ function mkCard(p) {
       + '</div>'
     + (lowStock ? '<div style="font-size:.7rem;color:var(--orange);font-weight:700;margin-bottom:3px">\u26a1 Only ' + qty + ' left!</div>' : '')
     + (saleActive && saving > 0 ? '<div class="savings-tag"><i class="fa-solid fa-fire"><\/i>  Save ' + currSymbol(p.currency) + saving.toLocaleString() + ' (' + savePct + '% OFF)</div>' : '')
+    + (p.couponCode ? '<div style="display:inline-flex;align-items:center;gap:5px;margin:3px 0 4px;background:linear-gradient(135deg,#fff7ed,#fef3c7);border:1.5px dashed #c9922a;border-radius:5px;padding:3px 8px;font-size:.68rem;font-weight:800;color:#92400e;max-width:100%;overflow:hidden"><i class="fa-solid fa-scissors" style="color:#c9922a;font-size:.65rem"><\/i><span style="letter-spacing:.3px">' + p.couponCode + '</span><span style="font-weight:500;color:#b45309">·</span><span style="color:#16a34a;font-weight:700">' + (p.couponType === 'percent' ? p.couponValue + '% OFF' : '\u20a6' + parseFloat(p.couponValue||0).toLocaleString() + ' OFF') + '</span></div>' : '')
     + (timerStr ? '<div class="live-timer" id="t' + p.id + '"><span class="dot">&#x25CF;</span> <span>' + timerStr + '</span></div>' : '')
     + '<div class="pcf"><div>'
     + (saleActive
@@ -12565,7 +12566,7 @@ window.renderSellerPage = renderSellerPage;
 
 
 /* ================================================================
-   STORE VISITOR MAP PANEL
+   STORE VISITOR MAP PANEL — SVG World Map with glowing pins
 ================================================================ */
 function loadStoreVisitorPanel() {
   if (!CU) return;
@@ -12584,35 +12585,156 @@ function loadStoreVisitorPanel() {
     else dw.appendChild(wrap);
   }
   wrap.innerHTML = '<h3><i class="fa-solid fa-earth-africa"></i>  Store Visitors</h3><div style="text-align:center;padding:14px;color:var(--muted);font-size:.8rem"><i class="fa-solid fa-hourglass-half"></i>  Loading...</div>';
+
+  /* Country code → [x%, y%] position on map (as % of SVG viewBox 0 0 1000 500) */
+  var CC_POS = {
+    'NG':[ 48.5, 53 ],'GH':[ 45.5, 54 ],'KE':[ 54,   57 ],'ZA':[ 51,   70 ],'EG':[ 52,   42 ],
+    'ET':[ 54,   55 ],'TZ':[ 53,   61 ],'UG':[ 53,   57 ],'SN':[ 43,   51 ],'CI':[ 45,   54 ],
+    'CM':[ 49,   55 ],'MZ':[ 53,   65 ],'AO':[ 50,   63 ],'ZM':[ 52,   63 ],'RW':[ 53,   58 ],
+    'GB':[ 46,   27 ],'US':[ 20,   35 ],'CA':[ 18,   25 ],'DE':[ 49,   26 ],'FR':[ 47,   27 ],
+    'IT':[ 50,   30 ],'ES':[ 46,   30 ],'NL':[ 48,   25 ],'SE':[ 50,   20 ],'NO':[ 49,   18 ],
+    'PL':[ 51,   25 ],'RU':[ 60,   22 ],'TR':[ 55,   33 ],'UA':[ 53,   26 ],'PT':[ 45,   30 ],
+    'IN':[ 67,   42 ],'CN':[ 75,   35 ],'JP':[ 84,   32 ],'KR':[ 82,   33 ],'PK':[ 65,   38 ],
+    'BD':[ 70,   41 ],'ID':[ 79,   57 ],'PH':[ 82,   50 ],'MY':[ 78,   54 ],'SG':[ 78,   56 ],
+    'TH':[ 76,   46 ],'VN':[ 78,   46 ],'AE':[ 60,   40 ],'SA':[ 58,   40 ],'QA':[ 59,   40 ],
+    'BR':[ 28,   62 ],'MX':[ 15,   42 ],'AR':[ 25,   72 ],'CO':[ 22,   55 ],'PE':[ 22,   62 ],
+    'AU':[ 82,   68 ],'NZ':[ 90,   73 ],'ZW':[ 52,   65 ],'BW':[ 51,   67 ],'NA':[ 49,   66 ],
+    'MU':[ 57,   65 ],'TG':[ 46,   53 ],'BJ':[ 47,   53 ],'NE':[ 48,   49 ],'ML':[ 46,   49 ],
+    'BF':[ 46,   51 ],'SL':[ 43,   54 ],'LR':[ 44,   55 ],'GN':[ 43,   53 ],'GM':[ 42,   51 ],
+    'LS':[ 51,   69 ],'SZ':[ 52,   68 ],'MW':[ 53,   63 ],'ZA':[ 51,   70 ],'DJ':[ 55,   52 ],
+    'SO':[ 56,   54 ],'ER':[ 54,   50 ],'LY':[ 50,   39 ],'TN':[ 49,   37 ],'DZ':[ 47,   38 ],
+    'MA':[ 45,   36 ],'SD':[ 52,   48 ],'SS':[ 52,   53 ],'CD':[ 51,   58 ],'CG':[ 49,   58 ],
+    'CF':[ 50,   54 ],'TD':[ 50,   49 ],'GA':[ 49,   57 ],'GQ':[ 49,   56 ],'ST':[ 48,   56 ],
+    'CV':[ 41,   48 ],'KM':[ 56,   63 ],'SC':[ 58,   60 ],'MG':[ 56,   65 ],'RE':[ 57,   66 ],
+    'IQ':[ 58,   36 ],'IR':[ 61,   36 ],'JO':[ 56,   36 ],'LB':[ 55,   34 ],'IL':[ 55,   35 ],
+    'SY':[ 56,   33 ],'YE':[ 59,   44 ],'OM':[ 61,   43 ],'KW':[ 59,   38 ],'BH':[ 60,   39 ],
+    'AF':[ 63,   37 ],'KZ':[ 63,   29 ],'UZ':[ 63,   33 ],'GE':[ 57,   31 ],'AM':[ 57,   32 ],
+    'AZ':[ 58,   32 ],'TM':[ 62,   33 ],'KG':[ 66,   32 ],'TJ':[ 65,   34 ],'MN':[ 73,   28 ],
+    'NP':[ 68,   39 ],'LK':[ 68,   48 ],'MM':[ 74,   44 ],'KH':[ 77,   48 ],'LA':[ 76,   46 ],
+    'TW':[ 81,   38 ],'HK':[ 80,   40 ],'MO':[ 80,   41 ],'BT':[ 70,   38 ],'MV':[ 67,   52 ],
+    'IE':[ 44,   26 ],'IS':[ 42,   18 ],'FI':[ 52,   19 ],'DK':[ 49,   23 ],'BE':[ 48,   26 ],
+    'CH':[ 49,   27 ],'AT':[ 50,   27 ],'CZ':[ 50,   26 ],'SK':[ 51,   26 ],'HU':[ 51,   27 ],
+    'RO':[ 52,   27 ],'BG':[ 52,   28 ],'RS':[ 51,   28 ],'HR':[ 50,   28 ],'SI':[ 50,   27 ],
+    'GR':[ 52,   31 ],'CY':[ 54,   33 ],'AL':[ 51,   29 ],'MK':[ 52,   29 ],'BA':[ 51,   28 ],
+    'LT':[ 52,   23 ],'LV':[ 52,   22 ],'EE':[ 52,   21 ],'BY':[ 53,   24 ],'MD':[ 53,   27 ],
+    'US':[ 20,   35 ],'MX':[ 15,   42 ],'GT':[ 16,   47 ],'HN':[ 17,   48 ],'SV':[ 16,   49 ],
+    'NI':[ 17,   50 ],'CR':[ 17,   51 ],'PA':[ 18,   52 ],'CU':[ 20,   44 ],'JM':[ 20,   46 ],
+    'HT':[ 21,   45 ],'DO':[ 22,   45 ],'PR':[ 22,   46 ],'TT':[ 24,   53 ],'BB':[ 24,   52 ],
+    'VE':[ 24,   52 ],'GY':[ 26,   54 ],'SR':[ 27,   54 ],'EC':[ 20,   57 ],'BO':[ 24,   65 ],
+    'PY':[ 26,   67 ],'UY':[ 27,   70 ],'CL':[ 22,   70 ],'FK':[ 25,   76 ],
+  };
+
   fetch('/api/affiliate?action=store-visitors&sellerId=' + encodeURIComponent(String(CU.id)))
     .then(function(r){ return r.json(); })
     .then(function(d) {
       if (!d.ok) { wrap.innerHTML = ''; return; }
-      var tv = d.totalViews || 0, uv = d.uniqueVisitors || 0, l7 = d.last7Days || 0;
-      var bc = d.byCountry || [], bci = d.byCity || [], dl = d.daily || [];
+      var tv  = d.totalViews    || 0;
+      var uv  = d.uniqueVisitors|| 0;
+      var l7  = d.last7Days     || 0;
+      var bc  = d.byCountry     || [];
+      var bci = d.byCity        || [];
+      var dl  = d.daily         || [];
+
       function flag(cc) {
         if (!cc || cc.length !== 2) return '';
         try { return String.fromCodePoint(cc.charCodeAt(0)-65+0x1F1E6)+String.fromCodePoint(cc.charCodeAt(1)-65+0x1F1E6)+' '; } catch(e){ return ''; }
       }
-      var mx = dl.reduce(function(m,x){ return Math.max(m,parseInt(x.views||0)); },1);
-      var bars = dl.length
-        ? '<div style="display:flex;align-items:flex-end;gap:3px;height:40px;margin:10px 0 2px">'
-          + dl.map(function(x){ var h=Math.max(3,Math.round(parseInt(x.views||0)/mx*40)); return '<div title="'+x.day+': '+x.views+' views" style="flex:1;background:var(--gold);border-radius:3px 3px 0 0;height:'+h+'px;opacity:.85"></div>'; }).join('')
-          + '</div><div style="display:flex;justify-content:space-between;font-size:.6rem;color:var(--muted)"><span>'+((dl[0]||{}).day||'')+'</span><span>'+((dl[dl.length-1]||{}).day||'')+'</span></div>'
-        : '<div style="font-size:.78rem;color:var(--muted);padding:8px 0">No views recorded yet.</div>';
+
+      /* ── Header ── */
       var h = '<h3><i class="fa-solid fa-earth-africa"></i>  Store Visitors <span style="font-size:.7rem;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(who viewed your store)</span></h3>';
+
+      /* ── Stats row ── */
       h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">'
         +'<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center"><div style="font-size:1.3rem;font-weight:800;color:var(--gold)">'+tv.toLocaleString()+'</div><div style="font-size:.7rem;color:var(--muted);margin-top:2px">Total Views</div></div>'
         +'<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center"><div style="font-size:1.3rem;font-weight:800;color:var(--blue)">'+uv.toLocaleString()+'</div><div style="font-size:.7rem;color:var(--muted);margin-top:2px">Unique Visitors</div></div>'
         +'<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center"><div style="font-size:1.3rem;font-weight:800;color:var(--green)">'+l7.toLocaleString()+'</div><div style="font-size:.7rem;color:var(--muted);margin-top:2px">Last 7 Days</div></div>'
         +'</div>';
+
       if (tv === 0) {
-        h += '<div style="text-align:center;padding:16px;font-size:.82rem;color:var(--muted)"><i class="fa-solid fa-map-location-dot"></i>  Share your store link to start seeing visitor locations!</div>';
+        h += '<div style="text-align:center;padding:20px;font-size:.82rem;color:var(--muted)"><i class="fa-solid fa-map-location-dot"></i>  Share your store link to start seeing visitor locations!</div>';
         wrap.innerHTML = h; return;
       }
-      h += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px">'
-        +'<div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Views - Last 14 Days</div>'
-        +bars+'</div>';
+
+      /* ── SVG World Map ── */
+      /* Simplified world map path — equirectangular projection */
+      var mapSvg = '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:12px;overflow:hidden">'
+        + '<div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px"><i class="fa-solid fa-map-location-dot"></i>  Visitor Map</div>'
+        + '<div style="position:relative;width:100%;border-radius:8px;overflow:hidden;background:#0f172a">'
+        + '<svg viewBox="0 0 1000 500" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block">'
+        /* Ocean background */
+        + '<rect width="1000" height="500" fill="#0f172a"/>'
+        /* Simplified continent outlines */
+        /* North America */
+        + '<path d="M60,60 L200,55 L220,80 L240,100 L230,130 L210,160 L190,180 L170,200 L160,230 L150,250 L140,280 L130,300 L120,320 L110,350 L100,370 L90,390 L80,400 L70,380 L60,350 L50,320 L45,290 L50,260 L55,230 L60,200 L65,170 L60,140 L55,110 L60,80 Z" fill="#1e3a5f" opacity="0.9"/>'
+        /* Greenland */
+        + '<path d="M200,20 L240,15 L260,30 L250,50 L230,55 L210,50 L200,35 Z" fill="#1e3a5f" opacity="0.9"/>'
+        /* Central America + Caribbean */
+        + '<path d="M130,410 L150,420 L160,440 L155,460 L145,455 L135,440 L128,425 Z" fill="#1e3a5f" opacity="0.9"/>'
+        /* South America */
+        + '<path d="M175,470 L200,450 L230,440 L260,445 L280,460 L290,490 L285,520 L270,550 L250,570 L230,560 L210,540 L195,510 L185,490 Z" fill="#1e3a5f" opacity="0.9"/>'
+        /* Europe */
+        + '<path d="M430,100 L480,90 L510,95 L530,105 L520,130 L500,145 L480,150 L460,145 L440,135 L425,120 Z" fill="#1e3a5f" opacity="0.9"/>'
+        /* Scandinavia */
+        + '<path d="M460,60 L490,55 L505,70 L500,90 L485,95 L465,85 L455,72 Z" fill="#1e3a5f" opacity="0.9"/>'
+        /* Africa */
+        + '<path d="M430,340 L455,320 L490,310 L520,315 L545,330 L555,360 L555,400 L545,440 L525,470 L500,480 L475,475 L455,460 L440,430 L430,400 L425,370 Z" fill="#1e3a5f" opacity="0.9"/>'
+        /* Middle East */
+        + '<path d="M530,200 L570,195 L590,210 L585,235 L565,245 L540,240 L525,225 Z" fill="#1e3a5f" opacity="0.9"/>'
+        /* Central/South Asia */
+        + '<path d="M590,200 L650,185 L690,190 L710,210 L700,240 L670,255 L640,250 L615,235 L595,220 Z" fill="#1e3a5f" opacity="0.9"/>'
+        /* East Asia */
+        + '<path d="M700,160 L770,155 L800,170 L810,200 L800,225 L770,235 L740,230 L715,215 L705,195 Z" fill="#1e3a5f" opacity="0.9"/>'
+        /* Southeast Asia */
+        + '<path d="M740,270 L780,265 L800,280 L795,300 L775,310 L750,305 L735,290 Z" fill="#1e3a5f" opacity="0.9"/>'
+        /* Australia */
+        + '<path d="M760,360 L820,355 L850,365 L860,390 L855,420 L830,435 L800,430 L775,415 L760,390 L758,370 Z" fill="#1e3a5f" opacity="0.9"/>'
+        /* Russia */
+        + '<path d="M510,80 L650,70 L750,75 L800,90 L790,110 L740,120 L680,115 L620,110 L560,105 L515,100 Z" fill="#1e3a5f" opacity="0.9"/>';
+
+      /* ── Glow pulse animation ── */
+      mapSvg += '<defs>'
+        + '<radialGradient id="pinGlow" cx="50%" cy="50%" r="50%">'
+        + '<stop offset="0%" stop-color="#c9922a" stop-opacity="0.9"/>'
+        + '<stop offset="100%" stop-color="#c9922a" stop-opacity="0"/>'
+        + '</radialGradient>'
+        + '<style>.vpin{animation:vpulse 2s ease-in-out infinite}.vpin2{animation:vpulse 2s ease-in-out infinite;animation-delay:.5s}.vpin3{animation:vpulse 2s ease-in-out infinite;animation-delay:1s}@keyframes vpulse{0%,100%{opacity:.5;r:6}50%{opacity:1;r:9}}</style>'
+        + '</defs>';
+
+      /* ── Drop pins for each country with data ── */
+      var maxViews = bc.reduce(function(m,c){ return Math.max(m,parseInt(c.views||0)); }, 1);
+      bc.forEach(function(c, i) {
+        var cc  = (c.country_code || '').toUpperCase();
+        var pos = CC_POS[cc];
+        if (!pos) return;
+        var x   = pos[0] * 10; /* convert % to SVG units (viewBox 0 0 1000 500) */
+        var y   = pos[1] * 5;
+        var sz  = Math.max(5, Math.min(14, Math.round(parseInt(c.views||0) / maxViews * 14)));
+        var cls = i === 0 ? 'vpin' : i === 1 ? 'vpin2' : 'vpin3';
+        /* Outer glow */
+        mapSvg += '<circle cx="'+x+'" cy="'+y+'" r="'+(sz*2)+'" fill="url(#pinGlow)" opacity="0.4" class="'+cls+'"/>';
+        /* Inner dot */
+        mapSvg += '<circle cx="'+x+'" cy="'+y+'" r="'+sz+'" fill="#c9922a" opacity="0.95"/>';
+        /* Count label for top countries */
+        if (i < 5 && c.views > 1) {
+          mapSvg += '<text x="'+x+'" y="'+(y-sz-3)+'" text-anchor="middle" font-size="9" fill="#fbbf24" font-weight="700" font-family="sans-serif">'+c.views+'</text>';
+        }
+      });
+
+      mapSvg += '</svg></div></div>';
+      h += mapSvg;
+
+      /* ── Daily chart ── */
+      var mx2 = dl.reduce(function(m,x){ return Math.max(m,parseInt(x.views||0)); },1);
+      if (dl.length) {
+        h += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px">'
+          +'<div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Views — Last 14 Days</div>'
+          +'<div style="display:flex;align-items:flex-end;gap:3px;height:40px;margin:10px 0 2px">'
+          + dl.map(function(x){ var hh=Math.max(3,Math.round(parseInt(x.views||0)/mx2*40)); return '<div title="'+x.day+': '+x.views+' views" style="flex:1;background:var(--gold);border-radius:3px 3px 0 0;height:'+hh+'px;opacity:.85"></div>'; }).join('')
+          +'</div><div style="display:flex;justify-content:space-between;font-size:.6rem;color:var(--muted)"><span>'+((dl[0]||{}).day||'')+'</span><span>'+((dl[dl.length-1]||{}).day||'')+'</span></div>'
+          +'</div>';
+      }
+
+      /* ── Top countries list ── */
       if (bc.length) {
         var mv = parseInt(bc[0].views||1);
         h += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px">'
@@ -12620,13 +12742,16 @@ function loadStoreVisitorPanel() {
           + bc.map(function(c){ var pct=Math.round(parseInt(c.views||0)/mv*100); return '<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px"><span style="font-size:.8rem;font-weight:600">'+flag(c.country_code)+(c.country||'Unknown')+'</span><span style="font-size:.76rem;color:var(--muted);font-weight:700">'+c.views+' view'+(c.views!=1?'s':'')+'</span></div><div style="background:var(--bg3);border-radius:20px;height:5px"><div style="background:var(--gold);border-radius:20px;height:100%;width:'+pct+'%"></div></div></div>'; }).join('')
           +'</div>';
       }
+
+      /* ── Top cities ── */
       if (bci.length) {
         h += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px">'
           +'<div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px"><i class="fa-solid fa-location-dot"></i>  Top Cities</div>'
           +'<div style="display:flex;flex-wrap:wrap;gap:6px">'
-          + bci.map(function(c){ return '<div style="background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:4px 10px;font-size:.74rem;font-weight:600">'+(c.city||'Unknown')+(c.country?' <span style="color:var(--muted);font-weight:400">· '+c.country+'</span>':'')+' <span style="color:var(--gold);font-weight:700">'+c.views+'</span></div>'; }).join('')
+          + bci.map(function(c){ return '<div style="background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:4px 10px;font-size:.74rem;font-weight:600">'+(c.city||'Unknown')+(c.country?' <span style="color:var(--muted);font-weight:400">\u00b7 '+c.country+'</span>':'')+' <span style="color:var(--gold);font-weight:700">'+c.views+'</span></div>'; }).join('')
           +'</div></div>';
       }
+
       wrap.innerHTML = h;
     })
     .catch(function(){ if(wrap) wrap.innerHTML=''; });
