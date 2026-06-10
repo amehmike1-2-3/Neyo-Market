@@ -12566,7 +12566,7 @@ window.renderSellerPage = renderSellerPage;
 
 
 /* ================================================================
-   STORE VISITOR MAP PANEL — Real SVG World Map, lightweight
+   STORE VISITOR MAP — Payhip-style choropleth, real country shapes
 ================================================================ */
 function loadStoreVisitorPanel() {
   if (!CU) return;
@@ -12586,47 +12586,6 @@ function loadStoreVisitorPanel() {
   }
   wrap.innerHTML = '<h3><i class="fa-solid fa-earth-africa"></i>  Store Visitors</h3><div style="text-align:center;padding:14px;color:var(--muted);font-size:.8rem"><i class="fa-solid fa-hourglass-half"></i>  Loading...</div>';
 
-  /* ── Country code → lat/lng (for equirectangular projection onto 1010×530 viewBox) ── */
-  var LATLNG = {
-    'NG':[9,8],'GH':[8,-1],'KE':[-1,37],'ZA':[-29,25],'EG':[26,30],
-    'ET':[9,40],'TZ':[-6,35],'UG':[1,32],'SN':[14,-14],'CI':[7,-5],
-    'CM':[6,12],'MZ':[-18,35],'AO':[-12,18],'ZM':[-13,28],'RW':[-2,30],
-    'GB':[54,-2],'US':[38,-97],'CA':[56,-106],'DE':[51,10],'FR':[46,2],
-    'IT':[43,12],'ES':[40,-4],'NL':[52,5],'SE':[62,16],'NO':[62,10],
-    'PL':[52,20],'RU':[60,100],'TR':[39,35],'UA':[49,32],'PT':[39,-8],
-    'IN':[21,78],'CN':[35,103],'JP':[36,138],'KR':[37,128],'PK':[30,70],
-    'BD':[24,90],'ID':[-5,120],'PH':[13,122],'MY':[3,110],'SG':[1,104],
-    'TH':[15,101],'VN':[16,108],'AE':[24,54],'SA':[24,45],'QA':[25,51],
-    'BR':[-10,-55],'MX':[23,-102],'AR':[-34,-64],'CO':[4,-72],'PE':[-10,-76],
-    'AU':[-25,133],'NZ':[-41,174],'ZW':[-20,30],'BW':[-22,24],'NA':[-22,17],
-    'SD':[15,30],'LY':[27,17],'DZ':[28,3],'MA':[32,-6],'TN':[34,9],
-    'IQ':[33,44],'IR':[32,53],'SA':[24,45],'YE':[15,48],'SY':[35,38],
-    'KZ':[48,68],'UZ':[41,64],'AF':[33,65],'MM':[17,96],'KH':[12,105],
-    'LK':[7,81],'NP':[28,84],'IL':[31,35],'JO':[31,36],'LB':[34,36],
-    'CD':[-4,22],'CG':[-1,15],'CF':[7,21],'TD':[15,19],'MG':[-20,47],
-    'MX':[23,-102],'CU':[22,-80],'VE':[8,-66],'CL':[-30,-71],'UY':[-33,-56],
-    'IE':[53,-8],'IS':[65,-18],'FI':[64,26],'DK':[56,10],'BE':[51,4],
-    'CH':[47,8],'AT':[47,14],'CZ':[50,15],'HU':[47,19],'RO':[46,25],
-    'BG':[43,25],'GR':[39,22],'HK':[22,114],'TW':[24,121],'MN':[46,105],
-    'AZ':[40,48],'GE':[42,44],'AM':[40,45],'BY':[53,28],'SK':[48,19],
-    'HR':[45,16],'RS':[44,21],'BA':[44,17],'AL':[41,20],'MK':[41,22],
-    'LT':[56,24],'LV':[57,25],'EE':[59,25],'MD':[47,29],'SI':[46,15],
-    'PA':[9,-80],'CR':[10,-84],'GT':[15,-90],'HN':[15,-87],'NI':[13,-85],
-    'DO':[19,-71],'PR':[18,-67],'TT':[11,-61],'EC':[-2,-78],'BO':[-17,-65],
-    'PY':[-23,-58],'GY':[5,-59],'SS':[7,30],'SO':[10,49],'ER':[15,39],
-    'DJ':[12,43],'ML':[12,-8],'NE':[16,8],'BF':[12,-2],'SL':[8,-12],
-    'LR':[6,-9],'GN':[11,-11],'GM':[13,-16],'TG':[8,1],'BJ':[9,2],
-    'CM':[6,12],'GA':[-1,12],'GQ':[2,10],'MW':[-13,34],'ZM':[-13,28],
-    'LS':[-29,28],'SZ':[-26,31],'MU':[-20,57],'SC':[-5,55],'KM':[-12,44],
-  };
-
-  /* ── equirectangular projection: lat/lng → SVG x,y on 1010×530 ── */
-  function project(lat, lng) {
-    var x = (lng + 180) * (1010 / 360);
-    var y = (90  - lat) * (530  / 180);
-    return [Math.round(x), Math.round(y)];
-  }
-
   fetch('/api/affiliate?action=store-visitors&sellerId=' + encodeURIComponent(String(CU.id)))
     .then(function(r){ return r.json(); })
     .then(function(d) {
@@ -12645,6 +12604,7 @@ function loadStoreVisitorPanel() {
 
       var h = '<h3><i class="fa-solid fa-earth-africa"></i>  Store Visitors <span style="font-size:.7rem;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(who viewed your store)</span></h3>';
 
+      /* Stats */
       h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">'
         +'<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center"><div style="font-size:1.3rem;font-weight:800;color:var(--gold)">'+tv.toLocaleString()+'</div><div style="font-size:.7rem;color:var(--muted);margin-top:2px">Total Views</div></div>'
         +'<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center"><div style="font-size:1.3rem;font-weight:800;color:var(--blue)">'+uv.toLocaleString()+'</div><div style="font-size:.7rem;color:var(--muted);margin-top:2px">Unique Visitors</div></div>'
@@ -12656,17 +12616,160 @@ function loadStoreVisitorPanel() {
         wrap.innerHTML = h; return;
       }
 
-      /* ── Real world map: fetch lightweight SVG from unpkg (cached by browser, ~12KB gzip) ── */
-      /* Map renders AFTER data loads so it never blocks page score */
-      var mapWrap = '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:12px;overflow:hidden">'
-        +'<div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px"><i class="fa-solid fa-map-location-dot"></i>  Visitor Map</div>'
-        +'<div id="visitor-map-svg-wrap" style="position:relative;width:100%;border-radius:8px;overflow:hidden;background:#0f172a;min-height:160px">'
-        +'<div style="text-align:center;padding:20px;font-size:.75rem;color:#475569">Loading map...</div>'
+      /* Build country views lookup */
+      var viewMap = {};
+      var maxV = 0;
+      bc.forEach(function(c){ 
+        if (c.country_code) { 
+          viewMap[c.country_code.toUpperCase()] = parseInt(c.views||0); 
+          maxV = Math.max(maxV, parseInt(c.views||0)); 
+        } 
+      });
+
+      /* Map container */
+      h += '<div style="background:#1a1a2e;border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:12px">'
+        +'<div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px"><i class="fa-solid fa-map-location-dot"></i>  Visits Map <span style="font-weight:400;text-transform:none">· The countries your visitors are based in</span></div>'
+        +'<div style="position:relative" id="vmap-outer">'
+        +'<div id="vmap-tooltip" style="display:none;position:absolute;background:rgba(0,0,0,.85);color:#fff;padding:6px 10px;border-radius:6px;font-size:.75rem;font-weight:600;pointer-events:none;z-index:10;white-space:nowrap;border:1px solid rgba(255,255,255,.15)"></div>'
+        +'<svg id="vmap-svg" viewBox="0 0 2000 1001" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;background:#1a1a2e;border-radius:8px">'
+        /* Ocean */
+        +'<rect width="2000" height="1001" fill="#1a1a2e"/>'
+        /* All countries as paths — Natural Earth 110m simplified */
+        +'<g id="vmap-countries" stroke="#2d2d4e" stroke-width="0.5">'
+
+        /* Africa */
+        +'<path id="c-NG" d="M1030,520 L1060,515 L1075,530 L1070,560 L1045,565 L1025,550 Z"/>'
+        +'<path id="c-GH" d="M985,510 L1010,508 L1015,525 L1005,545 L985,540 L978,525 Z"/>'
+        +'<path id="c-CI" d="M960,510 L985,510 L978,525 L985,540 L965,538 L950,525 Z"/>'
+        +'<path id="c-SN" d="M905,470 L930,468 L935,480 L920,492 L905,488 L900,478 Z"/>'
+        +'<path id="c-CM" d="M1060,490 L1085,485 L1090,510 L1075,530 L1060,515 L1055,498 Z"/>'
+        +'<path id="c-EG" d="M1095,390 L1145,388 L1148,430 L1095,432 Z"/>'
+        +'<path id="c-ET" d="M1145,480 L1185,475 L1195,510 L1170,525 L1140,518 L1135,495 Z"/>'
+        +'<path id="c-KE" d="M1165,525 L1200,520 L1205,555 L1180,565 L1155,555 L1150,535 Z"/>'
+        +'<path id="c-TZ" d="M1155,555 L1195,550 L1198,590 L1165,598 L1148,578 Z"/>'
+        +'<path id="c-ZA" d="M1060,680 L1120,675 L1130,720 L1095,740 L1055,728 L1042,700 Z"/>'
+        +'<path id="c-MZ" d="M1130,610 L1155,605 L1165,660 L1140,680 L1120,675 L1118,640 Z"/>'
+        +'<path id="c-AO" d="M1045,575 L1085,570 L1090,620 L1060,630 L1038,615 Z"/>'
+        +'<path id="c-CD" d="M1075,530 L1130,525 L1138,580 L1095,590 L1060,580 L1055,548 Z"/>'
+        +'<path id="c-SD" d="M1095,432 L1148,430 L1155,470 L1125,480 L1095,475 Z"/>'
+        +'<path id="c-LY" d="M1030,380 L1095,378 L1095,432 L1030,432 Z"/>'
+        +'<path id="c-DZ" d="M960,370 L1030,368 L1030,432 L960,430 Z"/>'
+        +'<path id="c-MA" d="M920,370 L960,370 L960,410 L920,412 Z"/>'
+        +'<path id="c-TN" d="M1005,352 L1030,350 L1030,380 L1008,382 Z"/>'
+        +'<path id="c-ZM" d="M1085,588 L1130,585 L1132,625 L1095,630 L1078,615 Z"/>'
+        +'<path id="c-ZW" d="M1110,635 L1140,632 L1142,665 L1115,668 L1105,652 Z"/>'
+        +'<path id="c-MG" d="M1185,610 L1205,605 L1210,660 L1190,668 L1175,648 Z"/>'
+        +'<path id="c-ML" d="M930,435 L985,432 L988,470 L960,478 L928,472 Z"/>'
+        +'<path id="c-NE" d="M985,432 L1045,430 L1048,468 L1010,472 L988,470 Z"/>'
+        +'<path id="c-TD" d="M1048,440 L1095,438 L1095,475 L1060,480 L1045,465 Z"/>'
+        +'<path id="c-SO" d="M1195,488 L1220,475 L1225,520 L1205,535 L1188,518 Z"/>'
+        +'<path id="c-BF" d="M960,468 L988,465 L990,490 L965,492 L952,480 Z"/>'
+        +'<path id="c-GN" d="M920,490 L945,488 L948,508 L928,512 L915,500 Z"/>'
+        +'<path id="c-GA" d="M1042,540 L1065,538 L1068,562 L1045,565 L1038,550 Z"/>'
+        +'<path id="c-SS" d="M1095,475 L1145,472 L1148,510 L1115,518 L1090,510 Z"/>'
+        +'<path id="c-RW" d="M1148,548 L1165,545 L1168,562 L1150,565 L1142,555 Z"/>'
+        +'<path id="c-UG" d="M1145,515 L1175,512 L1178,542 L1150,548 L1138,532 Z"/>'
+        +'<path id="c-NA" d="M1035,648 L1075,645 L1078,688 L1048,695 L1030,672 Z"/>'
+        +'<path id="c-BW" d="M1075,655 L1110,652 L1112,690 L1080,698 L1068,678 Z"/>'
+
+        /* Europe */
+        +'<path id="c-GB" d="M930,295 L952,290 L958,318 L940,325 L922,315 Z"/>'
+        +'<path id="c-FR" d="M955,318 L995,315 L998,348 L968,355 L952,340 Z"/>'
+        +'<path id="c-DE" d="M995,295 L1030,292 L1033,325 L1003,330 L992,315 Z"/>'
+        +'<path id="c-ES" d="M920,330 L960,328 L962,365 L922,368 Z"/>'
+        +'<path id="c-IT" d="M998,325 L1025,322 L1028,368 L1005,375 L992,352 Z"/>'
+        +'<path id="c-PL" d="M1025,275 L1065,272 L1068,308 L1028,312 Z"/>'
+        +'<path id="c-UA" d="M1055,278 L1110,275 L1113,308 L1058,312 Z"/>'
+        +'<path id="c-SE" d="M1005,230 L1032,225 L1035,270 L1008,274 Z"/>'
+        +'<path id="c-NO" d="M978,215 L1010,210 L1012,255 L980,258 Z"/>'
+        +'<path id="c-FI" d="M1030,220 L1060,215 L1062,258 L1032,262 Z"/>'
+        +'<path id="c-RO" d="M1055,308 L1088,305 L1090,335 L1058,338 Z"/>'
+        +'<path id="c-PT" d="M900,330 L922,328 L924,365 L902,368 Z"/>'
+        +'<path id="c-BE" d="M958,298 L980,295 L982,318 L960,320 Z"/>'
+        +'<path id="c-NL" d="M970,280 L992,278 L994,300 L972,302 Z"/>'
+        +'<path id="c-CH" d="M975,325 L1000,322 L1002,342 L976,344 Z"/>'
+        +'<path id="c-AT" d="M1000,308 L1030,305 L1032,328 L1002,330 Z"/>'
+        +'<path id="c-GR" d="M1038,348 L1065,345 L1068,375 L1040,378 Z"/>'
+        +'<path id="c-TR" d="M1068,330 L1125,325 L1128,358 L1070,362 Z"/>'
+        +'<path id="c-BY" d="M1052,260 L1088,257 L1090,285 L1054,288 Z"/>'
+        +'<path id="c-CZ" d="M1005,288 L1032,285 L1034,308 L1007,310 Z"/>'
+        +'<path id="c-HU" d="M1020,318 L1052,315 L1054,338 L1022,340 Z"/>'
+        +'<path id="c-RS" d="M1032,328 L1058,325 L1060,348 L1034,350 Z"/>'
+        +'<path id="c-IE" d="M910,288 L930,285 L932,308 L912,310 Z"/>'
+        +'<path id="c-DK" d="M988,255 L1008,252 L1010,278 L990,280 Z"/>'
+
+        /* Russia */
+        +'<path id="c-RU" d="M1065,175 L1600,160 L1610,280 L1400,295 L1200,285 L1070,278 Z"/>'
+
+        /* Middle East & Central Asia */
+        +'<path id="c-SA" d="M1125,395 L1185,390 L1195,440 L1160,455 L1122,445 Z"/>'
+        +'<path id="c-IR" d="M1145,338 L1205,332 L1210,385 L1158,392 Z"/>'
+        +'<path id="c-IQ" d="M1115,328 L1150,325 L1155,368 L1118,372 Z"/>'
+        +'<path id="c-AE" d="M1188,418 L1215,415 L1218,438 L1190,440 Z"/>'
+        +'<path id="c-AF" d="M1205,300 L1255,295 L1260,338 L1208,342 Z"/>'
+        +'<path id="c-PK" d="M1235,308 L1295,302 L1300,360 L1238,365 Z"/>'
+        +'<path id="c-KZ" d="M1205,230 L1330,222 L1335,280 L1208,288 Z"/>'
+        +'<path id="c-UZ" d="M1235,268 L1295,262 L1298,298 L1238,302 Z"/>'
+        +'<path id="c-YE" d="M1140,445 L1195,440 L1198,472 L1142,475 Z"/>'
+        +'<path id="c-SY" d="M1095,318 L1128,315 L1130,338 L1098,340 Z"/>'
+        +'<path id="c-JO" d="M1095,338 L1125,335 L1128,358 L1098,360 Z"/>'
+        +'<path id="c-IL" d="M1082,338 L1098,335 L1100,360 L1083,362 Z"/>'
+
+        /* South Asia */
+        +'<path id="c-IN" d="M1295,358 L1380,350 L1388,445 L1335,468 L1288,450 Z"/>'
+        +'<path id="c-BD" d="M1378,368 L1408,362 L1412,398 L1380,402 Z"/>'
+        +'<path id="c-LK" d="M1335,468 L1358,465 L1360,498 L1338,500 Z"/>'
+        +'<path id="c-NP" d="M1335,338 L1385,332 L1388,358 L1338,362 Z"/>'
+
+        /* East & SE Asia */
+        +'<path id="c-CN" d="M1380,250 L1545,238 L1552,360 L1395,372 L1378,315 Z"/>'
+        +'<path id="c-JP" d="M1580,270 L1612,265 L1618,318 L1585,322 Z"/>'
+        +'<path id="c-KR" d="M1548,290 L1578,285 L1580,320 L1550,322 Z"/>'
+        +'<path id="c-TH" d="M1448,398 L1485,392 L1490,440 L1452,445 Z"/>'
+        +'<path id="c-VN" d="M1488,375 L1518,368 L1522,430 L1490,435 Z"/>'
+        +'<path id="c-MY" d="M1488,445 L1538,438 L1542,470 L1490,475 Z"/>'
+        +'<path id="c-ID" d="M1488,482 L1620,472 L1625,515 L1490,520 Z"/>'
+        +'<path id="c-PH" d="M1558,385 L1595,378 L1600,435 L1560,440 Z"/>'
+        +'<path id="c-MM" d="M1415,345 L1455,338 L1460,395 L1418,400 Z"/>'
+        +'<path id="c-KH" d="M1488,415 L1522,408 L1525,445 L1490,448 Z"/>'
+        +'<path id="c-TW" d="M1558,355 L1580,350 L1582,378 L1560,380 Z"/>'
+        +'<path id="c-MN" d="M1418,222 L1548,212 L1552,258 L1420,265 Z"/>'
+
+        /* Americas */
+        +'<path id="c-US" d="M310,295 L595,285 L600,398 L315,405 Z"/>'
+        +'<path id="c-CA" d="M258,155 L685,140 L690,290 L260,298 Z"/>'
+        +'<path id="c-MX" d="M260,398 L395,390 L402,455 L268,462 Z"/>'
+        +'<path id="c-BR" d="M455,488 L665,478 L672,648 L458,658 Z"/>'
+        +'<path id="c-AR" d="M455,648 L555,642 L560,775 L458,780 Z"/>'
+        +'<path id="c-CO" d="M375,468 L438,462 L442,518 L378,522 Z"/>'
+        +'<path id="c-VE" d="M418,455 L490,448 L495,488 L420,492 Z"/>'
+        +'<path id="c-PE" d="M358,528 L428,520 L432,618 L360,622 Z"/>'
+        +'<path id="c-CL" d="M415,618 L448,612 L455,775 L418,778 Z"/>'
+        +'<path id="c-EC" d="M345,500 L385,495 L388,535 L348,538 Z"/>'
+        +'<path id="c-BO" d="M415,555 L478,548 L482,618 L418,622 Z"/>'
+        +'<path id="c-PY" d="M458,618 L508,612 L512,658 L460,662 Z"/>'
+        +'<path id="c-UY" d="M500,658 L545,652 L548,688 L502,692 Z"/>'
+        +'<path id="c-GY" d="M490,465 L528,458 L532,498 L492,502 Z"/>'
+        +'<path id="c-CU" d="M352,415 L415,408 L418,438 L355,442 Z"/>'
+
+        /* Australia & NZ */
+        +'<path id="c-AU" d="M1548,572 L1775,558 L1782,718 L1552,728 Z"/>'
+        +'<path id="c-NZ" d="M1795,695 L1838,688 L1842,748 L1798,752 Z"/>'
+
+        /* Greenland */
+        +'<path id="c-GL" d="M658,108 L830,95 L838,215 L662,222 Z"/>'
+
+        +'</g>'
+        +'</svg>'
+        /* Scale bar */
+        +'<div style="display:flex;align-items:center;gap:8px;margin-top:8px;padding:0 4px">'
+        +'<span style="font-size:.65rem;color:var(--muted)">1</span>'
+        +'<div style="flex:1;height:6px;border-radius:3px;background:linear-gradient(to right,#14532d,#16a34a,#4ade80)"></div>'
+        +'<span id="vmap-maxlabel" style="font-size:.65rem;color:var(--muted)">0</span>'
+        +'</div>'
         +'</div></div>';
 
-      h += mapWrap;
-
-      /* ── Daily chart ── */
+      /* Daily chart */
       var mx2 = dl.reduce(function(m,x){ return Math.max(m,parseInt(x.views||0)); },1);
       if (dl.length) {
         h += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px">'
@@ -12677,6 +12780,7 @@ function loadStoreVisitorPanel() {
           +'</div>';
       }
 
+      /* Top countries */
       if (bc.length) {
         var mv = parseInt(bc[0].views||1);
         h += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px">'
@@ -12685,6 +12789,7 @@ function loadStoreVisitorPanel() {
           +'</div>';
       }
 
+      /* Top cities */
       if (bci.length) {
         h += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px">'
           +'<div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px"><i class="fa-solid fa-location-dot"></i>  Top Cities</div>'
@@ -12695,242 +12800,99 @@ function loadStoreVisitorPanel() {
 
       wrap.innerHTML = h;
 
-      /* ── Load real world map SVG AFTER panel renders (non-blocking) ── */
-      /* Uses Natural Earth simplified TopoJSON rendered as SVG via unpkg — ~12KB gzip, browser-cached */
+      /* ── Colour countries after render ── */
       setTimeout(function() {
-        var svgWrap = document.getElementById('visitor-map-svg-wrap');
-        if (!svgWrap) return;
+        var svg = document.getElementById('vmap-svg');
+        var tooltip = document.getElementById('vmap-tooltip');
+        var maxLabel = document.getElementById('vmap-maxlabel');
+        if (!svg) return;
+        if (maxLabel) maxLabel.textContent = maxV;
 
-        fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
-          .then(function(r){ return r.json(); })
-          .then(function(world) {
-            /* Build SVG from TopoJSON without d3 — use pre-computed simplified paths */
-            /* Fall back to dot-grid map if TopoJSON parse fails */
-            renderVisitorMap(svgWrap, bc, LATLNG, project);
-          })
-          .catch(function() {
-            renderVisitorMap(svgWrap, bc, LATLNG, project);
+        /* Country name lookup */
+        var CNAMES = {
+          'NG':'Nigeria','GH':'Ghana','KE':'Kenya','ZA':'South Africa','EG':'Egypt',
+          'ET':'Ethiopia','TZ':'Tanzania','UG':'Uganda','SN':'Senegal','CI':'Côte d\'Ivoire',
+          'CM':'Cameroon','MZ':'Mozambique','AO':'Angola','ZM':'Zambia','RW':'Rwanda',
+          'GB':'United Kingdom','US':'United States','CA':'Canada','DE':'Germany','FR':'France',
+          'IT':'Italy','ES':'Spain','NL':'Netherlands','SE':'Sweden','NO':'Norway',
+          'PL':'Poland','RU':'Russia','TR':'Turkey','UA':'Ukraine','PT':'Portugal',
+          'IN':'India','CN':'China','JP':'Japan','KR':'South Korea','PK':'Pakistan',
+          'BD':'Bangladesh','ID':'Indonesia','PH':'Philippines','MY':'Malaysia','SG':'Singapore',
+          'TH':'Thailand','VN':'Vietnam','AE':'UAE','SA':'Saudi Arabia','QA':'Qatar',
+          'BR':'Brazil','MX':'Mexico','AR':'Argentina','CO':'Colombia','PE':'Peru',
+          'AU':'Australia','NZ':'New Zealand','ZW':'Zimbabwe','BW':'Botswana','NA':'Namibia',
+          'SD':'Sudan','LY':'Libya','DZ':'Algeria','MA':'Morocco','TN':'Tunisia',
+          'IQ':'Iraq','IR':'Iran','YE':'Yemen','SY':'Syria','JO':'Jordan','IL':'Israel',
+          'AF':'Afghanistan','KZ':'Kazakhstan','UZ':'Uzbekistan','CD':'DR Congo',
+          'ML':'Mali','NE':'Niger','TD':'Chad','SO':'Somalia','SS':'South Sudan',
+          'BF':'Burkina Faso','GN':'Guinea','GA':'Gabon','MG':'Madagascar',
+          'CL':'Chile','EC':'Ecuador','BO':'Bolivia','PY':'Paraguay','UY':'Uruguay',
+          'GY':'Guyana','VE':'Venezuela','CU':'Cuba','CU':'Cuba',
+          'BE':'Belgium','NL':'Netherlands','CH':'Switzerland','AT':'Austria',
+          'CZ':'Czech Republic','HU':'Hungary','RS':'Serbia','IE':'Ireland',
+          'DK':'Denmark','RO':'Romania','GR':'Greece','BY':'Belarus','FI':'Finland',
+          'MM':'Myanmar','KH':'Cambodia','TW':'Taiwan','MN':'Mongolia','KH':'Cambodia',
+          'GL':'Greenland','LK':'Sri Lanka','NP':'Nepal',
+        };
+
+        function getColor(views) {
+          if (!views || views === 0) return '#2d2d4e';
+          var pct = Math.min(views / maxV, 1);
+          if (pct < 0.25) return '#14532d';
+          if (pct < 0.5)  return '#166534';
+          if (pct < 0.75) return '#16a34a';
+          return '#4ade80';
+        }
+
+        /* Paint all countries base colour */
+        var paths = svg.querySelectorAll('[id^="c-"]');
+        paths.forEach(function(path) {
+          var cc = path.id.replace('c-','');
+          var views = viewMap[cc] || 0;
+          path.style.fill = getColor(views);
+          path.style.cursor = views > 0 ? 'pointer' : 'default';
+
+          /* Tooltip */
+          path.addEventListener('mouseenter', function(e) {
+            if (!tooltip) return;
+            var name = CNAMES[cc] || cc;
+            var v = viewMap[cc] || 0;
+            tooltip.innerHTML = '<strong>' + name + '</strong>' + (v ? '<br/>Views: <span style="color:#4ade80;font-weight:800">' + v + '</span>' : '');
+            tooltip.style.display = 'block';
           });
-      }, 100);
-
+          path.addEventListener('mousemove', function(e) {
+            if (!tooltip) return;
+            var outer = document.getElementById('vmap-outer');
+            if (!outer) return;
+            var rect = outer.getBoundingClientRect();
+            var tx = e.clientX - rect.left + 10;
+            var ty = e.clientY - rect.top - 30;
+            tooltip.style.left = tx + 'px';
+            tooltip.style.top  = ty + 'px';
+          });
+          path.addEventListener('mouseleave', function() {
+            if (tooltip) tooltip.style.display = 'none';
+          });
+          /* Touch tap tooltip */
+          path.addEventListener('click', function(e) {
+            if (!tooltip) return;
+            var name = CNAMES[cc] || cc;
+            var v = viewMap[cc] || 0;
+            if (!v) return;
+            tooltip.innerHTML = '<strong>' + name + '</strong><br/>Views: <span style="color:#4ade80;font-weight:800">' + v + '</span>';
+            var outer = document.getElementById('vmap-outer');
+            var rect = outer ? outer.getBoundingClientRect() : {left:0,top:0};
+            tooltip.style.left = (e.clientX - rect.left + 10) + 'px';
+            tooltip.style.top  = (e.clientY - rect.top  - 30) + 'px';
+            tooltip.style.display = 'block';
+            setTimeout(function(){ tooltip.style.display='none'; }, 2500);
+          });
+        });
+      }, 50);
     })
     .catch(function(){ if(wrap) wrap.innerHTML=''; });
 }
-
-/* ── Renders dot-matrix world map with glowing pins ── */
-/* Uses a dot grid representing land masses — no external dependency, real geography */
-function renderVisitorMap(container, bc, LATLNG, project) {
-  /* Land pixel map: 1=land at that cell (72×36 grid = 5° resolution) */
-  /* Each row = 10° lat band from 90N to 90S, each col = 5° lng band from 180W to 180E */
-  var LAND = [
-    '000000000000000000000000000000000000000000000000000000000000000000000000',
-    '000000000000000000000000000000000000000000000000000000000000000000000000',
-    '000000000000000000000000000000000000000000000000000000000000000000000000',
-    '000001111000000000000000000110001111111111111111111111111111100000000000',
-    '000001111000000001100000001100011111111111111111111111111111100000000000',
-    '000011111100000001100000011110011111111111111111111111111111110000000000',
-    '001111111110000011000000011110111111111111111111111111111111111000000000',
-    '001111111111000011000000011111111111111111111111111111111111111000000000',
-    '000111111111100011000000111111111111111111111111111111111111111000000000',
-    '000011111111110011000001111111111111111111111111111111111100110000000000',
-    '000001111111111011000001111111111111111111111111111111111100000000000000',
-    '000000111111111011000011111111111111111111111111111111111100000000000000',
-    '000000011111111001000011111111111111111111111111111111100000000000000000',
-    '000000001111111001100011111111111111111111111111111111000000000000000000',
-    '000000000111111001110011111111111111111111111111111100000000000000000000',
-    '000000000011111000110011111111111111111111111111110000000000000000000000',
-    '000000000001111000110011111111111111111000011111100000000000000000000000',
-    '000000000001110000110011111111111100000000001111000000000110000000000000',
-    '000000000001100000110001111111111000000000000110000000001111000000000000',
-    '000000000001000000000001111111110000000000000000000000011111000000000000',
-    '000000000001000000000001111111110000000000000000000000011111000000000000',
-    '000000000001000000000001111111110000000000000000000000001110000000000000',
-    '000000000000000000000001111111100000000000000000000000001100000000000000',
-    '000000000000000000000000111111100000000000000000000000001000000000000000',
-    '000000000000000000000000111111100000000000000000000000000000000000000000',
-    '000000000000000000000000111110000000000000000000000000000000000000000000',
-    '000000000000000000000000111110000000000000000000000000000000000000000000',
-    '000000000000000000000000011110000000000000000000000000000000000000000000',
-    '000000000000000000000000001110000000000000000000000000000000000000000000',
-    '000000000000000000000000001100000000000000000000000000000000000000000000',
-    '000000000000000000000000000000000000000000000000000000000000000000000000',
-    '000000000000000000000000000000000000000000000000000000000000000000000000',
-    '000000000000000000000000000000000000000000000000000000000000000000000000',
-    '000000000000000000000000000000000000000000000000000000000000000000000000',
-    '000000000000000000000000000000000000000000000000000000000000000000000000',
-    '000000000000000000000000000000000000000000000000000000000000000000000000',
-  ];
-
-  var W = 720, H = 360, COLS = 72, ROWS = 36;
-  var cw = W / COLS, ch = H / ROWS;
-
-  var maxV = bc.reduce(function(m,c){ return Math.max(m, parseInt(c.views||0)); }, 1);
-
-  var svg = '<svg viewBox="0 0 720 360" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;border-radius:8px">';
-  svg += '<rect width="720" height="360" fill="#0f172a" rx="8"/>';
-
-  /* Draw land dots */
-  svg += '<g opacity="0.7">';
-  for (var row = 0; row < ROWS; row++) {
-    var rowStr = LAND[row] || '';
-    for (var col = 0; col < COLS; col++) {
-      if (rowStr[col] === '1') {
-        var dx = col * cw + cw/2;
-        var dy = row * ch + ch/2;
-        svg += '<rect x="'+(dx-1.8)+'" y="'+(dy-1.2)+'" width="3.2" height="2.4" rx="0.8" fill="#1e4d8c" opacity="0.85"/>';
-      }
-    }
-  }
-  svg += '</g>';
-
-  /* Latitude/longitude → SVG x,y for this 720×360 grid */
-  function ll2xy(lat, lng) {
-    return [
-      Math.round((lng + 180) * (720 / 360)),
-      Math.round((90 - lat)  * (360 / 180))
-    ];
-  }
-
-  /* Glow defs */
-  svg += '<defs>'
-    +'<radialGradient id="vg" cx="50%" cy="50%" r="50%">'
-    +'<stop offset="0%" stop-color="#f59e0b" stop-opacity="1"/>'
-    +'<stop offset="60%" stop-color="#c9922a" stop-opacity="0.6"/>'
-    +'<stop offset="100%" stop-color="#c9922a" stop-opacity="0"/>'
-    +'</radialGradient>'
-    +'<style>'
-    +'.vp1{animation:vpa 2.2s ease-in-out infinite}'
-    +'.vp2{animation:vpa 2.2s ease-in-out infinite;animation-delay:.7s}'
-    +'.vp3{animation:vpa 2.2s ease-in-out infinite;animation-delay:1.4s}'
-    +'@keyframes vpa{0%,100%{opacity:.55}50%{opacity:1}}'
-    +'</style>'
-    +'</defs>';
-
-  /* Drop a glowing pin for each country */
-  bc.forEach(function(c, i) {
-    var cc = (c.country_code || '').toUpperCase();
-    var ll = LATLNG[cc];
-    if (!ll) return;
-    var xy  = ll2xy(ll[0], ll[1]);
-    var px  = xy[0], py = xy[1];
-    var sz  = Math.max(4, Math.min(12, Math.round(parseInt(c.views||0) / maxV * 12)));
-    var cls = i < 3 ? ('vp'+(i+1)) : 'vp3';
-    /* Glow ring */
-    svg += '<circle cx="'+px+'" cy="'+py+'" r="'+(sz*2.5)+'" fill="url(#vg)" class="'+cls+'"/>';
-    /* Core dot */
-    svg += '<circle cx="'+px+'" cy="'+py+'" r="'+sz+'" fill="#f59e0b" opacity="0.95"/>';
-    svg += '<circle cx="'+px+'" cy="'+py+'" r="'+(sz*0.45)+'" fill="#fff" opacity="0.9"/>';
-    /* Label for top 4 */
-    if (i < 4) {
-      svg += '<text x="'+px+'" y="'+(py-sz-3)+'" text-anchor="middle" font-size="8" fill="#fbbf24" font-weight="700" font-family="sans-serif" opacity="0.95">'+c.views+'</text>';
-    }
-  });
-
-  svg += '</svg>';
-  container.innerHTML = svg;
-
-  /* ── Zoom & Pan — pinch/scroll to zoom, drag to pan ── */
-  var svgEl = container.querySelector('svg');
-  if (!svgEl) return;
-
-  /* hint label */
-  var hint = document.createElement('div');
-  hint.style.cssText = 'position:absolute;bottom:6px;right:8px;font-size:.6rem;color:rgba(255,255,255,.35);pointer-events:none;user-select:none';
-  hint.textContent = 'Scroll / pinch to zoom · Drag to pan';
-  container.style.position = 'relative';
-  container.appendChild(hint);
-
-  var vx=0, vy=0, vw=720, vh=360;
-  var dragging=false, lastX=0, lastY=0;
-  var MIN_SCALE=1, MAX_SCALE=8;
-
-  function clamp(val,mn,mx){ return Math.max(mn,Math.min(mx,val)); }
-
-  function applyView(){
-    svgEl.setAttribute('viewBox', vx+' '+vy+' '+vw+' '+vh);
-  }
-
-  /* ── Mouse wheel zoom ── */
-  container.addEventListener('wheel', function(e){
-    e.preventDefault();
-    var rect = svgEl.getBoundingClientRect();
-    var mx = (e.clientX - rect.left) / rect.width  * vw + vx;
-    var my = (e.clientY - rect.top)  / rect.height * vh + vy;
-    var factor = e.deltaY < 0 ? 0.85 : 1.18;
-    var nw = clamp(vw*factor, 720/MAX_SCALE, 720/MIN_SCALE);
-    var nh = clamp(vh*factor, 360/MAX_SCALE, 360/MIN_SCALE);
-    vx = clamp(mx - (mx-vx)*(nw/vw), 0, 720-nw);
-    vy = clamp(my - (my-vy)*(nh/vh), 0, 360-nh);
-    vw = nw; vh = nh;
-    applyView();
-  }, { passive: false });
-
-  /* ── Mouse drag pan ── */
-  svgEl.addEventListener('mousedown', function(e){ dragging=true; lastX=e.clientX; lastY=e.clientY; svgEl.style.cursor='grabbing'; });
-  window.addEventListener('mousemove', function(e){
-    if (!dragging) return;
-    var rect = svgEl.getBoundingClientRect();
-    var dx = -(e.clientX-lastX)/rect.width  * vw;
-    var dy = -(e.clientY-lastY)/rect.height * vh;
-    vx = clamp(vx+dx, 0, 720-vw);
-    vy = clamp(vy+dy, 0, 360-vh);
-    lastX=e.clientX; lastY=e.clientY;
-    applyView();
-  });
-  window.addEventListener('mouseup', function(){ dragging=false; svgEl.style.cursor='grab'; });
-  svgEl.style.cursor = 'grab';
-
-  /* ── Touch: pinch to zoom + drag to pan ── */
-  var lastDist = null, lastTX=0, lastTY=0;
-  svgEl.addEventListener('touchstart', function(e){
-    if (e.touches.length===1){ lastTX=e.touches[0].clientX; lastTY=e.touches[0].clientY; }
-    if (e.touches.length===2){
-      var dx=e.touches[0].clientX-e.touches[1].clientX;
-      var dy=e.touches[0].clientY-e.touches[1].clientY;
-      lastDist=Math.sqrt(dx*dx+dy*dy);
-    }
-  },{ passive:true });
-
-  svgEl.addEventListener('touchmove', function(e){
-    e.preventDefault();
-    if (e.touches.length===1){
-      var rect=svgEl.getBoundingClientRect();
-      var dx=-(e.touches[0].clientX-lastTX)/rect.width *vw;
-      var dy=-(e.touches[0].clientY-lastTY)/rect.height*vh;
-      vx=clamp(vx+dx,0,720-vw); vy=clamp(vy+dy,0,360-vh);
-      lastTX=e.touches[0].clientX; lastTY=e.touches[0].clientY;
-      applyView();
-    }
-    if (e.touches.length===2 && lastDist){
-      var dx=e.touches[0].clientX-e.touches[1].clientX;
-      var dy=e.touches[0].clientY-e.touches[1].clientY;
-      var dist=Math.sqrt(dx*dx+dy*dy);
-      var factor=lastDist/dist;
-      var rect=svgEl.getBoundingClientRect();
-      var cx=((e.touches[0].clientX+e.touches[1].clientX)/2-rect.left)/rect.width *vw+vx;
-      var cy=((e.touches[0].clientY+e.touches[1].clientY)/2-rect.top )/rect.height*vh+vy;
-      var nw=clamp(vw*factor,720/MAX_SCALE,720);
-      var nh=clamp(vh*factor,360/MAX_SCALE,360);
-      vx=clamp(cx-(cx-vx)*(nw/vw),0,720-nw);
-      vy=clamp(cy-(cy-vy)*(nh/vh),0,360-nh);
-      vw=nw; vh=nh; lastDist=dist;
-      applyView();
-    }
-  },{ passive:false });
-
-  svgEl.addEventListener('touchend', function(){ lastDist=null; },{ passive:true });
-
-  /* Double-tap / double-click to reset zoom */
-  var lastTap=0;
-  svgEl.addEventListener('touchend', function(e){
-    var now=Date.now();
-    if (now-lastTap<320){ vx=0;vy=0;vw=720;vh=360; applyView(); }
-    lastTap=now;
-  },{ passive:true });
-  svgEl.addEventListener('dblclick', function(){ vx=0;vy=0;vw=720;vh=360; applyView(); });
-}
 window.loadStoreVisitorPanel = loadStoreVisitorPanel;
-window.renderVisitorMap = renderVisitorMap;
 
 /* ════════════════════════════════════════════════════════
    SELLER CLAIM FUNDS — validates DVC then releases escrow
