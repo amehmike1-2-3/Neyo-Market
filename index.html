@@ -9933,7 +9933,7 @@ function processPaystack(mode) {
             qty:      i.qty || 1,
             emoji:    i.emoji,
             sellerId: i.sellerId || (prod && prod.sellerId) || null,
-            variant:  selectedVariants[i.id] || i.variant || null,
+            variant: (typeof selectedVariants !== 'undefined' ? selectedVariants[i.id] : null) || i.variant || null,
             /* The actual downloadable file URL — NOT the product image */
             fileUrl:  (prod && (prod.fileUrl || prod.file_url)) || null,
             fileName: (prod && (prod.fileName || prod.file_name)) || null,
@@ -10070,7 +10070,7 @@ function processPaystack(mode) {
             id: i.id, name: i.name, type: i.type, price: i.price,
             qty: i.qty || 1, emoji: i.emoji,
             sellerId: i.sellerId || (prod && prod.sellerId) || null,
-            variant:  selectedVariants[i.id] || i.variant || null,
+            variant: (typeof selectedVariants !== 'undefined' ? selectedVariants[i.id] : null) || i.variant || null,
             fileUrl:  (prod && (prod.fileUrl  || prod.file_url))  || null,
             fileName: (prod && (prod.fileName || prod.file_name)) || null,
             fileExt:  (prod && (prod.fileExt  || prod.file_ext))  || null
@@ -10219,7 +10219,7 @@ function processPaystack(mode) {
           qty:      i.qty || 1,
           emoji:    i.emoji,
           sellerId: i.sellerId || (prod && prod.sellerId) || null,
-          variant:  selectedVariants[i.id] || i.variant || null,
+          variant: (typeof selectedVariants !== 'undefined' ? selectedVariants[i.id] : null) || i.variant || null,
           fileUrl:  (prod && (prod.fileUrl || prod.file_url)) || null,
           fileName: (prod && (prod.fileName || prod.file_name)) || null,
           fileExt:  (prod && (prod.fileExt  || prod.file_ext))  || null
