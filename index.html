@@ -8051,15 +8051,11 @@ function selectVariant(productId, variantIdx, btn) {
   btn.style.background  = 'rgba(201,146,42,.1)';
   btn.style.color       = 'var(--gold)';
 
-  function selectVariant(productId, variant) {
-    if (typeof selectedVariants === 'undefined') {
-        selectedVariants = {};
-    }
-    selectedVariants[productId] = variant;
-    
-    var label = document.getElementById('variant-selected-' + productId);
-    if (label) label.innerHTML = '<i class="fa-solid fa-check"><\/i>  Selected: ' + variant;
-}
+  if (typeof selectedVariants === 'undefined') selectedVariants = {};
+selectedVariants[productId] = vars[variantIdx].name;
+  var label = document.getElementById('variant-selected-' + productId);
+  if (label) label.innerHTML = '<i class="fa-solid fa-check"><\/i>  Selected: ' + vars[variantIdx].name;
+  }
 window.selectVariant = selectVariant;
 
 function addCartWithVariant(productId) {
