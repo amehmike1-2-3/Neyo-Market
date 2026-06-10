@@ -7939,6 +7939,7 @@ function mkCard(p) {
     + (outOfStock ? '<span class="sale-badge" style="background:#6b7280">OUT OF STOCK</span>' : saleActive ? '<span class="sale-badge">SALE</span>' : (p.badge && p.badge !== 'Pending Review' ? '<span class="pb1">' + p.badge + '</span>' : ''))
     + '<span class="pb2 ' + tc + '">' + tl + '</span>'
     + '<span class="el">\uD83D\uDEE1 Escrow</span>'
+    + (p.condition && p.condition.toLowerCase() === 'used' ? '<span style="position:absolute;top:6px;left:6px;background:rgba(0,0,0,.65);color:#fbbf24;font-size:.58rem;font-weight:800;padding:2px 7px;border-radius:4px;letter-spacing:.4px;z-index:3">USED</span>' : p.condition && p.condition.toLowerCase() === 'new' ? '<span style="position:absolute;top:6px;left:6px;background:rgba(22,163,74,.85);color:#fff;font-size:.58rem;font-weight:800;padding:2px 7px;border-radius:4px;letter-spacing:.4px;z-index:3">NEW</span>' : '')
     + (verBadge || trustBadge
         ? '<div style="position:absolute;bottom:34px;left:6px;display:flex;flex-direction:column;gap:3px;z-index:3">'
           + (p.sellerVerified ? '<span style="display:inline-flex;align-items:center;gap:3px;background:rgba(29,78,216,.9);color:#fff;padding:3px 8px;border-radius:5px;font-size:.58rem;font-weight:700;letter-spacing:.3px;box-shadow:0 1px 6px rgba(0,0,0,.3)">&#10003; VERIFIED</span>' : '')
@@ -8615,9 +8616,9 @@ window.copyStoreLink = copyStoreLink;
 function shareStoreLink() {
   if (!CU) return;
   var link = 'https://neyomarket.com.ng/?store=' + (CU.affCode || encodeURIComponent(CU.name));
-  var msg  = '<i class="fa-solid fa-bag-shopping"><\/i>  Shop on my NeyoMarket store!\n\nFind all my products here:\n' + link;
+  var msg  = '🛍️ Shop on my NeyoMarket store!\n\nFind all my products here:\n' + link;
   if (navigator.share) {
-    navigator.share({ title: CU.name + ' on NeyoMarket', text: msg, url: link }).catch(function(){});
+    navigator.share({ title: CU.name + ' on NeyoMarket', text: msg }).catch(function(){});
   } else {
     navigator.clipboard.writeText(link).then(function(){ toast('Link copied!', 'ok'); });
   }
@@ -12073,9 +12074,9 @@ function shareRefLink() {
   if (!CU) return;
   var code = CU.buyerRefCode || CU.affCode || '';
   var link = 'https://neyomarket.com.ng/?ref=' + code;
-  var msg  = '<i class="fa-solid fa-bag-shopping"><\/i>  Shop securely on NeyoMarket — Nigeria\'s trusted marketplace!\n\nEscrow-protected payments, verified sellers. Use my referral link and we both get ₦500 wallet credit on your first purchase! <i class="fa-solid fa-gift"><\/i> \n\n' + link;
+  var msg  = '🛍️ Shop securely on NeyoMarket — Nigeria\'s trusted marketplace!\n\nEscrow-protected payments, verified sellers. Use my referral link and we both get ₦500 wallet credit on your first purchase! 🎁\n\n' + link;
   if (navigator.share) {
-    navigator.share({ title: 'NeyoMarket', text: msg, url: link }).catch(function(){});
+    navigator.share({ title: 'NeyoMarket', text: msg }).catch(function(){});
   } else {
     safeCopy(link, '<i class="fa-solid fa-link"><\/i>  Referral link copied! Share it to earn ₦500.');
   }
@@ -15135,11 +15136,11 @@ function notifyVendorWA(order, sellerPhone) {
   var sym   = order.currency === 'USD' ? '$' : order.currency === 'GBP' ? '£' : '₦';
   var items = (order.items || []).map(function(i){ return i.name; }).join(', ');
   var msg   = encodeURIComponent(
-    '<i class="fa-solid fa-cart-shopping"><\/i>  *New Order on NeyoMarket!*\n\n'
+    '\uD83D\uDED2 *New Order on NeyoMarket!*\n\n'
     + 'Order: *' + order.id + '*\n'
     + 'Items: ' + items + '\n'
     + 'Amount: *' + sym + parseFloat(order.total).toLocaleString() + '*\n'
-    + 'Status: <i class="fa-solid fa-circle-check"><\/i>  Paid & Held in Escrow\n\n'
+    + 'Status: \u2705 Paid & Held in Escrow\n\n'
     + 'Login to NeyoMarket to process: https://neyomarket.com.ng'
   );
   /* Open in background iframe so buyer page is not disrupted */
@@ -16943,11 +16944,11 @@ function submitContactForm() {
   if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-hourglass-half"><\/i>  Sending…'; }
 
   /* Build message text */
-  var msgText = 'Hello NeyoMarket Support <i class="fa-solid fa-hand-wave"><\/i> \n\n'
-    + '<i class="fa-solid fa-clipboard-list"><\/i>  *Category:* ' + category + '\n'
-    + '<i class="fa-solid fa-user"><\/i>  *Name:* ' + name.trim() + '\n'
-    + '<i class="fa-solid fa-phone"><\/i>  *Contact:* ' + contact.trim() + '\n\n'
-    + '<i class="fa-solid fa-comment-dots"><\/i>  *Message:*\n' + message.trim();
+  var msgText = 'Hello NeyoMarket Support 👋\n\n'
+    + '📋 *Category:* ' + category + '\n'
+    + '👤 *Name:* ' + name.trim() + '\n'
+    + '📞 *Contact:* ' + contact.trim() + '\n\n'
+    + '💬 *Message:*\n' + message.trim();
 
   /* Open WhatsApp with pre-filled message */
   var waUrl = 'https://wa.me/2349072212496?text=' + encodeURIComponent(msgText);
