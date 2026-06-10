@@ -8082,7 +8082,7 @@ function addCartWithVariant(productId) {
   }
 
   /* Attach variant to all newly added items */
-  if (selectedVariants[productId]) {
+  if (typeof selectedVariants !== 'undefined' && selectedVariants[productId]) {
     for (var ci = cart.length - qty; ci < cart.length; ci++) {
       if (cart[ci] && String(cart[ci].id) === String(productId)) {
         cart[ci].selectedVariant = selectedVariants[productId];
