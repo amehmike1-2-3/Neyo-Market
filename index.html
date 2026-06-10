@@ -68,7 +68,7 @@
   "foundingDate": "2026",
   "description": "NeyoMarket is a Nigerian digital and physical marketplace launched in 2026, providing escrow-protected transactions, KYC-verified sellers, and an affiliate commission program.",
   "areaServed": "Nigeria",
-  "email": "support@neyomarket.com",
+  "email": "support@neyomarket.com.ng",
   "telephone": "+2349072212496",
   "address": {
     "@type": "PostalAddress",
@@ -83,7 +83,7 @@
     },
     {
       "@type": "ContactPoint",
-      "email": "support@neyomarket.com",
+      "email": "support@neyomarket.com.ng",
       "contactType": "customer support",
       "availableLanguage": "English"
     }
@@ -6562,11 +6562,11 @@ nav:not(.bottom-nav){
           <div class="contact-ch-value">+234 907 221 2496</div>
         </div>
       </a>
-      <a class="contact-channel em" href="mailto:support@neyomarket.com">
+      <a class="contact-channel em" href="mailto:support@neyomarket.com.ng">
         <div class="contact-ch-icon em-c"><i class="fa-solid fa-envelope"></i> </div>
         <div>
           <div class="contact-ch-label">Support Email</div>
-          <div class="contact-ch-value">support@neyomarket.com</div>
+          <div class="contact-ch-value">support@neyomarket.com.ng</div>
         </div>
       </a>
       <a class="contact-channel wa2" href="mailto:adminneyomarket@gmail.com">
@@ -12628,11 +12628,8 @@ function loadStoreVisitorPanel() {
         +'<div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px"><i class="fa-solid fa-map-location-dot"></i>  Visits Map <span style="font-weight:400;text-transform:none;letter-spacing:0">· Countries your visitors are from</span></div>'
         +'<div id="vmap-container" style="position:relative;width:100%;border-radius:8px;overflow:hidden;background:#0f1120;touch-action:none;cursor:grab">'
         +'<div id="vmap-tooltip" style="display:none;position:fixed;background:rgba(10,10,25,.96);color:#fff;padding:7px 13px;border-radius:8px;font-size:.75rem;font-weight:600;pointer-events:none;z-index:9999;white-space:nowrap;border:1px solid rgba(74,222,128,.4);box-shadow:0 4px 16px rgba(0,0,0,.6)"></div>'
-        +'<svg id="vmap-svg" style="width:100%;display:block;border-radius:8px" viewBox="0 0 960 500" preserveAspectRatio="xMidYMid meet">'
-        +'<rect width="960" height="500" fill="#0f1120"/>'
-        +'<g id="vmap-g"></g>'
-        +'</svg>'
-        +'<div id="vmap-zoom-hint" style="position:absolute;bottom:6px;right:8px;font-size:.58rem;color:rgba(255,255,255,.3);pointer-events:none">pinch or scroll to zoom · tap country for details</div>'
+        +'<div id="vmap-svg-wrap" style="width:100%;display:block;border-radius:8px;line-height:0"></div>'
+        +'<div id="vmap-zoom-hint" style="position:absolute;bottom:6px;right:8px;font-size:.58rem;color:rgba(255,255,255,.3);pointer-events:none">pinch or scroll to zoom · tap for details</div>'
         +'</div>'
         +'<div style="display:flex;align-items:center;gap:8px;margin-top:8px;padding:0 2px">'
         +'<span style="font-size:.62rem;color:var(--muted)">Low</span>'
@@ -12674,11 +12671,24 @@ function loadStoreVisitorPanel() {
 
       /* ── Draw SVG choropleth map with zoom/pan + tap tooltips ── */
       setTimeout(function() {
-        var svgEl  = document.getElementById('vmap-svg');
-        var gEl    = document.getElementById('vmap-g');
+        var svgWrap = document.getElementById('vmap-svg-wrap');
         var tooltip = document.getElementById('vmap-tooltip');
-        var cont   = document.getElementById('vmap-container');
-        if (!svgEl || !gEl) return;
+        var cont    = document.getElementById('vmap-container');
+        if (!svgWrap) return;
+
+        /* Build SVG element properly via createElementNS so paths render */
+        var NS = 'http://www.w3.org/2000/svg';
+        var svgEl = document.createElementNS(NS, 'svg');
+        svgEl.setAttribute('viewBox', '0 0 960 500');
+        svgEl.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+        svgEl.style.cssText = 'width:100%;display:block;border-radius:8px';
+        var bgRect = document.createElementNS(NS, 'rect');
+        bgRect.setAttribute('width','960'); bgRect.setAttribute('height','500');
+        bgRect.setAttribute('fill','#0f1120');
+        svgEl.appendChild(bgRect);
+        var gEl = document.createElementNS(NS, 'g');
+        svgEl.appendChild(gEl);
+        svgWrap.appendChild(svgEl);
 
         var CNAMES = {
           'AF':'Afghanistan','AL':'Albania','DZ':'Algeria','AO':'Angola','AR':'Argentina',
