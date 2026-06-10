@@ -8052,9 +8052,9 @@ function selectVariant(productId, variantIdx, btn) {
   btn.style.color       = 'var(--gold)';
 
   if (typeof selectedVariants === 'undefined') selectedVariants = {};
-selectedVariants[productId] = vars[variantIdx].name;
+selectedVariants[productId] = vars[variantIdx].name || variant;
   var label = document.getElementById('variant-selected-' + productId);
-  if (label) label.innerHTML = '<i class="fa-solid fa-check"><\/i>  Selected: ' + vars[variantIdx].name;
+  if (label) label.innerHTML = '<i class="fa-solid fa-check"><\/i>  Selected: ' + (vars[variantIdx] ? vars[variantIdx].name : variant);
   }
 window.selectVariant = selectVariant;
 
