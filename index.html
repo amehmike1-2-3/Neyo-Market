@@ -8067,7 +8067,7 @@ function addCartWithVariant(productId) {
   if (!Array.isArray(vars)) vars = [];
 
   /* If product has variants, require selection */
-  if (vars.length > 0 && !selectedVariants[productId]) {
+  if (vars.length > 0 && (typeof selectedVariants === 'undefined' || !selectedVariants[productId])) {
     toast('Please select an option first (e.g. color, size).', 'warn');
     return;
   }
