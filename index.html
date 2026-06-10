@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="en" data-theme="light">
 <head>
 <meta charset="UTF-8"/>
@@ -12624,15 +12624,19 @@ function loadStoreVisitorPanel() {
         }
       });
 
-      h += '<div style="background:#1a1a2e;border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:12px">'
-        +'<div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px"><i class="fa-solid fa-map-location-dot"></i>  Visits Map <span style="font-weight:400;text-transform:none;letter-spacing:0">· The countries your visitors are based in</span></div>'
-        +'<div id="vmap-container" style="position:relative;width:100%;border-radius:8px;overflow:hidden;background:#1a1a2e;min-height:200px">'
-        +'<div id="vmap-tooltip" style="display:none;position:fixed;background:rgba(15,15,30,.95);color:#fff;padding:7px 12px;border-radius:7px;font-size:.75rem;font-weight:600;pointer-events:none;z-index:9999;white-space:nowrap;border:1px solid rgba(74,222,128,.3);box-shadow:0 4px 12px rgba(0,0,0,.5)"></div>'
-        +'<canvas id="vmap-canvas" style="width:100%;display:block;border-radius:8px"></canvas>'
+      h += '<div style="background:#0f1120;border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:12px">'
+        +'<div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px"><i class="fa-solid fa-map-location-dot"></i>  Visits Map <span style="font-weight:400;text-transform:none;letter-spacing:0">· Countries your visitors are from</span></div>'
+        +'<div id="vmap-container" style="position:relative;width:100%;border-radius:8px;overflow:hidden;background:#0f1120;touch-action:none;cursor:grab">'
+        +'<div id="vmap-tooltip" style="display:none;position:fixed;background:rgba(10,10,25,.96);color:#fff;padding:7px 13px;border-radius:8px;font-size:.75rem;font-weight:600;pointer-events:none;z-index:9999;white-space:nowrap;border:1px solid rgba(74,222,128,.4);box-shadow:0 4px 16px rgba(0,0,0,.6)"></div>'
+        +'<svg id="vmap-svg" style="width:100%;display:block;border-radius:8px" viewBox="0 0 960 500" preserveAspectRatio="xMidYMid meet">'
+        +'<rect width="960" height="500" fill="#0f1120"/>'
+        +'<g id="vmap-g"></g>'
+        +'</svg>'
+        +'<div id="vmap-zoom-hint" style="position:absolute;bottom:6px;right:8px;font-size:.58rem;color:rgba(255,255,255,.3);pointer-events:none">pinch or scroll to zoom · tap country for details</div>'
         +'</div>'
         +'<div style="display:flex;align-items:center;gap:8px;margin-top:8px;padding:0 2px">'
         +'<span style="font-size:.62rem;color:var(--muted)">Low</span>'
-        +'<div style="flex:1;height:5px;border-radius:3px;background:linear-gradient(to right,#14532d,#16a34a,#4ade80)"></div>'
+        +'<div style="flex:1;height:6px;border-radius:3px;background:linear-gradient(to right,#14532d,#166534,#16a34a,#4ade80)"></div>'
         +'<span style="font-size:.62rem;color:var(--muted)">High</span>'
         +'</div>'
         +'</div>';
@@ -12668,22 +12672,13 @@ function loadStoreVisitorPanel() {
 
       wrap.innerHTML = h;
 
-      /* ── Draw real map using Canvas + TopoJSON ── */
-      /* Load topojson lib + world data, draw proper country shapes */
+      /* ── Draw SVG choropleth map with zoom/pan + tap tooltips ── */
       setTimeout(function() {
-        var canvas = document.getElementById('vmap-canvas');
+        var svgEl  = document.getElementById('vmap-svg');
+        var gEl    = document.getElementById('vmap-g');
         var tooltip = document.getElementById('vmap-tooltip');
-        if (!canvas) return;
-
-        /* Set canvas resolution */
-        var W = canvas.parentElement.offsetWidth || 340;
-        var H = Math.round(W * 0.52);
-        canvas.width  = W * 2; /* retina */
-        canvas.height = H * 2;
-        canvas.style.width  = W + 'px';
-        canvas.style.height = H + 'px';
-        var ctx = canvas.getContext('2d');
-        ctx.scale(2, 2);
+        var cont   = document.getElementById('vmap-container');
+        if (!svgEl || !gEl) return;
 
         var CNAMES = {
           'AF':'Afghanistan','AL':'Albania','DZ':'Algeria','AO':'Angola','AR':'Argentina',
@@ -12712,7 +12707,7 @@ function loadStoreVisitorPanel() {
           'QA':'Qatar','RO':'Romania','RU':'Russia','RW':'Rwanda','SA':'Saudi Arabia',
           'SN':'Senegal','RS':'Serbia','SL':'Sierra Leone','SO':'Somalia','ZA':'South Africa',
           'SS':'South Sudan','ES':'Spain','LK':'Sri Lanka','SD':'Sudan','SR':'Suriname',
-          'SZ':'Swaziland','SE':'Sweden','CH':'Switzerland','SY':'Syria','TW':'Taiwan',
+          'SZ':'Eswatini','SE':'Sweden','CH':'Switzerland','SY':'Syria','TW':'Taiwan',
           'TJ':'Tajikistan','TZ':'Tanzania','TH':'Thailand','TL':'Timor-Leste',
           'TG':'Togo','TT':'Trinidad and Tobago','TN':'Tunisia','TR':'Turkey',
           'TM':'Turkmenistan','UG':'Uganda','UA':'Ukraine','AE':'UAE',
@@ -12721,64 +12716,6 @@ function loadStoreVisitorPanel() {
           'GL':'Greenland','NC':'New Caledonia','SB':'Solomon Islands',
         };
 
-        function getColor(cc) {
-          var v = viewMap[cc] || 0;
-          if (!v) return '#2a2a4a';
-          var p = Math.min(v / maxV, 1);
-          if (p < 0.2)  return '#14532d';
-          if (p < 0.45) return '#166534';
-          if (p < 0.7)  return '#16a34a';
-          return '#4ade80';
-        }
-
-        /* Equirectangular projection */
-        function project(lon, lat) {
-          var x = (lon + 180) * (W / 360);
-          var y = (90 - lat)  * (H / 180);
-          return [x, y];
-        }
-
-        /* Store paths for hit-testing */
-        var countryPaths = [];
-
-        function drawGeo(features) {
-          features.forEach(function(f) {
-            var cc = (f.id && String(f.id).length === 3)
-              ? iso3toIso2(String(f.id))
-              : (f.properties && f.properties.iso_a2 ? f.properties.iso_a2 : null);
-            var color = getColor(cc || '');
-            ctx.beginPath();
-            drawGeometry(f.geometry);
-            ctx.fillStyle = color;
-            ctx.fill();
-            ctx.strokeStyle = '#0f0f2a';
-            ctx.lineWidth = 0.4;
-            ctx.stroke();
-            if (cc) countryPaths.push({ cc: cc, feature: f });
-          });
-        }
-
-        function drawGeometry(geom) {
-          if (!geom) return;
-          if (geom.type === 'Polygon') {
-            drawRings(geom.coordinates);
-          } else if (geom.type === 'MultiPolygon') {
-            geom.coordinates.forEach(function(poly){ drawRings(poly); });
-          }
-        }
-
-        function drawRings(rings) {
-          rings.forEach(function(ring, ri) {
-            if (ri === 0) ctx.moveTo.apply(ctx, project(ring[0][0], ring[0][1]));
-            else ctx.moveTo.apply(ctx, project(ring[0][0], ring[0][1]));
-            for (var i = 1; i < ring.length; i++) {
-              ctx.lineTo.apply(ctx, project(ring[i][0], ring[i][1]));
-            }
-            ctx.closePath();
-          });
-        }
-
-        /* ISO 3166-1 alpha-3 to alpha-2 lookup */
         var ISO3 = {
           'AFG':'AF','ALB':'AL','DZA':'DZ','AGO':'AO','ARG':'AR','ARM':'AM','AUS':'AU',
           'AUT':'AT','AZE':'AZ','BHS':'BS','BGD':'BD','BLR':'BY','BEL':'BE','BLZ':'BZ',
@@ -12804,68 +12741,233 @@ function loadStoreVisitorPanel() {
           'TZA':'TZ','THA':'TH','TLS':'TL','TGO':'TG','TTO':'TT','TUN':'TN','TUR':'TR',
           'TKM':'TM','UGA':'UG','UKR':'UA','ARE':'AE','GBR':'GB','USA':'US','URY':'UY',
           'UZB':'UZ','VEN':'VE','VNM':'VN','YEM':'YE','ZMB':'ZM','ZWE':'ZW','CIV':'CI',
-          'NCL':'NC','SLB':'SB','VUT':'VU','WSM':'WS','TON':'TO','FJI':'FJ',
+          'NCL':'NC','SLB':'SB','VUT':'VU','WSM':'WS','TON':'TO',
         };
+
         function iso3toIso2(a3){ return ISO3[a3] || null; }
 
-        /* Fetch real world GeoJSON — Natural Earth 110m, ~90KB, browser-cached */
+        function getColor(cc) {
+          var v = viewMap[cc] || 0;
+          if (!v) return '#1e2040';
+          var p = Math.min(v / maxV, 1);
+          /* smooth green ramp */
+          var r = Math.round(20  + (74  - 20)  * p);
+          var g = Math.round(83  + (222 - 83)  * p);
+          var b = Math.round(45  + (128 - 45)  * p);
+          return 'rgb(' + r + ',' + g + ',' + b + ')';
+        }
+
+        /* Equirectangular projection → SVG 960×500 viewBox */
+        function project(lon, lat) {
+          return [(lon + 180) * (960 / 360), (90 - lat) * (500 / 180)];
+        }
+
+        function coordsToPath(rings) {
+          var d = '';
+          rings.forEach(function(ring) {
+            var p0 = project(ring[0][0], ring[0][1]);
+            d += 'M' + p0[0].toFixed(2) + ',' + p0[1].toFixed(2);
+            for (var i = 1; i < ring.length; i++) {
+              var p = project(ring[i][0], ring[i][1]);
+              d += 'L' + p[0].toFixed(2) + ',' + p[1].toFixed(2);
+            }
+            d += 'Z';
+          });
+          return d;
+        }
+
+        function geomToPath(geom) {
+          if (!geom) return '';
+          if (geom.type === 'Polygon')      return coordsToPath(geom.coordinates);
+          if (geom.type === 'MultiPolygon') return geom.coordinates.map(coordsToPath).join('');
+          return '';
+        }
+
+        /* ── Zoom / pan state ── */
+        var zoom = 1, panX = 0, panY = 0;
+        var MIN_ZOOM = 1, MAX_ZOOM = 8;
+        var isDragging = false, lastMX = 0, lastMY = 0;
+        var touchStart = null, pinchDist0 = 0, zoom0 = 1, panX0 = 0, panY0 = 0;
+
+        function applyTransform() {
+          gEl.setAttribute('transform', 'translate(' + panX + ',' + panY + ') scale(' + zoom + ')');
+        }
+
+        function clampPan(z, px, py) {
+          var W = svgEl.clientWidth || 340;
+          var H = svgEl.clientHeight || 177;
+          var scaleX = W / 960, scaleY = H / 500;
+          var s = z * Math.min(scaleX, scaleY);
+          var maxPx = 0, minPx = W - 960 * s;
+          var maxPy = 0, minPy = H - 500 * s;
+          return [
+            Math.min(maxPx, Math.max(minPx, px)),
+            Math.min(maxPy, Math.max(minPy, py))
+          ];
+        }
+
+        function zoomAt(cx, cy, factor) {
+          var newZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom * factor));
+          var ratio = newZoom / zoom;
+          var newPx = cx - ratio * (cx - panX);
+          var newPy = cy - ratio * (cy - panY);
+          zoom = newZoom;
+          var clamped = clampPan(zoom, newPx, newPy);
+          panX = clamped[0]; panY = clamped[1];
+          applyTransform();
+        }
+
+        /* Scroll-to-zoom (desktop) */
+        svgEl.addEventListener('wheel', function(e) {
+          e.preventDefault();
+          var rect = svgEl.getBoundingClientRect();
+          var cx = e.clientX - rect.left;
+          var cy = e.clientY - rect.top;
+          zoomAt(cx, cy, e.deltaY < 0 ? 1.15 : 0.87);
+        }, { passive: false });
+
+        /* Drag-to-pan (mouse) */
+        svgEl.addEventListener('mousedown', function(e) {
+          isDragging = true; lastMX = e.clientX; lastMY = e.clientY;
+          svgEl.style.cursor = 'grabbing';
+        });
+        window.addEventListener('mousemove', function(e) {
+          if (!isDragging) return;
+          var dx = e.clientX - lastMX, dy = e.clientY - lastMY;
+          lastMX = e.clientX; lastMY = e.clientY;
+          var clamped = clampPan(zoom, panX + dx, panY + dy);
+          panX = clamped[0]; panY = clamped[1];
+          applyTransform();
+        });
+        window.addEventListener('mouseup', function() {
+          isDragging = false;
+          if (svgEl) svgEl.style.cursor = 'grab';
+        });
+
+        /* Touch: drag + pinch-zoom */
+        svgEl.addEventListener('touchstart', function(e) {
+          if (e.touches.length === 1) {
+            isDragging = true;
+            lastMX = e.touches[0].clientX; lastMY = e.touches[0].clientY;
+          } else if (e.touches.length === 2) {
+            isDragging = false;
+            var dx = e.touches[0].clientX - e.touches[1].clientX;
+            var dy = e.touches[0].clientY - e.touches[1].clientY;
+            pinchDist0 = Math.sqrt(dx*dx + dy*dy);
+            zoom0 = zoom; panX0 = panX; panY0 = panY;
+            touchStart = { x: (e.touches[0].clientX + e.touches[1].clientX) / 2, y: (e.touches[0].clientY + e.touches[1].clientY) / 2 };
+          }
+          e.preventDefault();
+        }, { passive: false });
+
+        svgEl.addEventListener('touchmove', function(e) {
+          e.preventDefault();
+          if (e.touches.length === 1 && isDragging) {
+            var dx = e.touches[0].clientX - lastMX;
+            var dy = e.touches[0].clientY - lastMY;
+            lastMX = e.touches[0].clientX; lastMY = e.touches[0].clientY;
+            var rect = svgEl.getBoundingClientRect();
+            var clamped = clampPan(zoom, panX + dx, panY + dy);
+            panX = clamped[0]; panY = clamped[1];
+            applyTransform();
+          } else if (e.touches.length === 2 && touchStart) {
+            var dx2 = e.touches[0].clientX - e.touches[1].clientX;
+            var dy2 = e.touches[0].clientY - e.touches[1].clientY;
+            var dist = Math.sqrt(dx2*dx2 + dy2*dy2);
+            var newZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom0 * (dist / pinchDist0)));
+            var rect2 = svgEl.getBoundingClientRect();
+            var cx = touchStart.x - rect2.left, cy = touchStart.y - rect2.top;
+            var ratio = newZoom / zoom0;
+            var newPx = cx - ratio * (cx - panX0);
+            var newPy = cy - ratio * (cy - panY0);
+            zoom = newZoom;
+            var clamped2 = clampPan(zoom, newPx, newPy);
+            panX = clamped2[0]; panY = clamped2[1];
+            applyTransform();
+          }
+        }, { passive: false });
+
+        svgEl.addEventListener('touchend', function(e) {
+          if (e.touches.length < 2) { touchStart = null; }
+          if (e.touches.length === 0) isDragging = false;
+        });
+
+        /* Show tooltip */
+        var _ttHide = null;
+        function showTooltip(cc, clientX, clientY) {
+          if (!cc) { tooltip.style.display = 'none'; return; }
+          var name = CNAMES[cc] || cc;
+          var v = viewMap[cc] || 0;
+          var flag = '';
+          try { flag = String.fromCodePoint(cc.charCodeAt(0)-65+0x1F1E6) + String.fromCodePoint(cc.charCodeAt(1)-65+0x1F1E6) + ' '; } catch(e){}
+          tooltip.innerHTML = flag + '<strong>' + name + '</strong>'
+            + (v ? ' &nbsp;<span style="color:#4ade80;font-size:.8rem">' + v + ' view' + (v!==1?'s':'') + '</span>'
+                 : ' <span style="color:rgba(255,255,255,.4);font-size:.75rem">no visits yet</span>');
+          tooltip.style.display = 'block';
+          tooltip.style.left = (clientX + 14) + 'px';
+          tooltip.style.top  = (clientY - 40) + 'px';
+          if (_ttHide) clearTimeout(_ttHide);
+        }
+        function hideTooltip(delay) {
+          _ttHide = setTimeout(function(){ tooltip.style.display = 'none'; }, delay || 0);
+        }
+
+        /* Fetch TopoJSON and build SVG paths */
         fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
           .then(function(r){ return r.json(); })
           .then(function(topo) {
-            /* Convert TopoJSON → GeoJSON manually (no lib needed) */
             var countries = topoToGeo(topo, topo.objects.countries);
-            ctx.clearRect(0, 0, W, H);
-            /* Ocean background */
-            ctx.fillStyle = '#1a1a2e';
-            ctx.fillRect(0, 0, W, H);
-            drawGeo(countries.features);
-
-            /* Mouse/touch interaction */
-            function getCountryAt(px, py) {
-              /* Re-test using point-in-polygon on projected coords */
-              for (var i = countryPaths.length - 1; i >= 0; i--) {
-                var f = countryPaths[i];
-                var geom = f.feature.geometry;
-                if (pointInGeoFeature(px, py, geom)) return f.cc;
+            var frag = document.createDocumentFragment();
+            countries.features.forEach(function(f) {
+              var cc = (f.id && String(f.id).length === 3)
+                ? iso3toIso2(String(f.id))
+                : (f.properties && f.properties.iso_a2 ? f.properties.iso_a2 : null);
+              var d = geomToPath(f.geometry);
+              if (!d) return;
+              var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+              path.setAttribute('d', d);
+              path.setAttribute('fill', getColor(cc || ''));
+              path.setAttribute('stroke', '#0a0d1e');
+              path.setAttribute('stroke-width', '0.5');
+              path.style.transition = 'fill .15s';
+              if (cc) {
+                path.setAttribute('data-cc', cc);
+                /* hover highlight */
+                path.addEventListener('mouseenter', function(e) {
+                  if (!isDragging) {
+                    path.setAttribute('fill', viewMap[cc] ? '#86efac' : '#2d3060');
+                    showTooltip(cc, e.clientX, e.clientY);
+                  }
+                });
+                path.addEventListener('mousemove', function(e) {
+                  if (!isDragging) {
+                    tooltip.style.left = (e.clientX + 14) + 'px';
+                    tooltip.style.top  = (e.clientY - 40) + 'px';
+                  }
+                });
+                path.addEventListener('mouseleave', function() {
+                  path.setAttribute('fill', getColor(cc));
+                  hideTooltip(120);
+                });
+                /* tap on mobile */
+                path.addEventListener('click', function(e) {
+                  e.stopPropagation();
+                  showTooltip(cc, e.clientX, e.clientY);
+                  hideTooltip(2800);
+                });
               }
-              return null;
-            }
-
-            canvas.addEventListener('mousemove', function(e) {
-              var rect = canvas.getBoundingClientRect();
-              var px = (e.clientX - rect.left);
-              var py = (e.clientY - rect.top);
-              var cc = getCountryAt(px, py);
-              if (cc && (viewMap[cc] || CNAMES[cc])) {
-                var name = CNAMES[cc] || cc;
-                var v = viewMap[cc] || 0;
-                tooltip.innerHTML = '<strong>' + name + '</strong>' + (v ? ' &nbsp;<span style="color:#4ade80">' + v + ' view' + (v!==1?'s':'') + '</span>' : '');
-                tooltip.style.display = 'block';
-                tooltip.style.left = (e.clientX + 14) + 'px';
-                tooltip.style.top  = (e.clientY - 36) + 'px';
-              } else {
-                tooltip.style.display = 'none';
-              }
+              frag.appendChild(path);
             });
-            canvas.addEventListener('mouseleave', function(){ tooltip.style.display='none'; });
-            canvas.addEventListener('click', function(e) {
-              var rect = canvas.getBoundingClientRect();
-              var cc = getCountryAt(e.clientX - rect.left, e.clientY - rect.top);
-              if (cc && viewMap[cc]) {
-                var name = CNAMES[cc] || cc;
-                tooltip.innerHTML = '<strong>' + name + '</strong> &nbsp;<span style="color:#4ade80">' + viewMap[cc] + ' view' + (viewMap[cc]!==1?'s':'') + '</span>';
-                tooltip.style.display = 'block';
-                tooltip.style.left = (e.clientX + 14) + 'px';
-                tooltip.style.top  = (e.clientY - 36) + 'px';
-                setTimeout(function(){ tooltip.style.display='none'; }, 2500);
-              }
-            });
+            gEl.appendChild(frag);
+            applyTransform();
           })
           .catch(function(err) {
             console.warn('Map load failed:', err);
-            var c2 = document.getElementById('vmap-container');
-            if (c2) c2.innerHTML = '<div style="text-align:center;padding:30px;font-size:.8rem;color:var(--muted)"><i class="fa-solid fa-map-location-dot"></i>  Map unavailable offline</div>';
+            if (cont) cont.innerHTML = '<div style="text-align:center;padding:30px;font-size:.8rem;color:var(--muted)"><i class="fa-solid fa-map-location-dot"></i>  Map unavailable offline</div>';
           });
+
+        /* Tap on background hides tooltip */
+        svgEl.addEventListener('click', function() { hideTooltip(0); });
       }, 80);
     })
     .catch(function(){ if(wrap) wrap.innerHTML=''; });
@@ -12921,39 +13023,6 @@ function topoToGeo(topology, object) {
   return { type:'FeatureCollection', features: features };
 }
 
-/* ── Point-in-polygon test for canvas hit detection ── */
-function pointInGeoFeature(px, py, geom) {
-  if (!geom) return false;
-  function testPolygon(rings) {
-    var inside = false;
-    var outer = rings[0];
-    for (var i = 0, j = outer.length-1; i < outer.length; j = i++) {
-      var xi = outer[i][0], yi = outer[i][1];
-      var xj = outer[j][0], yj = outer[j][1];
-      if (((yi>py) !== (yj>py)) && (px < (xj-xi)*(py-yi)/(yj-yi)+xi)) inside = !inside;
-    }
-    return inside;
-  }
-  /* Project coords for hit test */
-  var W2 = (document.getElementById('vmap-canvas')||{offsetWidth:340}).offsetWidth || 340;
-  var H2 = Math.round(W2*0.52);
-  function proj(c){ return [(c[0]+180)*(W2/360), (90-c[1])*(H2/180)]; }
-
-  function testGeom(g) {
-    if (g.type==='Polygon') {
-      var projected = g.coordinates.map(function(r){ return r.map(proj); });
-      return testPolygon(projected);
-    }
-    if (g.type==='MultiPolygon') {
-      return g.coordinates.some(function(poly){
-        var projected = poly.map(function(r){ return r.map(proj); });
-        return testPolygon(projected);
-      });
-    }
-    return false;
-  }
-  return testGeom(geom);
-}
 window.loadStoreVisitorPanel = loadStoreVisitorPanel;
 
 /* ════════════════════════════════════════════════════════
