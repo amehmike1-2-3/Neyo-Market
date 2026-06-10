@@ -12818,189 +12818,48 @@ function loadStoreVisitorPanel() {
             /* Ocean background */
             ctx.fillStyle = '#1a1a2e';
             ctx.fillRect(0, 0, W, H);
-            /* ── Zoom/pan state ── */
-            var zoom = 1, panX = 0, panY = 0;
-            var MIN_Z = 1, MAX_Z = 8;
-            function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
-
-            /* ── Redraw everything with current transform ── */
-            function redraw() {
-              ctx.save();
-              ctx.clearRect(0,0,W,H);
-              ctx.fillStyle='#1a1a2e'; ctx.fillRect(0,0,W,H);
-              ctx.translate(panX, panY);
-              ctx.scale(zoom, zoom);
-
-              /* Countries */
-              countryPaths.forEach(function(f) {
-                var color = getColor(f.cc);
-                ctx.beginPath();
-                drawGeometry(f.feature.geometry);
-                ctx.fillStyle = color;
-                ctx.fill();
-                ctx.strokeStyle = '#0f0f2a';
-                ctx.lineWidth = 0.4 / zoom;
-                ctx.stroke();
-              });
-
-              /* View count labels on visitor countries */
-              bc.forEach(function(c) {
-                var cc = (c.country_code||'').toUpperCase();
-                var v  = viewMap[cc]; if (!v) return;
-                /* Find centroid of this country's first polygon */
-                var feat = countryPaths.find(function(f){ return f.cc===cc; });
-                if (!feat) return;
-                var cen = getCentroid(feat.feature.geometry);
-                if (!cen) return;
-                var cx = cen[0], cy = cen[1];
-                var fs = Math.max(7, Math.min(13, 9/zoom));
-                var lbl = String(v);
-                ctx.font = 'bold ' + fs + 'px sans-serif';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                /* Shadow for readability */
-                ctx.shadowColor = 'rgba(0,0,0,0.8)';
-                ctx.shadowBlur = 3/zoom;
-                ctx.fillStyle = '#fff';
-                ctx.fillText(lbl, cx, cy);
-                ctx.shadowBlur = 0;
-              });
-
-              ctx.restore();
-            }
-
-            /* ── Centroid helper ── */
-            function getCentroid(geom) {
-              var ring = null;
-              if (geom.type==='Polygon') ring = geom.coordinates[0];
-              else if (geom.type==='MultiPolygon') {
-                /* Pick largest polygon */
-                var best = 0;
-                geom.coordinates.forEach(function(poly){
-                  if (poly[0].length > best) { best=poly[0].length; ring=poly[0]; }
-                });
-              }
-              if (!ring || !ring.length) return null;
-              var sx=0, sy=0;
-              ring.forEach(function(pt){ var p=project(pt[0],pt[1]); sx+=p[0]; sy+=p[1]; });
-              return [sx/ring.length, sy/ring.length];
-            }
-
-            /* Initial draw */
             drawGeo(countries.features);
-            redraw();
 
-            /* ── Canvas coords accounting for zoom/pan ── */
-            function canvasXY(clientX, clientY) {
-              var rect = canvas.getBoundingClientRect();
-              return [(clientX - rect.left - panX) / zoom,
-                      (clientY - rect.top  - panY) / zoom];
-            }
-
-            function getCountryAt(cx, cy) {
-              for (var i = countryPaths.length-1; i >= 0; i--) {
-                if (pointInGeoFeature(cx, cy, countryPaths[i].feature.geometry)) return countryPaths[i].cc;
+            /* Mouse/touch interaction */
+            function getCountryAt(px, py) {
+              /* Re-test using point-in-polygon on projected coords */
+              for (var i = countryPaths.length - 1; i >= 0; i--) {
+                var f = countryPaths[i];
+                var geom = f.feature.geometry;
+                if (pointInGeoFeature(px, py, geom)) return f.cc;
               }
               return null;
             }
 
-            function showTip(e, cc) {
-              if (!cc) { tooltip.style.display='none'; return; }
-              var name = CNAMES[cc]||cc;
-              var v = viewMap[cc]||0;
-              tooltip.innerHTML = '<strong>'+name+'</strong>'+(v?' &nbsp;<span style="color:#4ade80">'+v+' view'+(v!==1?'s':'')+'</span>':'');
-              tooltip.style.display='block';
-              tooltip.style.left=(e.clientX+14)+'px';
-              tooltip.style.top=(e.clientY-36)+'px';
-            }
-
-            /* ── Mouse zoom ── */
-            canvas.addEventListener('wheel', function(e){
-              e.preventDefault();
+            canvas.addEventListener('mousemove', function(e) {
               var rect = canvas.getBoundingClientRect();
-              var mx = e.clientX - rect.left, my = e.clientY - rect.top;
-              var factor = e.deltaY < 0 ? 1.25 : 0.8;
-              var nz = clamp(zoom*factor, MIN_Z, MAX_Z);
-              panX = mx - (mx - panX) * (nz/zoom);
-              panY = my - (my - panY) * (nz/zoom);
-              /* Clamp pan */
-              panX = clamp(panX, W*(1-nz), 0);
-              panY = clamp(panY, H*(1-nz), 0);
-              zoom = nz;
-              redraw();
-            },{ passive:false });
-
-            /* ── Mouse drag ── */
-            var drag=false, dragX=0, dragY=0;
-            canvas.addEventListener('mousedown',function(e){ drag=true; dragX=e.clientX; dragY=e.clientY; canvas.style.cursor='grabbing'; });
-            window.addEventListener('mousemove',function(e){
-              if (!drag) {
-                var xy=canvasXY(e.clientX,e.clientY);
-                showTip(e, getCountryAt(xy[0],xy[1]));
-                return;
+              var px = (e.clientX - rect.left);
+              var py = (e.clientY - rect.top);
+              var cc = getCountryAt(px, py);
+              if (cc && (viewMap[cc] || CNAMES[cc])) {
+                var name = CNAMES[cc] || cc;
+                var v = viewMap[cc] || 0;
+                tooltip.innerHTML = '<strong>' + name + '</strong>' + (v ? ' &nbsp;<span style="color:#4ade80">' + v + ' view' + (v!==1?'s':'') + '</span>' : '');
+                tooltip.style.display = 'block';
+                tooltip.style.left = (e.clientX + 14) + 'px';
+                tooltip.style.top  = (e.clientY - 36) + 'px';
+              } else {
+                tooltip.style.display = 'none';
               }
-              panX = clamp(panX+(e.clientX-dragX), W*(1-zoom), 0);
-              panY = clamp(panY+(e.clientY-dragY), H*(1-zoom), 0);
-              dragX=e.clientX; dragY=e.clientY;
-              redraw();
             });
-            window.addEventListener('mouseup',function(){ drag=false; canvas.style.cursor='grab'; });
-            canvas.style.cursor='grab';
-            canvas.addEventListener('mouseleave',function(){ tooltip.style.display='none'; });
-
-            /* ── Touch pinch+pan ── */
-            var lastDist=null, lastTX=0, lastTY=0;
-            canvas.addEventListener('touchstart',function(e){
-              if(e.touches.length===1){ lastTX=e.touches[0].clientX; lastTY=e.touches[0].clientY; }
-              if(e.touches.length===2){
-                var dx=e.touches[0].clientX-e.touches[1].clientX;
-                var dy=e.touches[0].clientY-e.touches[1].clientY;
-                lastDist=Math.sqrt(dx*dx+dy*dy);
+            canvas.addEventListener('mouseleave', function(){ tooltip.style.display='none'; });
+            canvas.addEventListener('click', function(e) {
+              var rect = canvas.getBoundingClientRect();
+              var cc = getCountryAt(e.clientX - rect.left, e.clientY - rect.top);
+              if (cc && viewMap[cc]) {
+                var name = CNAMES[cc] || cc;
+                tooltip.innerHTML = '<strong>' + name + '</strong> &nbsp;<span style="color:#4ade80">' + viewMap[cc] + ' view' + (viewMap[cc]!==1?'s':'') + '</span>';
+                tooltip.style.display = 'block';
+                tooltip.style.left = (e.clientX + 14) + 'px';
+                tooltip.style.top  = (e.clientY - 36) + 'px';
+                setTimeout(function(){ tooltip.style.display='none'; }, 2500);
               }
-            },{ passive:true });
-            canvas.addEventListener('touchmove',function(e){
-              e.preventDefault();
-              if(e.touches.length===1){
-                panX=clamp(panX+(e.touches[0].clientX-lastTX), W*(1-zoom),0);
-                panY=clamp(panY+(e.touches[0].clientY-lastTY), H*(1-zoom),0);
-                lastTX=e.touches[0].clientX; lastTY=e.touches[0].clientY;
-                redraw();
-              }
-              if(e.touches.length===2 && lastDist){
-                var dx=e.touches[0].clientX-e.touches[1].clientX;
-                var dy=e.touches[0].clientY-e.touches[1].clientY;
-                var dist=Math.sqrt(dx*dx+dy*dy);
-                var nz=clamp(zoom*(dist/lastDist),MIN_Z,MAX_Z);
-                var rect=canvas.getBoundingClientRect();
-                var mx=(e.touches[0].clientX+e.touches[1].clientX)/2-rect.left;
-                var my=(e.touches[0].clientY+e.touches[1].clientY)/2-rect.top;
-                panX=clamp(mx-(mx-panX)*(nz/zoom), W*(1-nz),0);
-                panY=clamp(my-(my-panY)*(nz/zoom), H*(1-nz),0);
-                zoom=nz; lastDist=dist;
-                redraw();
-              }
-            },{ passive:false });
-            canvas.addEventListener('touchend',function(e){
-              lastDist=null;
-              /* Tap tooltip */
-              if(e.changedTouches.length===1){
-                var xy=canvasXY(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
-                var cc=getCountryAt(xy[0],xy[1]);
-                if(cc && viewMap[cc]){
-                  showTip({ clientX:e.changedTouches[0].clientX, clientY:e.changedTouches[0].clientY }, cc);
-                  setTimeout(function(){ tooltip.style.display='none'; },2500);
-                }
-              }
-            },{ passive:true });
-
-            /* Double-tap/click resets zoom */
-            var lastTap=0;
-            canvas.addEventListener('touchend',function(e){
-              var now=Date.now();
-              if(now-lastTap<320){ zoom=1;panX=0;panY=0; redraw(); }
-              lastTap=now;
-            },{ passive:true });
-            canvas.addEventListener('dblclick',function(){ zoom=1;panX=0;panY=0; redraw(); });
+            });
           })
           .catch(function(err) {
             console.warn('Map load failed:', err);
