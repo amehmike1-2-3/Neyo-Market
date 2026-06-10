@@ -7971,6 +7971,7 @@ function mkCard(p) {
 }
 /* ═══ PRODUCT VARIANTS ═══ */
 var variantCount = 0;
+var selectedVariants = {}; /* tracks selected variant per product id */
 function addVariant() {
   variantCount++;
   var id = 'variant-' + variantCount;
