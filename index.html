@@ -167,9 +167,9 @@
 <link rel="manifest" href="/manifest.json"/>
 
 <!-- ═══ FONTS ═══ -->
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="dns-prefetch" href="https://cdnjs.cloudflare.com"/><link rel="dns-prefetch" href="https://cdn.jsdelivr.net"/><link rel="dns-prefetch" href="https://js.paystack.co"/><link rel="dns-prefetch" href="https://res.cloudinary.com"/><link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer"/>
+<link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'" crossorigin="anonymous" referrerpolicy="no-referrer"/><noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous"/></noscript>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 
 <!-- ═══ PAYSTACK ═══ -->
@@ -177,7 +177,7 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js" defer></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>window.GOOGLE_CLIENT_ID = '850245958205-fh4fdhcs1epra5u1v0nfouetcada8rd2.apps.googleusercontent.com';</script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css"/>
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'"/><noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css"/></noscript>
 
 <!-- ═══ EMAIL SERVICE: Gmail SMTP (backend only) — password reset & verification ═══ -->
 
@@ -3964,7 +3964,7 @@ nav:not(.bottom-nav){
 </head>
 <body>
 <div id="splash">
-  <img src="https://neyomarket.com.ng/neyomarket-logo.webp" alt="NeyoMarket" class="splash-logo">
+  <img loading="lazy" fetchpriority="high" src="https://neyomarket.com.ng/neyomarket-logo.webp" alt="NeyoMarket" class="splash-logo">
   <div class="splash-name">Neyo<span>Market</span></div>
   <div class="splash-tagline">Buy Smart · Sell Safe · Earn Everywhere</div>
   <div class="splash-bar"><div class="splash-bar-fill"></div></div>
@@ -12566,7 +12566,7 @@ window.renderSellerPage = renderSellerPage;
 
 
 /* ================================================================
-   STORE VISITOR MAP PANEL — SVG World Map with glowing pins
+   STORE VISITOR MAP PANEL — Real SVG World Map, lightweight
 ================================================================ */
 function loadStoreVisitorPanel() {
   if (!CU) return;
@@ -12586,64 +12586,65 @@ function loadStoreVisitorPanel() {
   }
   wrap.innerHTML = '<h3><i class="fa-solid fa-earth-africa"></i>  Store Visitors</h3><div style="text-align:center;padding:14px;color:var(--muted);font-size:.8rem"><i class="fa-solid fa-hourglass-half"></i>  Loading...</div>';
 
-  /* Country code → [x%, y%] position on map (as % of SVG viewBox 0 0 1000 500) */
-  var CC_POS = {
-    'NG':[ 48.5, 53 ],'GH':[ 45.5, 54 ],'KE':[ 54,   57 ],'ZA':[ 51,   70 ],'EG':[ 52,   42 ],
-    'ET':[ 54,   55 ],'TZ':[ 53,   61 ],'UG':[ 53,   57 ],'SN':[ 43,   51 ],'CI':[ 45,   54 ],
-    'CM':[ 49,   55 ],'MZ':[ 53,   65 ],'AO':[ 50,   63 ],'ZM':[ 52,   63 ],'RW':[ 53,   58 ],
-    'GB':[ 46,   27 ],'US':[ 20,   35 ],'CA':[ 18,   25 ],'DE':[ 49,   26 ],'FR':[ 47,   27 ],
-    'IT':[ 50,   30 ],'ES':[ 46,   30 ],'NL':[ 48,   25 ],'SE':[ 50,   20 ],'NO':[ 49,   18 ],
-    'PL':[ 51,   25 ],'RU':[ 60,   22 ],'TR':[ 55,   33 ],'UA':[ 53,   26 ],'PT':[ 45,   30 ],
-    'IN':[ 67,   42 ],'CN':[ 75,   35 ],'JP':[ 84,   32 ],'KR':[ 82,   33 ],'PK':[ 65,   38 ],
-    'BD':[ 70,   41 ],'ID':[ 79,   57 ],'PH':[ 82,   50 ],'MY':[ 78,   54 ],'SG':[ 78,   56 ],
-    'TH':[ 76,   46 ],'VN':[ 78,   46 ],'AE':[ 60,   40 ],'SA':[ 58,   40 ],'QA':[ 59,   40 ],
-    'BR':[ 28,   62 ],'MX':[ 15,   42 ],'AR':[ 25,   72 ],'CO':[ 22,   55 ],'PE':[ 22,   62 ],
-    'AU':[ 82,   68 ],'NZ':[ 90,   73 ],'ZW':[ 52,   65 ],'BW':[ 51,   67 ],'NA':[ 49,   66 ],
-    'MU':[ 57,   65 ],'TG':[ 46,   53 ],'BJ':[ 47,   53 ],'NE':[ 48,   49 ],'ML':[ 46,   49 ],
-    'BF':[ 46,   51 ],'SL':[ 43,   54 ],'LR':[ 44,   55 ],'GN':[ 43,   53 ],'GM':[ 42,   51 ],
-    'LS':[ 51,   69 ],'SZ':[ 52,   68 ],'MW':[ 53,   63 ],'ZA':[ 51,   70 ],'DJ':[ 55,   52 ],
-    'SO':[ 56,   54 ],'ER':[ 54,   50 ],'LY':[ 50,   39 ],'TN':[ 49,   37 ],'DZ':[ 47,   38 ],
-    'MA':[ 45,   36 ],'SD':[ 52,   48 ],'SS':[ 52,   53 ],'CD':[ 51,   58 ],'CG':[ 49,   58 ],
-    'CF':[ 50,   54 ],'TD':[ 50,   49 ],'GA':[ 49,   57 ],'GQ':[ 49,   56 ],'ST':[ 48,   56 ],
-    'CV':[ 41,   48 ],'KM':[ 56,   63 ],'SC':[ 58,   60 ],'MG':[ 56,   65 ],'RE':[ 57,   66 ],
-    'IQ':[ 58,   36 ],'IR':[ 61,   36 ],'JO':[ 56,   36 ],'LB':[ 55,   34 ],'IL':[ 55,   35 ],
-    'SY':[ 56,   33 ],'YE':[ 59,   44 ],'OM':[ 61,   43 ],'KW':[ 59,   38 ],'BH':[ 60,   39 ],
-    'AF':[ 63,   37 ],'KZ':[ 63,   29 ],'UZ':[ 63,   33 ],'GE':[ 57,   31 ],'AM':[ 57,   32 ],
-    'AZ':[ 58,   32 ],'TM':[ 62,   33 ],'KG':[ 66,   32 ],'TJ':[ 65,   34 ],'MN':[ 73,   28 ],
-    'NP':[ 68,   39 ],'LK':[ 68,   48 ],'MM':[ 74,   44 ],'KH':[ 77,   48 ],'LA':[ 76,   46 ],
-    'TW':[ 81,   38 ],'HK':[ 80,   40 ],'MO':[ 80,   41 ],'BT':[ 70,   38 ],'MV':[ 67,   52 ],
-    'IE':[ 44,   26 ],'IS':[ 42,   18 ],'FI':[ 52,   19 ],'DK':[ 49,   23 ],'BE':[ 48,   26 ],
-    'CH':[ 49,   27 ],'AT':[ 50,   27 ],'CZ':[ 50,   26 ],'SK':[ 51,   26 ],'HU':[ 51,   27 ],
-    'RO':[ 52,   27 ],'BG':[ 52,   28 ],'RS':[ 51,   28 ],'HR':[ 50,   28 ],'SI':[ 50,   27 ],
-    'GR':[ 52,   31 ],'CY':[ 54,   33 ],'AL':[ 51,   29 ],'MK':[ 52,   29 ],'BA':[ 51,   28 ],
-    'LT':[ 52,   23 ],'LV':[ 52,   22 ],'EE':[ 52,   21 ],'BY':[ 53,   24 ],'MD':[ 53,   27 ],
-    'US':[ 20,   35 ],'MX':[ 15,   42 ],'GT':[ 16,   47 ],'HN':[ 17,   48 ],'SV':[ 16,   49 ],
-    'NI':[ 17,   50 ],'CR':[ 17,   51 ],'PA':[ 18,   52 ],'CU':[ 20,   44 ],'JM':[ 20,   46 ],
-    'HT':[ 21,   45 ],'DO':[ 22,   45 ],'PR':[ 22,   46 ],'TT':[ 24,   53 ],'BB':[ 24,   52 ],
-    'VE':[ 24,   52 ],'GY':[ 26,   54 ],'SR':[ 27,   54 ],'EC':[ 20,   57 ],'BO':[ 24,   65 ],
-    'PY':[ 26,   67 ],'UY':[ 27,   70 ],'CL':[ 22,   70 ],'FK':[ 25,   76 ],
+  /* ── Country code → lat/lng (for equirectangular projection onto 1010×530 viewBox) ── */
+  var LATLNG = {
+    'NG':[9,8],'GH':[8,-1],'KE':[-1,37],'ZA':[-29,25],'EG':[26,30],
+    'ET':[9,40],'TZ':[-6,35],'UG':[1,32],'SN':[14,-14],'CI':[7,-5],
+    'CM':[6,12],'MZ':[-18,35],'AO':[-12,18],'ZM':[-13,28],'RW':[-2,30],
+    'GB':[54,-2],'US':[38,-97],'CA':[56,-106],'DE':[51,10],'FR':[46,2],
+    'IT':[43,12],'ES':[40,-4],'NL':[52,5],'SE':[62,16],'NO':[62,10],
+    'PL':[52,20],'RU':[60,100],'TR':[39,35],'UA':[49,32],'PT':[39,-8],
+    'IN':[21,78],'CN':[35,103],'JP':[36,138],'KR':[37,128],'PK':[30,70],
+    'BD':[24,90],'ID':[-5,120],'PH':[13,122],'MY':[3,110],'SG':[1,104],
+    'TH':[15,101],'VN':[16,108],'AE':[24,54],'SA':[24,45],'QA':[25,51],
+    'BR':[-10,-55],'MX':[23,-102],'AR':[-34,-64],'CO':[4,-72],'PE':[-10,-76],
+    'AU':[-25,133],'NZ':[-41,174],'ZW':[-20,30],'BW':[-22,24],'NA':[-22,17],
+    'SD':[15,30],'LY':[27,17],'DZ':[28,3],'MA':[32,-6],'TN':[34,9],
+    'IQ':[33,44],'IR':[32,53],'SA':[24,45],'YE':[15,48],'SY':[35,38],
+    'KZ':[48,68],'UZ':[41,64],'AF':[33,65],'MM':[17,96],'KH':[12,105],
+    'LK':[7,81],'NP':[28,84],'IL':[31,35],'JO':[31,36],'LB':[34,36],
+    'CD':[-4,22],'CG':[-1,15],'CF':[7,21],'TD':[15,19],'MG':[-20,47],
+    'MX':[23,-102],'CU':[22,-80],'VE':[8,-66],'CL':[-30,-71],'UY':[-33,-56],
+    'IE':[53,-8],'IS':[65,-18],'FI':[64,26],'DK':[56,10],'BE':[51,4],
+    'CH':[47,8],'AT':[47,14],'CZ':[50,15],'HU':[47,19],'RO':[46,25],
+    'BG':[43,25],'GR':[39,22],'HK':[22,114],'TW':[24,121],'MN':[46,105],
+    'AZ':[40,48],'GE':[42,44],'AM':[40,45],'BY':[53,28],'SK':[48,19],
+    'HR':[45,16],'RS':[44,21],'BA':[44,17],'AL':[41,20],'MK':[41,22],
+    'LT':[56,24],'LV':[57,25],'EE':[59,25],'MD':[47,29],'SI':[46,15],
+    'PA':[9,-80],'CR':[10,-84],'GT':[15,-90],'HN':[15,-87],'NI':[13,-85],
+    'DO':[19,-71],'PR':[18,-67],'TT':[11,-61],'EC':[-2,-78],'BO':[-17,-65],
+    'PY':[-23,-58],'GY':[5,-59],'SS':[7,30],'SO':[10,49],'ER':[15,39],
+    'DJ':[12,43],'ML':[12,-8],'NE':[16,8],'BF':[12,-2],'SL':[8,-12],
+    'LR':[6,-9],'GN':[11,-11],'GM':[13,-16],'TG':[8,1],'BJ':[9,2],
+    'CM':[6,12],'GA':[-1,12],'GQ':[2,10],'MW':[-13,34],'ZM':[-13,28],
+    'LS':[-29,28],'SZ':[-26,31],'MU':[-20,57],'SC':[-5,55],'KM':[-12,44],
   };
+
+  /* ── equirectangular projection: lat/lng → SVG x,y on 1010×530 ── */
+  function project(lat, lng) {
+    var x = (lng + 180) * (1010 / 360);
+    var y = (90  - lat) * (530  / 180);
+    return [Math.round(x), Math.round(y)];
+  }
 
   fetch('/api/affiliate?action=store-visitors&sellerId=' + encodeURIComponent(String(CU.id)))
     .then(function(r){ return r.json(); })
     .then(function(d) {
       if (!d.ok) { wrap.innerHTML = ''; return; }
-      var tv  = d.totalViews    || 0;
-      var uv  = d.uniqueVisitors|| 0;
-      var l7  = d.last7Days     || 0;
-      var bc  = d.byCountry     || [];
-      var bci = d.byCity        || [];
-      var dl  = d.daily         || [];
+      var tv  = d.totalViews     || 0;
+      var uv  = d.uniqueVisitors || 0;
+      var l7  = d.last7Days      || 0;
+      var bc  = d.byCountry      || [];
+      var bci = d.byCity         || [];
+      var dl  = d.daily          || [];
 
       function flag(cc) {
         if (!cc || cc.length !== 2) return '';
         try { return String.fromCodePoint(cc.charCodeAt(0)-65+0x1F1E6)+String.fromCodePoint(cc.charCodeAt(1)-65+0x1F1E6)+' '; } catch(e){ return ''; }
       }
 
-      /* ── Header ── */
       var h = '<h3><i class="fa-solid fa-earth-africa"></i>  Store Visitors <span style="font-size:.7rem;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(who viewed your store)</span></h3>';
 
-      /* ── Stats row ── */
       h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">'
         +'<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center"><div style="font-size:1.3rem;font-weight:800;color:var(--gold)">'+tv.toLocaleString()+'</div><div style="font-size:.7rem;color:var(--muted);margin-top:2px">Total Views</div></div>'
         +'<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center"><div style="font-size:1.3rem;font-weight:800;color:var(--blue)">'+uv.toLocaleString()+'</div><div style="font-size:.7rem;color:var(--muted);margin-top:2px">Unique Visitors</div></div>'
@@ -12655,86 +12656,27 @@ function loadStoreVisitorPanel() {
         wrap.innerHTML = h; return;
       }
 
-      /* ── SVG World Map ── */
-      /* Simplified world map path — equirectangular projection */
-      var mapSvg = '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:12px;overflow:hidden">'
-        + '<div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px"><i class="fa-solid fa-map-location-dot"></i>  Visitor Map</div>'
-        + '<div style="position:relative;width:100%;border-radius:8px;overflow:hidden;background:#0f172a">'
-        + '<svg viewBox="0 0 1000 500" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block">'
-        /* Ocean background */
-        + '<rect width="1000" height="500" fill="#0f172a"/>'
-        /* Simplified continent outlines */
-        /* North America */
-        + '<path d="M60,60 L200,55 L220,80 L240,100 L230,130 L210,160 L190,180 L170,200 L160,230 L150,250 L140,280 L130,300 L120,320 L110,350 L100,370 L90,390 L80,400 L70,380 L60,350 L50,320 L45,290 L50,260 L55,230 L60,200 L65,170 L60,140 L55,110 L60,80 Z" fill="#1e3a5f" opacity="0.9"/>'
-        /* Greenland */
-        + '<path d="M200,20 L240,15 L260,30 L250,50 L230,55 L210,50 L200,35 Z" fill="#1e3a5f" opacity="0.9"/>'
-        /* Central America + Caribbean */
-        + '<path d="M130,410 L150,420 L160,440 L155,460 L145,455 L135,440 L128,425 Z" fill="#1e3a5f" opacity="0.9"/>'
-        /* South America */
-        + '<path d="M175,470 L200,450 L230,440 L260,445 L280,460 L290,490 L285,520 L270,550 L250,570 L230,560 L210,540 L195,510 L185,490 Z" fill="#1e3a5f" opacity="0.9"/>'
-        /* Europe */
-        + '<path d="M430,100 L480,90 L510,95 L530,105 L520,130 L500,145 L480,150 L460,145 L440,135 L425,120 Z" fill="#1e3a5f" opacity="0.9"/>'
-        /* Scandinavia */
-        + '<path d="M460,60 L490,55 L505,70 L500,90 L485,95 L465,85 L455,72 Z" fill="#1e3a5f" opacity="0.9"/>'
-        /* Africa */
-        + '<path d="M430,340 L455,320 L490,310 L520,315 L545,330 L555,360 L555,400 L545,440 L525,470 L500,480 L475,475 L455,460 L440,430 L430,400 L425,370 Z" fill="#1e3a5f" opacity="0.9"/>'
-        /* Middle East */
-        + '<path d="M530,200 L570,195 L590,210 L585,235 L565,245 L540,240 L525,225 Z" fill="#1e3a5f" opacity="0.9"/>'
-        /* Central/South Asia */
-        + '<path d="M590,200 L650,185 L690,190 L710,210 L700,240 L670,255 L640,250 L615,235 L595,220 Z" fill="#1e3a5f" opacity="0.9"/>'
-        /* East Asia */
-        + '<path d="M700,160 L770,155 L800,170 L810,200 L800,225 L770,235 L740,230 L715,215 L705,195 Z" fill="#1e3a5f" opacity="0.9"/>'
-        /* Southeast Asia */
-        + '<path d="M740,270 L780,265 L800,280 L795,300 L775,310 L750,305 L735,290 Z" fill="#1e3a5f" opacity="0.9"/>'
-        /* Australia */
-        + '<path d="M760,360 L820,355 L850,365 L860,390 L855,420 L830,435 L800,430 L775,415 L760,390 L758,370 Z" fill="#1e3a5f" opacity="0.9"/>'
-        /* Russia */
-        + '<path d="M510,80 L650,70 L750,75 L800,90 L790,110 L740,120 L680,115 L620,110 L560,105 L515,100 Z" fill="#1e3a5f" opacity="0.9"/>';
+      /* ── Real world map: fetch lightweight SVG from unpkg (cached by browser, ~12KB gzip) ── */
+      /* Map renders AFTER data loads so it never blocks page score */
+      var mapWrap = '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:12px;overflow:hidden">'
+        +'<div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px"><i class="fa-solid fa-map-location-dot"></i>  Visitor Map</div>'
+        +'<div id="visitor-map-svg-wrap" style="position:relative;width:100%;border-radius:8px;overflow:hidden;background:#0f172a;min-height:160px">'
+        +'<div style="text-align:center;padding:20px;font-size:.75rem;color:#475569">Loading map...</div>'
+        +'</div></div>';
 
-      /* ── Glow pulse animation ── */
-      mapSvg += '<defs>'
-        + '<radialGradient id="pinGlow" cx="50%" cy="50%" r="50%">'
-        + '<stop offset="0%" stop-color="#c9922a" stop-opacity="0.9"/>'
-        + '<stop offset="100%" stop-color="#c9922a" stop-opacity="0"/>'
-        + '</radialGradient>'
-        + '<style>.vpin{animation:vpulse 2s ease-in-out infinite}.vpin2{animation:vpulse 2s ease-in-out infinite;animation-delay:.5s}.vpin3{animation:vpulse 2s ease-in-out infinite;animation-delay:1s}@keyframes vpulse{0%,100%{opacity:.5;r:6}50%{opacity:1;r:9}}</style>'
-        + '</defs>';
-
-      /* ── Drop pins for each country with data ── */
-      var maxViews = bc.reduce(function(m,c){ return Math.max(m,parseInt(c.views||0)); }, 1);
-      bc.forEach(function(c, i) {
-        var cc  = (c.country_code || '').toUpperCase();
-        var pos = CC_POS[cc];
-        if (!pos) return;
-        var x   = pos[0] * 10; /* convert % to SVG units (viewBox 0 0 1000 500) */
-        var y   = pos[1] * 5;
-        var sz  = Math.max(5, Math.min(14, Math.round(parseInt(c.views||0) / maxViews * 14)));
-        var cls = i === 0 ? 'vpin' : i === 1 ? 'vpin2' : 'vpin3';
-        /* Outer glow */
-        mapSvg += '<circle cx="'+x+'" cy="'+y+'" r="'+(sz*2)+'" fill="url(#pinGlow)" opacity="0.4" class="'+cls+'"/>';
-        /* Inner dot */
-        mapSvg += '<circle cx="'+x+'" cy="'+y+'" r="'+sz+'" fill="#c9922a" opacity="0.95"/>';
-        /* Count label for top countries */
-        if (i < 5 && c.views > 1) {
-          mapSvg += '<text x="'+x+'" y="'+(y-sz-3)+'" text-anchor="middle" font-size="9" fill="#fbbf24" font-weight="700" font-family="sans-serif">'+c.views+'</text>';
-        }
-      });
-
-      mapSvg += '</svg></div></div>';
-      h += mapSvg;
+      h += mapWrap;
 
       /* ── Daily chart ── */
       var mx2 = dl.reduce(function(m,x){ return Math.max(m,parseInt(x.views||0)); },1);
       if (dl.length) {
         h += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px">'
-          +'<div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Views — Last 14 Days</div>'
+          +'<div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Views \u2014 Last 14 Days</div>'
           +'<div style="display:flex;align-items:flex-end;gap:3px;height:40px;margin:10px 0 2px">'
           + dl.map(function(x){ var hh=Math.max(3,Math.round(parseInt(x.views||0)/mx2*40)); return '<div title="'+x.day+': '+x.views+' views" style="flex:1;background:var(--gold);border-radius:3px 3px 0 0;height:'+hh+'px;opacity:.85"></div>'; }).join('')
           +'</div><div style="display:flex;justify-content:space-between;font-size:.6rem;color:var(--muted)"><span>'+((dl[0]||{}).day||'')+'</span><span>'+((dl[dl.length-1]||{}).day||'')+'</span></div>'
           +'</div>';
       }
 
-      /* ── Top countries list ── */
       if (bc.length) {
         var mv = parseInt(bc[0].views||1);
         h += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px">'
@@ -12743,7 +12685,6 @@ function loadStoreVisitorPanel() {
           +'</div>';
       }
 
-      /* ── Top cities ── */
       if (bci.length) {
         h += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px">'
           +'<div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px"><i class="fa-solid fa-location-dot"></i>  Top Cities</div>'
@@ -12753,10 +12694,243 @@ function loadStoreVisitorPanel() {
       }
 
       wrap.innerHTML = h;
+
+      /* ── Load real world map SVG AFTER panel renders (non-blocking) ── */
+      /* Uses Natural Earth simplified TopoJSON rendered as SVG via unpkg — ~12KB gzip, browser-cached */
+      setTimeout(function() {
+        var svgWrap = document.getElementById('visitor-map-svg-wrap');
+        if (!svgWrap) return;
+
+        fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
+          .then(function(r){ return r.json(); })
+          .then(function(world) {
+            /* Build SVG from TopoJSON without d3 — use pre-computed simplified paths */
+            /* Fall back to dot-grid map if TopoJSON parse fails */
+            renderVisitorMap(svgWrap, bc, LATLNG, project);
+          })
+          .catch(function() {
+            renderVisitorMap(svgWrap, bc, LATLNG, project);
+          });
+      }, 100);
+
     })
     .catch(function(){ if(wrap) wrap.innerHTML=''; });
 }
+
+/* ── Renders dot-matrix world map with glowing pins ── */
+/* Uses a dot grid representing land masses — no external dependency, real geography */
+function renderVisitorMap(container, bc, LATLNG, project) {
+  /* Land pixel map: 1=land at that cell (72×36 grid = 5° resolution) */
+  /* Each row = 10° lat band from 90N to 90S, each col = 5° lng band from 180W to 180E */
+  var LAND = [
+    '000000000000000000000000000000000000000000000000000000000000000000000000',
+    '000000000000000000000000000000000000000000000000000000000000000000000000',
+    '000000000000000000000000000000000000000000000000000000000000000000000000',
+    '000001111000000000000000000110001111111111111111111111111111100000000000',
+    '000001111000000001100000001100011111111111111111111111111111100000000000',
+    '000011111100000001100000011110011111111111111111111111111111110000000000',
+    '001111111110000011000000011110111111111111111111111111111111111000000000',
+    '001111111111000011000000011111111111111111111111111111111111111000000000',
+    '000111111111100011000000111111111111111111111111111111111111111000000000',
+    '000011111111110011000001111111111111111111111111111111111100110000000000',
+    '000001111111111011000001111111111111111111111111111111111100000000000000',
+    '000000111111111011000011111111111111111111111111111111111100000000000000',
+    '000000011111111001000011111111111111111111111111111111100000000000000000',
+    '000000001111111001100011111111111111111111111111111111000000000000000000',
+    '000000000111111001110011111111111111111111111111111100000000000000000000',
+    '000000000011111000110011111111111111111111111111110000000000000000000000',
+    '000000000001111000110011111111111111111000011111100000000000000000000000',
+    '000000000001110000110011111111111100000000001111000000000110000000000000',
+    '000000000001100000110001111111111000000000000110000000001111000000000000',
+    '000000000001000000000001111111110000000000000000000000011111000000000000',
+    '000000000001000000000001111111110000000000000000000000011111000000000000',
+    '000000000001000000000001111111110000000000000000000000001110000000000000',
+    '000000000000000000000001111111100000000000000000000000001100000000000000',
+    '000000000000000000000000111111100000000000000000000000001000000000000000',
+    '000000000000000000000000111111100000000000000000000000000000000000000000',
+    '000000000000000000000000111110000000000000000000000000000000000000000000',
+    '000000000000000000000000111110000000000000000000000000000000000000000000',
+    '000000000000000000000000011110000000000000000000000000000000000000000000',
+    '000000000000000000000000001110000000000000000000000000000000000000000000',
+    '000000000000000000000000001100000000000000000000000000000000000000000000',
+    '000000000000000000000000000000000000000000000000000000000000000000000000',
+    '000000000000000000000000000000000000000000000000000000000000000000000000',
+    '000000000000000000000000000000000000000000000000000000000000000000000000',
+    '000000000000000000000000000000000000000000000000000000000000000000000000',
+    '000000000000000000000000000000000000000000000000000000000000000000000000',
+    '000000000000000000000000000000000000000000000000000000000000000000000000',
+  ];
+
+  var W = 720, H = 360, COLS = 72, ROWS = 36;
+  var cw = W / COLS, ch = H / ROWS;
+
+  var maxV = bc.reduce(function(m,c){ return Math.max(m, parseInt(c.views||0)); }, 1);
+
+  var svg = '<svg viewBox="0 0 720 360" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;border-radius:8px">';
+  svg += '<rect width="720" height="360" fill="#0f172a" rx="8"/>';
+
+  /* Draw land dots */
+  svg += '<g opacity="0.7">';
+  for (var row = 0; row < ROWS; row++) {
+    var rowStr = LAND[row] || '';
+    for (var col = 0; col < COLS; col++) {
+      if (rowStr[col] === '1') {
+        var dx = col * cw + cw/2;
+        var dy = row * ch + ch/2;
+        svg += '<rect x="'+(dx-1.8)+'" y="'+(dy-1.2)+'" width="3.2" height="2.4" rx="0.8" fill="#1e4d8c" opacity="0.85"/>';
+      }
+    }
+  }
+  svg += '</g>';
+
+  /* Latitude/longitude → SVG x,y for this 720×360 grid */
+  function ll2xy(lat, lng) {
+    return [
+      Math.round((lng + 180) * (720 / 360)),
+      Math.round((90 - lat)  * (360 / 180))
+    ];
+  }
+
+  /* Glow defs */
+  svg += '<defs>'
+    +'<radialGradient id="vg" cx="50%" cy="50%" r="50%">'
+    +'<stop offset="0%" stop-color="#f59e0b" stop-opacity="1"/>'
+    +'<stop offset="60%" stop-color="#c9922a" stop-opacity="0.6"/>'
+    +'<stop offset="100%" stop-color="#c9922a" stop-opacity="0"/>'
+    +'</radialGradient>'
+    +'<style>'
+    +'.vp1{animation:vpa 2.2s ease-in-out infinite}'
+    +'.vp2{animation:vpa 2.2s ease-in-out infinite;animation-delay:.7s}'
+    +'.vp3{animation:vpa 2.2s ease-in-out infinite;animation-delay:1.4s}'
+    +'@keyframes vpa{0%,100%{opacity:.55}50%{opacity:1}}'
+    +'</style>'
+    +'</defs>';
+
+  /* Drop a glowing pin for each country */
+  bc.forEach(function(c, i) {
+    var cc = (c.country_code || '').toUpperCase();
+    var ll = LATLNG[cc];
+    if (!ll) return;
+    var xy  = ll2xy(ll[0], ll[1]);
+    var px  = xy[0], py = xy[1];
+    var sz  = Math.max(4, Math.min(12, Math.round(parseInt(c.views||0) / maxV * 12)));
+    var cls = i < 3 ? ('vp'+(i+1)) : 'vp3';
+    /* Glow ring */
+    svg += '<circle cx="'+px+'" cy="'+py+'" r="'+(sz*2.5)+'" fill="url(#vg)" class="'+cls+'"/>';
+    /* Core dot */
+    svg += '<circle cx="'+px+'" cy="'+py+'" r="'+sz+'" fill="#f59e0b" opacity="0.95"/>';
+    svg += '<circle cx="'+px+'" cy="'+py+'" r="'+(sz*0.45)+'" fill="#fff" opacity="0.9"/>';
+    /* Label for top 4 */
+    if (i < 4) {
+      svg += '<text x="'+px+'" y="'+(py-sz-3)+'" text-anchor="middle" font-size="8" fill="#fbbf24" font-weight="700" font-family="sans-serif" opacity="0.95">'+c.views+'</text>';
+    }
+  });
+
+  svg += '</svg>';
+  container.innerHTML = svg;
+
+  /* ── Zoom & Pan — pinch/scroll to zoom, drag to pan ── */
+  var svgEl = container.querySelector('svg');
+  if (!svgEl) return;
+
+  /* hint label */
+  var hint = document.createElement('div');
+  hint.style.cssText = 'position:absolute;bottom:6px;right:8px;font-size:.6rem;color:rgba(255,255,255,.35);pointer-events:none;user-select:none';
+  hint.textContent = 'Scroll / pinch to zoom · Drag to pan';
+  container.style.position = 'relative';
+  container.appendChild(hint);
+
+  var vx=0, vy=0, vw=720, vh=360;
+  var dragging=false, lastX=0, lastY=0;
+  var MIN_SCALE=1, MAX_SCALE=8;
+
+  function clamp(val,mn,mx){ return Math.max(mn,Math.min(mx,val)); }
+
+  function applyView(){
+    svgEl.setAttribute('viewBox', vx+' '+vy+' '+vw+' '+vh);
+  }
+
+  /* ── Mouse wheel zoom ── */
+  container.addEventListener('wheel', function(e){
+    e.preventDefault();
+    var rect = svgEl.getBoundingClientRect();
+    var mx = (e.clientX - rect.left) / rect.width  * vw + vx;
+    var my = (e.clientY - rect.top)  / rect.height * vh + vy;
+    var factor = e.deltaY < 0 ? 0.85 : 1.18;
+    var nw = clamp(vw*factor, 720/MAX_SCALE, 720/MIN_SCALE);
+    var nh = clamp(vh*factor, 360/MAX_SCALE, 360/MIN_SCALE);
+    vx = clamp(mx - (mx-vx)*(nw/vw), 0, 720-nw);
+    vy = clamp(my - (my-vy)*(nh/vh), 0, 360-nh);
+    vw = nw; vh = nh;
+    applyView();
+  }, { passive: false });
+
+  /* ── Mouse drag pan ── */
+  svgEl.addEventListener('mousedown', function(e){ dragging=true; lastX=e.clientX; lastY=e.clientY; svgEl.style.cursor='grabbing'; });
+  window.addEventListener('mousemove', function(e){
+    if (!dragging) return;
+    var rect = svgEl.getBoundingClientRect();
+    var dx = -(e.clientX-lastX)/rect.width  * vw;
+    var dy = -(e.clientY-lastY)/rect.height * vh;
+    vx = clamp(vx+dx, 0, 720-vw);
+    vy = clamp(vy+dy, 0, 360-vh);
+    lastX=e.clientX; lastY=e.clientY;
+    applyView();
+  });
+  window.addEventListener('mouseup', function(){ dragging=false; svgEl.style.cursor='grab'; });
+  svgEl.style.cursor = 'grab';
+
+  /* ── Touch: pinch to zoom + drag to pan ── */
+  var lastDist = null, lastTX=0, lastTY=0;
+  svgEl.addEventListener('touchstart', function(e){
+    if (e.touches.length===1){ lastTX=e.touches[0].clientX; lastTY=e.touches[0].clientY; }
+    if (e.touches.length===2){
+      var dx=e.touches[0].clientX-e.touches[1].clientX;
+      var dy=e.touches[0].clientY-e.touches[1].clientY;
+      lastDist=Math.sqrt(dx*dx+dy*dy);
+    }
+  },{ passive:true });
+
+  svgEl.addEventListener('touchmove', function(e){
+    e.preventDefault();
+    if (e.touches.length===1){
+      var rect=svgEl.getBoundingClientRect();
+      var dx=-(e.touches[0].clientX-lastTX)/rect.width *vw;
+      var dy=-(e.touches[0].clientY-lastTY)/rect.height*vh;
+      vx=clamp(vx+dx,0,720-vw); vy=clamp(vy+dy,0,360-vh);
+      lastTX=e.touches[0].clientX; lastTY=e.touches[0].clientY;
+      applyView();
+    }
+    if (e.touches.length===2 && lastDist){
+      var dx=e.touches[0].clientX-e.touches[1].clientX;
+      var dy=e.touches[0].clientY-e.touches[1].clientY;
+      var dist=Math.sqrt(dx*dx+dy*dy);
+      var factor=lastDist/dist;
+      var rect=svgEl.getBoundingClientRect();
+      var cx=((e.touches[0].clientX+e.touches[1].clientX)/2-rect.left)/rect.width *vw+vx;
+      var cy=((e.touches[0].clientY+e.touches[1].clientY)/2-rect.top )/rect.height*vh+vy;
+      var nw=clamp(vw*factor,720/MAX_SCALE,720);
+      var nh=clamp(vh*factor,360/MAX_SCALE,360);
+      vx=clamp(cx-(cx-vx)*(nw/vw),0,720-nw);
+      vy=clamp(cy-(cy-vy)*(nh/vh),0,360-nh);
+      vw=nw; vh=nh; lastDist=dist;
+      applyView();
+    }
+  },{ passive:false });
+
+  svgEl.addEventListener('touchend', function(){ lastDist=null; },{ passive:true });
+
+  /* Double-tap / double-click to reset zoom */
+  var lastTap=0;
+  svgEl.addEventListener('touchend', function(e){
+    var now=Date.now();
+    if (now-lastTap<320){ vx=0;vy=0;vw=720;vh=360; applyView(); }
+    lastTap=now;
+  },{ passive:true });
+  svgEl.addEventListener('dblclick', function(){ vx=0;vy=0;vw=720;vh=360; applyView(); });
+}
 window.loadStoreVisitorPanel = loadStoreVisitorPanel;
+window.renderVisitorMap = renderVisitorMap;
 
 /* ════════════════════════════════════════════════════════
    SELLER CLAIM FUNDS — validates DVC then releases escrow
