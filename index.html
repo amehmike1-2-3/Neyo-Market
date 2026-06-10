@@ -12566,7 +12566,7 @@ window.renderSellerPage = renderSellerPage;
 
 
 /* ================================================================
-   STORE VISITOR MAP — Payhip-style choropleth, real country shapes
+   STORE VISITOR MAP — Real world map via TopoJSON + D3 projection
 ================================================================ */
 function loadStoreVisitorPanel() {
   if (!CU) return;
@@ -12604,7 +12604,6 @@ function loadStoreVisitorPanel() {
 
       var h = '<h3><i class="fa-solid fa-earth-africa"></i>  Store Visitors <span style="font-size:.7rem;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(who viewed your store)</span></h3>';
 
-      /* Stats */
       h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">'
         +'<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center"><div style="font-size:1.3rem;font-weight:800;color:var(--gold)">'+tv.toLocaleString()+'</div><div style="font-size:.7rem;color:var(--muted);margin-top:2px">Total Views</div></div>'
         +'<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center"><div style="font-size:1.3rem;font-weight:800;color:var(--blue)">'+uv.toLocaleString()+'</div><div style="font-size:.7rem;color:var(--muted);margin-top:2px">Unique Visitors</div></div>'
@@ -12616,158 +12615,27 @@ function loadStoreVisitorPanel() {
         wrap.innerHTML = h; return;
       }
 
-      /* Build country views lookup */
-      var viewMap = {};
-      var maxV = 0;
-      bc.forEach(function(c){ 
-        if (c.country_code) { 
-          viewMap[c.country_code.toUpperCase()] = parseInt(c.views||0); 
-          maxV = Math.max(maxV, parseInt(c.views||0)); 
-        } 
+      /* Build views lookup */
+      var viewMap = {}, maxV = 0;
+      bc.forEach(function(c){
+        if (c.country_code) {
+          viewMap[c.country_code.toUpperCase()] = parseInt(c.views||0);
+          maxV = Math.max(maxV, parseInt(c.views||0));
+        }
       });
 
-      /* Map container */
       h += '<div style="background:#1a1a2e;border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:12px">'
-        +'<div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px"><i class="fa-solid fa-map-location-dot"></i>  Visits Map <span style="font-weight:400;text-transform:none">· The countries your visitors are based in</span></div>'
-        +'<div style="position:relative" id="vmap-outer">'
-        +'<div id="vmap-tooltip" style="display:none;position:absolute;background:rgba(0,0,0,.85);color:#fff;padding:6px 10px;border-radius:6px;font-size:.75rem;font-weight:600;pointer-events:none;z-index:10;white-space:nowrap;border:1px solid rgba(255,255,255,.15)"></div>'
-        +'<svg id="vmap-svg" viewBox="0 0 2000 1001" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;background:#1a1a2e;border-radius:8px">'
-        /* Ocean */
-        +'<rect width="2000" height="1001" fill="#1a1a2e"/>'
-        /* All countries as paths — Natural Earth 110m simplified */
-        +'<g id="vmap-countries" stroke="#2d2d4e" stroke-width="0.5">'
-
-        /* Africa */
-        +'<path id="c-NG" d="M1030,520 L1060,515 L1075,530 L1070,560 L1045,565 L1025,550 Z"/>'
-        +'<path id="c-GH" d="M985,510 L1010,508 L1015,525 L1005,545 L985,540 L978,525 Z"/>'
-        +'<path id="c-CI" d="M960,510 L985,510 L978,525 L985,540 L965,538 L950,525 Z"/>'
-        +'<path id="c-SN" d="M905,470 L930,468 L935,480 L920,492 L905,488 L900,478 Z"/>'
-        +'<path id="c-CM" d="M1060,490 L1085,485 L1090,510 L1075,530 L1060,515 L1055,498 Z"/>'
-        +'<path id="c-EG" d="M1095,390 L1145,388 L1148,430 L1095,432 Z"/>'
-        +'<path id="c-ET" d="M1145,480 L1185,475 L1195,510 L1170,525 L1140,518 L1135,495 Z"/>'
-        +'<path id="c-KE" d="M1165,525 L1200,520 L1205,555 L1180,565 L1155,555 L1150,535 Z"/>'
-        +'<path id="c-TZ" d="M1155,555 L1195,550 L1198,590 L1165,598 L1148,578 Z"/>'
-        +'<path id="c-ZA" d="M1060,680 L1120,675 L1130,720 L1095,740 L1055,728 L1042,700 Z"/>'
-        +'<path id="c-MZ" d="M1130,610 L1155,605 L1165,660 L1140,680 L1120,675 L1118,640 Z"/>'
-        +'<path id="c-AO" d="M1045,575 L1085,570 L1090,620 L1060,630 L1038,615 Z"/>'
-        +'<path id="c-CD" d="M1075,530 L1130,525 L1138,580 L1095,590 L1060,580 L1055,548 Z"/>'
-        +'<path id="c-SD" d="M1095,432 L1148,430 L1155,470 L1125,480 L1095,475 Z"/>'
-        +'<path id="c-LY" d="M1030,380 L1095,378 L1095,432 L1030,432 Z"/>'
-        +'<path id="c-DZ" d="M960,370 L1030,368 L1030,432 L960,430 Z"/>'
-        +'<path id="c-MA" d="M920,370 L960,370 L960,410 L920,412 Z"/>'
-        +'<path id="c-TN" d="M1005,352 L1030,350 L1030,380 L1008,382 Z"/>'
-        +'<path id="c-ZM" d="M1085,588 L1130,585 L1132,625 L1095,630 L1078,615 Z"/>'
-        +'<path id="c-ZW" d="M1110,635 L1140,632 L1142,665 L1115,668 L1105,652 Z"/>'
-        +'<path id="c-MG" d="M1185,610 L1205,605 L1210,660 L1190,668 L1175,648 Z"/>'
-        +'<path id="c-ML" d="M930,435 L985,432 L988,470 L960,478 L928,472 Z"/>'
-        +'<path id="c-NE" d="M985,432 L1045,430 L1048,468 L1010,472 L988,470 Z"/>'
-        +'<path id="c-TD" d="M1048,440 L1095,438 L1095,475 L1060,480 L1045,465 Z"/>'
-        +'<path id="c-SO" d="M1195,488 L1220,475 L1225,520 L1205,535 L1188,518 Z"/>'
-        +'<path id="c-BF" d="M960,468 L988,465 L990,490 L965,492 L952,480 Z"/>'
-        +'<path id="c-GN" d="M920,490 L945,488 L948,508 L928,512 L915,500 Z"/>'
-        +'<path id="c-GA" d="M1042,540 L1065,538 L1068,562 L1045,565 L1038,550 Z"/>'
-        +'<path id="c-SS" d="M1095,475 L1145,472 L1148,510 L1115,518 L1090,510 Z"/>'
-        +'<path id="c-RW" d="M1148,548 L1165,545 L1168,562 L1150,565 L1142,555 Z"/>'
-        +'<path id="c-UG" d="M1145,515 L1175,512 L1178,542 L1150,548 L1138,532 Z"/>'
-        +'<path id="c-NA" d="M1035,648 L1075,645 L1078,688 L1048,695 L1030,672 Z"/>'
-        +'<path id="c-BW" d="M1075,655 L1110,652 L1112,690 L1080,698 L1068,678 Z"/>'
-
-        /* Europe */
-        +'<path id="c-GB" d="M930,295 L952,290 L958,318 L940,325 L922,315 Z"/>'
-        +'<path id="c-FR" d="M955,318 L995,315 L998,348 L968,355 L952,340 Z"/>'
-        +'<path id="c-DE" d="M995,295 L1030,292 L1033,325 L1003,330 L992,315 Z"/>'
-        +'<path id="c-ES" d="M920,330 L960,328 L962,365 L922,368 Z"/>'
-        +'<path id="c-IT" d="M998,325 L1025,322 L1028,368 L1005,375 L992,352 Z"/>'
-        +'<path id="c-PL" d="M1025,275 L1065,272 L1068,308 L1028,312 Z"/>'
-        +'<path id="c-UA" d="M1055,278 L1110,275 L1113,308 L1058,312 Z"/>'
-        +'<path id="c-SE" d="M1005,230 L1032,225 L1035,270 L1008,274 Z"/>'
-        +'<path id="c-NO" d="M978,215 L1010,210 L1012,255 L980,258 Z"/>'
-        +'<path id="c-FI" d="M1030,220 L1060,215 L1062,258 L1032,262 Z"/>'
-        +'<path id="c-RO" d="M1055,308 L1088,305 L1090,335 L1058,338 Z"/>'
-        +'<path id="c-PT" d="M900,330 L922,328 L924,365 L902,368 Z"/>'
-        +'<path id="c-BE" d="M958,298 L980,295 L982,318 L960,320 Z"/>'
-        +'<path id="c-NL" d="M970,280 L992,278 L994,300 L972,302 Z"/>'
-        +'<path id="c-CH" d="M975,325 L1000,322 L1002,342 L976,344 Z"/>'
-        +'<path id="c-AT" d="M1000,308 L1030,305 L1032,328 L1002,330 Z"/>'
-        +'<path id="c-GR" d="M1038,348 L1065,345 L1068,375 L1040,378 Z"/>'
-        +'<path id="c-TR" d="M1068,330 L1125,325 L1128,358 L1070,362 Z"/>'
-        +'<path id="c-BY" d="M1052,260 L1088,257 L1090,285 L1054,288 Z"/>'
-        +'<path id="c-CZ" d="M1005,288 L1032,285 L1034,308 L1007,310 Z"/>'
-        +'<path id="c-HU" d="M1020,318 L1052,315 L1054,338 L1022,340 Z"/>'
-        +'<path id="c-RS" d="M1032,328 L1058,325 L1060,348 L1034,350 Z"/>'
-        +'<path id="c-IE" d="M910,288 L930,285 L932,308 L912,310 Z"/>'
-        +'<path id="c-DK" d="M988,255 L1008,252 L1010,278 L990,280 Z"/>'
-
-        /* Russia */
-        +'<path id="c-RU" d="M1065,175 L1600,160 L1610,280 L1400,295 L1200,285 L1070,278 Z"/>'
-
-        /* Middle East & Central Asia */
-        +'<path id="c-SA" d="M1125,395 L1185,390 L1195,440 L1160,455 L1122,445 Z"/>'
-        +'<path id="c-IR" d="M1145,338 L1205,332 L1210,385 L1158,392 Z"/>'
-        +'<path id="c-IQ" d="M1115,328 L1150,325 L1155,368 L1118,372 Z"/>'
-        +'<path id="c-AE" d="M1188,418 L1215,415 L1218,438 L1190,440 Z"/>'
-        +'<path id="c-AF" d="M1205,300 L1255,295 L1260,338 L1208,342 Z"/>'
-        +'<path id="c-PK" d="M1235,308 L1295,302 L1300,360 L1238,365 Z"/>'
-        +'<path id="c-KZ" d="M1205,230 L1330,222 L1335,280 L1208,288 Z"/>'
-        +'<path id="c-UZ" d="M1235,268 L1295,262 L1298,298 L1238,302 Z"/>'
-        +'<path id="c-YE" d="M1140,445 L1195,440 L1198,472 L1142,475 Z"/>'
-        +'<path id="c-SY" d="M1095,318 L1128,315 L1130,338 L1098,340 Z"/>'
-        +'<path id="c-JO" d="M1095,338 L1125,335 L1128,358 L1098,360 Z"/>'
-        +'<path id="c-IL" d="M1082,338 L1098,335 L1100,360 L1083,362 Z"/>'
-
-        /* South Asia */
-        +'<path id="c-IN" d="M1295,358 L1380,350 L1388,445 L1335,468 L1288,450 Z"/>'
-        +'<path id="c-BD" d="M1378,368 L1408,362 L1412,398 L1380,402 Z"/>'
-        +'<path id="c-LK" d="M1335,468 L1358,465 L1360,498 L1338,500 Z"/>'
-        +'<path id="c-NP" d="M1335,338 L1385,332 L1388,358 L1338,362 Z"/>'
-
-        /* East & SE Asia */
-        +'<path id="c-CN" d="M1380,250 L1545,238 L1552,360 L1395,372 L1378,315 Z"/>'
-        +'<path id="c-JP" d="M1580,270 L1612,265 L1618,318 L1585,322 Z"/>'
-        +'<path id="c-KR" d="M1548,290 L1578,285 L1580,320 L1550,322 Z"/>'
-        +'<path id="c-TH" d="M1448,398 L1485,392 L1490,440 L1452,445 Z"/>'
-        +'<path id="c-VN" d="M1488,375 L1518,368 L1522,430 L1490,435 Z"/>'
-        +'<path id="c-MY" d="M1488,445 L1538,438 L1542,470 L1490,475 Z"/>'
-        +'<path id="c-ID" d="M1488,482 L1620,472 L1625,515 L1490,520 Z"/>'
-        +'<path id="c-PH" d="M1558,385 L1595,378 L1600,435 L1560,440 Z"/>'
-        +'<path id="c-MM" d="M1415,345 L1455,338 L1460,395 L1418,400 Z"/>'
-        +'<path id="c-KH" d="M1488,415 L1522,408 L1525,445 L1490,448 Z"/>'
-        +'<path id="c-TW" d="M1558,355 L1580,350 L1582,378 L1560,380 Z"/>'
-        +'<path id="c-MN" d="M1418,222 L1548,212 L1552,258 L1420,265 Z"/>'
-
-        /* Americas */
-        +'<path id="c-US" d="M310,295 L595,285 L600,398 L315,405 Z"/>'
-        +'<path id="c-CA" d="M258,155 L685,140 L690,290 L260,298 Z"/>'
-        +'<path id="c-MX" d="M260,398 L395,390 L402,455 L268,462 Z"/>'
-        +'<path id="c-BR" d="M455,488 L665,478 L672,648 L458,658 Z"/>'
-        +'<path id="c-AR" d="M455,648 L555,642 L560,775 L458,780 Z"/>'
-        +'<path id="c-CO" d="M375,468 L438,462 L442,518 L378,522 Z"/>'
-        +'<path id="c-VE" d="M418,455 L490,448 L495,488 L420,492 Z"/>'
-        +'<path id="c-PE" d="M358,528 L428,520 L432,618 L360,622 Z"/>'
-        +'<path id="c-CL" d="M415,618 L448,612 L455,775 L418,778 Z"/>'
-        +'<path id="c-EC" d="M345,500 L385,495 L388,535 L348,538 Z"/>'
-        +'<path id="c-BO" d="M415,555 L478,548 L482,618 L418,622 Z"/>'
-        +'<path id="c-PY" d="M458,618 L508,612 L512,658 L460,662 Z"/>'
-        +'<path id="c-UY" d="M500,658 L545,652 L548,688 L502,692 Z"/>'
-        +'<path id="c-GY" d="M490,465 L528,458 L532,498 L492,502 Z"/>'
-        +'<path id="c-CU" d="M352,415 L415,408 L418,438 L355,442 Z"/>'
-
-        /* Australia & NZ */
-        +'<path id="c-AU" d="M1548,572 L1775,558 L1782,718 L1552,728 Z"/>'
-        +'<path id="c-NZ" d="M1795,695 L1838,688 L1842,748 L1798,752 Z"/>'
-
-        /* Greenland */
-        +'<path id="c-GL" d="M658,108 L830,95 L838,215 L662,222 Z"/>'
-
-        +'</g>'
-        +'</svg>'
-        /* Scale bar */
-        +'<div style="display:flex;align-items:center;gap:8px;margin-top:8px;padding:0 4px">'
-        +'<span style="font-size:.65rem;color:var(--muted)">1</span>'
-        +'<div style="flex:1;height:6px;border-radius:3px;background:linear-gradient(to right,#14532d,#16a34a,#4ade80)"></div>'
-        +'<span id="vmap-maxlabel" style="font-size:.65rem;color:var(--muted)">0</span>'
+        +'<div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px"><i class="fa-solid fa-map-location-dot"></i>  Visits Map <span style="font-weight:400;text-transform:none;letter-spacing:0">· The countries your visitors are based in</span></div>'
+        +'<div id="vmap-container" style="position:relative;width:100%;border-radius:8px;overflow:hidden;background:#1a1a2e;min-height:200px">'
+        +'<div id="vmap-tooltip" style="display:none;position:fixed;background:rgba(15,15,30,.95);color:#fff;padding:7px 12px;border-radius:7px;font-size:.75rem;font-weight:600;pointer-events:none;z-index:9999;white-space:nowrap;border:1px solid rgba(74,222,128,.3);box-shadow:0 4px 12px rgba(0,0,0,.5)"></div>'
+        +'<canvas id="vmap-canvas" style="width:100%;display:block;border-radius:8px"></canvas>'
         +'</div>'
-        +'</div></div>';
+        +'<div style="display:flex;align-items:center;gap:8px;margin-top:8px;padding:0 2px">'
+        +'<span style="font-size:.62rem;color:var(--muted)">Low</span>'
+        +'<div style="flex:1;height:5px;border-radius:3px;background:linear-gradient(to right,#14532d,#16a34a,#4ade80)"></div>'
+        +'<span style="font-size:.62rem;color:var(--muted)">High</span>'
+        +'</div>'
+        +'</div>';
 
       /* Daily chart */
       var mx2 = dl.reduce(function(m,x){ return Math.max(m,parseInt(x.views||0)); },1);
@@ -12800,97 +12668,291 @@ function loadStoreVisitorPanel() {
 
       wrap.innerHTML = h;
 
-      /* ── Colour countries after render ── */
+      /* ── Draw real map using Canvas + TopoJSON ── */
+      /* Load topojson lib + world data, draw proper country shapes */
       setTimeout(function() {
-        var svg = document.getElementById('vmap-svg');
+        var canvas = document.getElementById('vmap-canvas');
         var tooltip = document.getElementById('vmap-tooltip');
-        var maxLabel = document.getElementById('vmap-maxlabel');
-        if (!svg) return;
-        if (maxLabel) maxLabel.textContent = maxV;
+        if (!canvas) return;
 
-        /* Country name lookup */
+        /* Set canvas resolution */
+        var W = canvas.parentElement.offsetWidth || 340;
+        var H = Math.round(W * 0.52);
+        canvas.width  = W * 2; /* retina */
+        canvas.height = H * 2;
+        canvas.style.width  = W + 'px';
+        canvas.style.height = H + 'px';
+        var ctx = canvas.getContext('2d');
+        ctx.scale(2, 2);
+
         var CNAMES = {
-          'NG':'Nigeria','GH':'Ghana','KE':'Kenya','ZA':'South Africa','EG':'Egypt',
-          'ET':'Ethiopia','TZ':'Tanzania','UG':'Uganda','SN':'Senegal','CI':'Côte d\'Ivoire',
-          'CM':'Cameroon','MZ':'Mozambique','AO':'Angola','ZM':'Zambia','RW':'Rwanda',
-          'GB':'United Kingdom','US':'United States','CA':'Canada','DE':'Germany','FR':'France',
-          'IT':'Italy','ES':'Spain','NL':'Netherlands','SE':'Sweden','NO':'Norway',
-          'PL':'Poland','RU':'Russia','TR':'Turkey','UA':'Ukraine','PT':'Portugal',
-          'IN':'India','CN':'China','JP':'Japan','KR':'South Korea','PK':'Pakistan',
-          'BD':'Bangladesh','ID':'Indonesia','PH':'Philippines','MY':'Malaysia','SG':'Singapore',
-          'TH':'Thailand','VN':'Vietnam','AE':'UAE','SA':'Saudi Arabia','QA':'Qatar',
-          'BR':'Brazil','MX':'Mexico','AR':'Argentina','CO':'Colombia','PE':'Peru',
-          'AU':'Australia','NZ':'New Zealand','ZW':'Zimbabwe','BW':'Botswana','NA':'Namibia',
-          'SD':'Sudan','LY':'Libya','DZ':'Algeria','MA':'Morocco','TN':'Tunisia',
-          'IQ':'Iraq','IR':'Iran','YE':'Yemen','SY':'Syria','JO':'Jordan','IL':'Israel',
-          'AF':'Afghanistan','KZ':'Kazakhstan','UZ':'Uzbekistan','CD':'DR Congo',
-          'ML':'Mali','NE':'Niger','TD':'Chad','SO':'Somalia','SS':'South Sudan',
-          'BF':'Burkina Faso','GN':'Guinea','GA':'Gabon','MG':'Madagascar',
-          'CL':'Chile','EC':'Ecuador','BO':'Bolivia','PY':'Paraguay','UY':'Uruguay',
-          'GY':'Guyana','VE':'Venezuela','CU':'Cuba','CU':'Cuba',
-          'BE':'Belgium','NL':'Netherlands','CH':'Switzerland','AT':'Austria',
-          'CZ':'Czech Republic','HU':'Hungary','RS':'Serbia','IE':'Ireland',
-          'DK':'Denmark','RO':'Romania','GR':'Greece','BY':'Belarus','FI':'Finland',
-          'MM':'Myanmar','KH':'Cambodia','TW':'Taiwan','MN':'Mongolia','KH':'Cambodia',
-          'GL':'Greenland','LK':'Sri Lanka','NP':'Nepal',
+          'AF':'Afghanistan','AL':'Albania','DZ':'Algeria','AO':'Angola','AR':'Argentina',
+          'AU':'Australia','AT':'Austria','AZ':'Azerbaijan','BS':'Bahamas','BD':'Bangladesh',
+          'BY':'Belarus','BE':'Belgium','BJ':'Benin','BO':'Bolivia','BA':'Bosnia',
+          'BW':'Botswana','BR':'Brazil','BG':'Bulgaria','BF':'Burkina Faso','BI':'Burundi',
+          'KH':'Cambodia','CM':'Cameroon','CA':'Canada','CF':'Central African Rep.',
+          'TD':'Chad','CL':'Chile','CN':'China','CO':'Colombia','CD':'DR Congo',
+          'CG':'Congo','CR':'Costa Rica','HR':'Croatia','CU':'Cuba','CZ':'Czech Republic',
+          'DK':'Denmark','DJ':'Djibouti','DO':'Dominican Rep.','EC':'Ecuador','EG':'Egypt',
+          'SV':'El Salvador','GQ':'Eq. Guinea','ER':'Eritrea','EE':'Estonia','ET':'Ethiopia',
+          'FI':'Finland','FR':'France','GA':'Gabon','GM':'Gambia','GE':'Georgia',
+          'DE':'Germany','GH':'Ghana','GR':'Greece','GT':'Guatemala','GN':'Guinea',
+          'GW':'Guinea-Bissau','GY':'Guyana','HT':'Haiti','HN':'Honduras','HU':'Hungary',
+          'IS':'Iceland','IN':'India','ID':'Indonesia','IR':'Iran','IQ':'Iraq',
+          'IE':'Ireland','IL':'Israel','IT':'Italy','CI':"Côte d'Ivoire",'JM':'Jamaica',
+          'JP':'Japan','JO':'Jordan','KZ':'Kazakhstan','KE':'Kenya','KR':'South Korea',
+          'KW':'Kuwait','KG':'Kyrgyzstan','LA':'Laos','LV':'Latvia','LB':'Lebanon',
+          'LS':'Lesotho','LR':'Liberia','LY':'Libya','LT':'Lithuania','MG':'Madagascar',
+          'MW':'Malawi','MY':'Malaysia','ML':'Mali','MR':'Mauritania','MX':'Mexico',
+          'MD':'Moldova','MN':'Mongolia','MA':'Morocco','MZ':'Mozambique','MM':'Myanmar',
+          'NA':'Namibia','NP':'Nepal','NL':'Netherlands','NZ':'New Zealand','NI':'Nicaragua',
+          'NE':'Niger','NG':'Nigeria','NO':'Norway','OM':'Oman','PK':'Pakistan',
+          'PA':'Panama','PG':'Papua New Guinea','PY':'Paraguay','PE':'Peru',
+          'PH':'Philippines','PL':'Poland','PT':'Portugal','PR':'Puerto Rico',
+          'QA':'Qatar','RO':'Romania','RU':'Russia','RW':'Rwanda','SA':'Saudi Arabia',
+          'SN':'Senegal','RS':'Serbia','SL':'Sierra Leone','SO':'Somalia','ZA':'South Africa',
+          'SS':'South Sudan','ES':'Spain','LK':'Sri Lanka','SD':'Sudan','SR':'Suriname',
+          'SZ':'Swaziland','SE':'Sweden','CH':'Switzerland','SY':'Syria','TW':'Taiwan',
+          'TJ':'Tajikistan','TZ':'Tanzania','TH':'Thailand','TL':'Timor-Leste',
+          'TG':'Togo','TT':'Trinidad and Tobago','TN':'Tunisia','TR':'Turkey',
+          'TM':'Turkmenistan','UG':'Uganda','UA':'Ukraine','AE':'UAE',
+          'GB':'United Kingdom','US':'United States','UY':'Uruguay','UZ':'Uzbekistan',
+          'VE':'Venezuela','VN':'Vietnam','YE':'Yemen','ZM':'Zambia','ZW':'Zimbabwe',
+          'GL':'Greenland','NC':'New Caledonia','SB':'Solomon Islands',
         };
 
-        function getColor(views) {
-          if (!views || views === 0) return '#2d2d4e';
-          var pct = Math.min(views / maxV, 1);
-          if (pct < 0.25) return '#14532d';
-          if (pct < 0.5)  return '#166534';
-          if (pct < 0.75) return '#16a34a';
+        function getColor(cc) {
+          var v = viewMap[cc] || 0;
+          if (!v) return '#2a2a4a';
+          var p = Math.min(v / maxV, 1);
+          if (p < 0.2)  return '#14532d';
+          if (p < 0.45) return '#166534';
+          if (p < 0.7)  return '#16a34a';
           return '#4ade80';
         }
 
-        /* Paint all countries base colour */
-        var paths = svg.querySelectorAll('[id^="c-"]');
-        paths.forEach(function(path) {
-          var cc = path.id.replace('c-','');
-          var views = viewMap[cc] || 0;
-          path.style.fill = getColor(views);
-          path.style.cursor = views > 0 ? 'pointer' : 'default';
+        /* Equirectangular projection */
+        function project(lon, lat) {
+          var x = (lon + 180) * (W / 360);
+          var y = (90 - lat)  * (H / 180);
+          return [x, y];
+        }
 
-          /* Tooltip */
-          path.addEventListener('mouseenter', function(e) {
-            if (!tooltip) return;
-            var name = CNAMES[cc] || cc;
-            var v = viewMap[cc] || 0;
-            tooltip.innerHTML = '<strong>' + name + '</strong>' + (v ? '<br/>Views: <span style="color:#4ade80;font-weight:800">' + v + '</span>' : '');
-            tooltip.style.display = 'block';
+        /* Store paths for hit-testing */
+        var countryPaths = [];
+
+        function drawGeo(features) {
+          features.forEach(function(f) {
+            var cc = (f.id && String(f.id).length === 3)
+              ? iso3toIso2(String(f.id))
+              : (f.properties && f.properties.iso_a2 ? f.properties.iso_a2 : null);
+            var color = getColor(cc || '');
+            ctx.beginPath();
+            drawGeometry(f.geometry);
+            ctx.fillStyle = color;
+            ctx.fill();
+            ctx.strokeStyle = '#0f0f2a';
+            ctx.lineWidth = 0.4;
+            ctx.stroke();
+            if (cc) countryPaths.push({ cc: cc, feature: f });
           });
-          path.addEventListener('mousemove', function(e) {
-            if (!tooltip) return;
-            var outer = document.getElementById('vmap-outer');
-            if (!outer) return;
-            var rect = outer.getBoundingClientRect();
-            var tx = e.clientX - rect.left + 10;
-            var ty = e.clientY - rect.top - 30;
-            tooltip.style.left = tx + 'px';
-            tooltip.style.top  = ty + 'px';
+        }
+
+        function drawGeometry(geom) {
+          if (!geom) return;
+          if (geom.type === 'Polygon') {
+            drawRings(geom.coordinates);
+          } else if (geom.type === 'MultiPolygon') {
+            geom.coordinates.forEach(function(poly){ drawRings(poly); });
+          }
+        }
+
+        function drawRings(rings) {
+          rings.forEach(function(ring, ri) {
+            if (ri === 0) ctx.moveTo.apply(ctx, project(ring[0][0], ring[0][1]));
+            else ctx.moveTo.apply(ctx, project(ring[0][0], ring[0][1]));
+            for (var i = 1; i < ring.length; i++) {
+              ctx.lineTo.apply(ctx, project(ring[i][0], ring[i][1]));
+            }
+            ctx.closePath();
           });
-          path.addEventListener('mouseleave', function() {
-            if (tooltip) tooltip.style.display = 'none';
+        }
+
+        /* ISO 3166-1 alpha-3 to alpha-2 lookup */
+        var ISO3 = {
+          'AFG':'AF','ALB':'AL','DZA':'DZ','AGO':'AO','ARG':'AR','ARM':'AM','AUS':'AU',
+          'AUT':'AT','AZE':'AZ','BHS':'BS','BGD':'BD','BLR':'BY','BEL':'BE','BLZ':'BZ',
+          'BEN':'BJ','BTN':'BT','BOL':'BO','BIH':'BA','BWA':'BW','BRA':'BR','BRN':'BN',
+          'BGR':'BG','BFA':'BF','BDI':'BI','CPV':'CV','KHM':'KH','CMR':'CM','CAN':'CA',
+          'CAF':'CF','TCD':'TD','CHL':'CL','CHN':'CN','COL':'CO','COM':'KM','COD':'CD',
+          'COG':'CG','CRI':'CR','HRV':'HR','CUB':'CU','CYP':'CY','CZE':'CZ','DNK':'DK',
+          'DJI':'DJ','DOM':'DO','ECU':'EC','EGY':'EG','SLV':'SV','GNQ':'GQ','ERI':'ER',
+          'EST':'EE','SWZ':'SZ','ETH':'ET','FJI':'FJ','FIN':'FI','FRA':'FR','GAB':'GA',
+          'GMB':'GM','GEO':'GE','DEU':'DE','GHA':'GH','GRC':'GR','GRL':'GL','GTM':'GT',
+          'GIN':'GN','GNB':'GW','GUY':'GY','HTI':'HT','HND':'HN','HUN':'HU','ISL':'IS',
+          'IND':'IN','IDN':'ID','IRN':'IR','IRQ':'IQ','IRL':'IE','ISR':'IL','ITA':'IT',
+          'JAM':'JM','JPN':'JP','JOR':'JO','KAZ':'KZ','KEN':'KE','PRK':'KP','KOR':'KR',
+          'KWT':'KW','KGZ':'KG','LAO':'LA','LVA':'LV','LBN':'LB','LSO':'LS','LBR':'LR',
+          'LBY':'LY','LTU':'LT','MDG':'MG','MWI':'MW','MYS':'MY','MDV':'MV','MLI':'ML',
+          'MRT':'MR','MEX':'MX','MDA':'MD','MNG':'MN','MNE':'ME','MAR':'MA','MOZ':'MZ',
+          'MMR':'MM','NAM':'NA','NPL':'NP','NLD':'NL','NZL':'NZ','NIC':'NI','NER':'NE',
+          'NGA':'NG','MKD':'MK','NOR':'NO','OMN':'OM','PAK':'PK','PAN':'PA','PNG':'PG',
+          'PRY':'PY','PER':'PE','PHL':'PH','POL':'PL','PRT':'PT','QAT':'QA','ROU':'RO',
+          'RUS':'RU','RWA':'RW','SAU':'SA','SEN':'SN','SRB':'RS','SLE':'SL','SGP':'SG',
+          'SVK':'SK','SVN':'SI','SOM':'SO','ZAF':'ZA','SSD':'SS','ESP':'ES','LKA':'LK',
+          'SDN':'SD','SUR':'SR','SWE':'SE','CHE':'CH','SYR':'SY','TWN':'TW','TJK':'TJ',
+          'TZA':'TZ','THA':'TH','TLS':'TL','TGO':'TG','TTO':'TT','TUN':'TN','TUR':'TR',
+          'TKM':'TM','UGA':'UG','UKR':'UA','ARE':'AE','GBR':'GB','USA':'US','URY':'UY',
+          'UZB':'UZ','VEN':'VE','VNM':'VN','YEM':'YE','ZMB':'ZM','ZWE':'ZW','CIV':'CI',
+          'NCL':'NC','SLB':'SB','VUT':'VU','WSM':'WS','TON':'TO','FJI':'FJ',
+        };
+        function iso3toIso2(a3){ return ISO3[a3] || null; }
+
+        /* Fetch real world GeoJSON — Natural Earth 110m, ~90KB, browser-cached */
+        fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
+          .then(function(r){ return r.json(); })
+          .then(function(topo) {
+            /* Convert TopoJSON → GeoJSON manually (no lib needed) */
+            var countries = topoToGeo(topo, topo.objects.countries);
+            ctx.clearRect(0, 0, W, H);
+            /* Ocean background */
+            ctx.fillStyle = '#1a1a2e';
+            ctx.fillRect(0, 0, W, H);
+            drawGeo(countries.features);
+
+            /* Mouse/touch interaction */
+            function getCountryAt(px, py) {
+              /* Re-test using point-in-polygon on projected coords */
+              for (var i = countryPaths.length - 1; i >= 0; i--) {
+                var f = countryPaths[i];
+                var geom = f.feature.geometry;
+                if (pointInGeoFeature(px, py, geom)) return f.cc;
+              }
+              return null;
+            }
+
+            canvas.addEventListener('mousemove', function(e) {
+              var rect = canvas.getBoundingClientRect();
+              var px = (e.clientX - rect.left);
+              var py = (e.clientY - rect.top);
+              var cc = getCountryAt(px, py);
+              if (cc && (viewMap[cc] || CNAMES[cc])) {
+                var name = CNAMES[cc] || cc;
+                var v = viewMap[cc] || 0;
+                tooltip.innerHTML = '<strong>' + name + '</strong>' + (v ? ' &nbsp;<span style="color:#4ade80">' + v + ' view' + (v!==1?'s':'') + '</span>' : '');
+                tooltip.style.display = 'block';
+                tooltip.style.left = (e.clientX + 14) + 'px';
+                tooltip.style.top  = (e.clientY - 36) + 'px';
+              } else {
+                tooltip.style.display = 'none';
+              }
+            });
+            canvas.addEventListener('mouseleave', function(){ tooltip.style.display='none'; });
+            canvas.addEventListener('click', function(e) {
+              var rect = canvas.getBoundingClientRect();
+              var cc = getCountryAt(e.clientX - rect.left, e.clientY - rect.top);
+              if (cc && viewMap[cc]) {
+                var name = CNAMES[cc] || cc;
+                tooltip.innerHTML = '<strong>' + name + '</strong> &nbsp;<span style="color:#4ade80">' + viewMap[cc] + ' view' + (viewMap[cc]!==1?'s':'') + '</span>';
+                tooltip.style.display = 'block';
+                tooltip.style.left = (e.clientX + 14) + 'px';
+                tooltip.style.top  = (e.clientY - 36) + 'px';
+                setTimeout(function(){ tooltip.style.display='none'; }, 2500);
+              }
+            });
+          })
+          .catch(function(err) {
+            console.warn('Map load failed:', err);
+            var c2 = document.getElementById('vmap-container');
+            if (c2) c2.innerHTML = '<div style="text-align:center;padding:30px;font-size:.8rem;color:var(--muted)"><i class="fa-solid fa-map-location-dot"></i>  Map unavailable offline</div>';
           });
-          /* Touch tap tooltip */
-          path.addEventListener('click', function(e) {
-            if (!tooltip) return;
-            var name = CNAMES[cc] || cc;
-            var v = viewMap[cc] || 0;
-            if (!v) return;
-            tooltip.innerHTML = '<strong>' + name + '</strong><br/>Views: <span style="color:#4ade80;font-weight:800">' + v + '</span>';
-            var outer = document.getElementById('vmap-outer');
-            var rect = outer ? outer.getBoundingClientRect() : {left:0,top:0};
-            tooltip.style.left = (e.clientX - rect.left + 10) + 'px';
-            tooltip.style.top  = (e.clientY - rect.top  - 30) + 'px';
-            tooltip.style.display = 'block';
-            setTimeout(function(){ tooltip.style.display='none'; }, 2500);
-          });
-        });
-      }, 50);
+      }, 80);
     })
     .catch(function(){ if(wrap) wrap.innerHTML=''; });
+}
+
+/* ── Minimal TopoJSON → GeoJSON converter (no library needed) ── */
+function topoToGeo(topology, object) {
+  var arcs = topology.arcs;
+  var scale = topology.transform ? topology.transform.scale : [1,1];
+  var translate = topology.transform ? topology.transform.translate : [0,0];
+
+  /* Decode delta-encoded arc */
+  function decodeArc(arcIdx) {
+    var reverse = arcIdx < 0;
+    var arc = arcs[reverse ? ~arcIdx : arcIdx];
+    var coords = [], x = 0, y = 0;
+    arc.forEach(function(pt) {
+      x += pt[0]; y += pt[1];
+      coords.push([x * scale[0] + translate[0], y * scale[1] + translate[1]]);
+    });
+    if (reverse) coords.reverse();
+    return coords;
+  }
+
+  function stitchArcs(arcIdxList) {
+    var ring = [];
+    arcIdxList.forEach(function(idx) {
+      var coords = decodeArc(idx);
+      if (ring.length) coords = coords.slice(1);
+      ring = ring.concat(coords);
+    });
+    return ring;
+  }
+
+  function convertGeometry(geom) {
+    if (geom.type === 'Polygon') {
+      return { type:'Polygon', coordinates: geom.arcs.map(stitchArcs) };
+    } else if (geom.type === 'MultiPolygon') {
+      return { type:'MultiPolygon', coordinates: geom.arcs.map(function(poly){ return poly.map(stitchArcs); }) };
+    }
+    return geom;
+  }
+
+  var features = object.geometries.map(function(geom) {
+    return {
+      type: 'Feature',
+      id: geom.id,
+      properties: geom.properties || {},
+      geometry: convertGeometry(geom)
+    };
+  });
+
+  return { type:'FeatureCollection', features: features };
+}
+
+/* ── Point-in-polygon test for canvas hit detection ── */
+function pointInGeoFeature(px, py, geom) {
+  if (!geom) return false;
+  function testPolygon(rings) {
+    var inside = false;
+    var outer = rings[0];
+    for (var i = 0, j = outer.length-1; i < outer.length; j = i++) {
+      var xi = outer[i][0], yi = outer[i][1];
+      var xj = outer[j][0], yj = outer[j][1];
+      if (((yi>py) !== (yj>py)) && (px < (xj-xi)*(py-yi)/(yj-yi)+xi)) inside = !inside;
+    }
+    return inside;
+  }
+  /* Project coords for hit test */
+  var W2 = (document.getElementById('vmap-canvas')||{offsetWidth:340}).offsetWidth || 340;
+  var H2 = Math.round(W2*0.52);
+  function proj(c){ return [(c[0]+180)*(W2/360), (90-c[1])*(H2/180)]; }
+
+  function testGeom(g) {
+    if (g.type==='Polygon') {
+      var projected = g.coordinates.map(function(r){ return r.map(proj); });
+      return testPolygon(projected);
+    }
+    if (g.type==='MultiPolygon') {
+      return g.coordinates.some(function(poly){
+        var projected = poly.map(function(r){ return r.map(proj); });
+        return testPolygon(projected);
+      });
+    }
+    return false;
+  }
+  return testGeom(geom);
 }
 window.loadStoreVisitorPanel = loadStoreVisitorPanel;
 
