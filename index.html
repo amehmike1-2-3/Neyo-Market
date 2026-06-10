@@ -5199,6 +5199,30 @@ nav:not(.bottom-nav){
         <textarea class="fi" id="s-bio" rows="3" placeholder="Tell buyers about yourself — your expertise, experience, what you sell..."></textarea>
       </div>
 
+      <!-- ═══ PROMO / COUPON CODE ═══ -->
+      <div class="dc" style="margin-top:14px">
+        <h3><i class="fa-solid fa-tag"></i>  Promo Code <span style="font-size:.7rem;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(optional — give buyers a discount code for this product)</span></h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+          <div class="fg" style="margin-bottom:0">
+            <label>Code <span style="font-size:.7rem;font-weight:400;text-transform:none">(e.g. SAVE10)</span></label>
+            <input class="fi" type="text" id="s-coupon-code" placeholder="e.g. SUMMER20" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'')"/>
+          </div>
+          <div class="fg" style="margin-bottom:0">
+            <label>Discount Type</label>
+            <select class="fi" id="s-coupon-type">
+              <option value="">-- No discount --</option>
+              <option value="percent">Percentage (e.g. 10%)</option>
+              <option value="fixed">Fixed Amount (e.g. ₦500)</option>
+            </select>
+          </div>
+        </div>
+        <div class="fg" id="s-coupon-value-wrap" style="display:none;margin-bottom:0">
+          <label id="s-coupon-value-label">Discount Value</label>
+          <input class="fi" type="number" id="s-coupon-value" placeholder="e.g. 10" min="1"/>
+          <p class="hint" id="s-coupon-hint">Enter the discount amount.</p>
+        </div>
+      </div>
+
       <!-- ═══ COURSE LESSONS (shown when type=course) ═══ -->
       <div id="lessons-wrap" style="display:none">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
@@ -7452,7 +7476,10 @@ function submitProduct() {
     fileUrl:        null,   /* filled below if digital upload succeeds */
     lessons:        (document.getElementById('s-type') && document.getElementById('s-type').value === 'course') ? getLessons() : [],
     condition:      gv('s-condition') || null,  /* NEW: capture condition (new/used) */
-    variants:       getVariants()               /* NEW: product variants */
+    variants:       getVariants(),               /* NEW: product variants */
+    couponCode:     gv('s-coupon-code')  || null,
+    couponType:     gv('s-coupon-type')  || null,
+    couponValue:    parseFloat(gv('s-coupon-value') || '0') || null,
   };
 
   var pType = payload.type;
@@ -7781,6 +7808,11 @@ function resetSell() {
   ['s-name','s-type','s-cat','s-price','s-currency','s-comm','s-desc','s-email','s-discount-price','s-sale-ends','s-shipping-fee'].forEach(function (id) { sval(id, ''); });
   var vc = document.getElementById('variants-container'); if (vc) vc.innerHTML = '';
   variantCount = 0;
+  /* Reset coupon fields */
+  var cc = document.getElementById('s-coupon-code'); if (cc) cc.value = '';
+  var ct = document.getElementById('s-coupon-type'); if (ct) ct.value = '';
+  var cv = document.getElementById('s-coupon-value'); if (cv) cv.value = '';
+  var cw = document.getElementById('s-coupon-value-wrap'); if (cw) cw.style.display = 'none';
   var cb = document.getElementById('sell-cb'); if (cb) cb.checked = false;
   var dw = document.getElementById('dfile-wrap'); if (dw) dw.style.display = 'none';
   var fn = document.getElementById('dfile-name'); if (fn) fn.textContent = 'Tap to Choose File';
@@ -7968,8 +8000,38 @@ function getVariants() {
 }
 window.getVariants = getVariants;
 
-/* ═══ VARIANT SELECTION ═══ */
-var selectedVariants = {}; /* productId → variantName */
+/* ═══ COUPON TYPE TOGGLE ═══ */
+(function() {
+  function initCouponToggle() {
+    var typeEl = document.getElementById('s-coupon-type');
+    if (!typeEl) return;
+    typeEl.addEventListener('change', function() {
+      var wrap  = document.getElementById('s-coupon-value-wrap');
+      var label = document.getElementById('s-coupon-value-label');
+      var hint  = document.getElementById('s-coupon-hint');
+      var inp   = document.getElementById('s-coupon-value');
+      if (!wrap) return;
+      if (this.value === 'percent') {
+        wrap.style.display = 'block';
+        if (label) label.textContent = 'Discount % (1–90)';
+        if (hint)  hint.textContent  = 'e.g. 10 = 10% off';
+        if (inp)   { inp.min = '1'; inp.max = '90'; inp.placeholder = 'e.g. 10'; }
+      } else if (this.value === 'fixed') {
+        wrap.style.display = 'block';
+        if (label) label.textContent = 'Discount Amount (₦)';
+        if (hint)  hint.textContent  = 'e.g. 500 = ₦500 off';
+        if (inp)   { inp.min = '1'; inp.max = ''; inp.placeholder = 'e.g. 500'; }
+      } else {
+        wrap.style.display = 'none';
+      }
+    });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initCouponToggle);
+  } else {
+    initCouponToggle();
+  }
+})();
 
 function selectVariant(productId, variantIdx, btn) {
   var p = prods.find(function(x){ return String(x.id) === String(productId); });
@@ -8439,6 +8501,15 @@ window.clearFeaturedSeller = function() {
 function openStorefront(sellerName) {
   if (!sellerName) return;
   go('store');
+
+  /* Track this store visit — fire and forget, non-fatal */
+  try {
+    fetch('/api/affiliate?action=track-store-view', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sellerId: String(sellerName).trim(), page: 'store' })
+    }).catch(function(){});
+  } catch(e) {}
 
   /* Fetch seller's active products from existing API */
   var encodedName = encodeURIComponent(sellerName.trim());
@@ -9563,7 +9634,27 @@ function applyPromo() {
 
   if (!code) { toast('Enter a promo code', 'warn'); return; }
 
+  /* Check global platform codes first */
   var promo = window.PROMO_CODES[code];
+
+  /* If not found globally, check product-level seller coupons on cart items */
+  if (!promo) {
+    for (var ci = 0; ci < cart.length; ci++) {
+      var item = cart[ci];
+      if (item.couponCode && item.couponCode.toUpperCase() === code
+          && item.couponType && item.couponValue) {
+        promo = {
+          type:  item.couponType,
+          value: parseFloat(item.couponValue),
+          label: item.couponType === 'percent'
+            ? item.couponValue + '% off'
+            : '\u20a6' + parseFloat(item.couponValue).toLocaleString() + ' off'
+        };
+        break;
+      }
+    }
+  }
+
   if (!promo) {
     appliedPromo = null;
     if (msgEl)   { msgEl.style.display='block'; msgEl.style.color='#dc2626'; msgEl.innerHTML = '<i class="fa-solid fa-circle-xmark"><\/i>  Invalid promo code'; }
@@ -9594,7 +9685,7 @@ function applyPromo() {
   if (discAmt) discAmt.textContent = '-' + sym + discount.toLocaleString();
   if (finalEl) finalEl.textContent = sym + newTotal.toLocaleString();
 
-  toast('?? Promo code applied! ' + promo.label, 'ok');
+  toast('\U0001f389 Promo code applied! ' + promo.label, 'ok');
 }
 window.applyPromo = applyPromo;
 
@@ -12463,8 +12554,80 @@ function renderSellerPage() {
               + '</div></div>';
           }).join(''));
   }
+  /* Load store visitor analytics */
+  loadStoreVisitorPanel();
 }
 window.renderSellerPage = renderSellerPage;
+
+
+/* ================================================================
+   STORE VISITOR MAP PANEL
+================================================================ */
+function loadStoreVisitorPanel() {
+  if (!CU) return;
+  var wrap = document.getElementById('sel-visitors-panel');
+  if (!wrap) {
+    var selDash = document.getElementById('page-seller');
+    if (!selDash) return;
+    wrap = document.createElement('div');
+    wrap.className = 'dc';
+    wrap.id = 'sel-visitors-panel';
+    wrap.style.marginTop = '20px';
+    var ordWrap = document.getElementById('sel-orders-wrap');
+    var dw = selDash.querySelector('.dw');
+    if (!dw) return;
+    if (ordWrap) dw.insertBefore(wrap, ordWrap);
+    else dw.appendChild(wrap);
+  }
+  wrap.innerHTML = '<h3><i class="fa-solid fa-earth-africa"></i>  Store Visitors</h3><div style="text-align:center;padding:14px;color:var(--muted);font-size:.8rem"><i class="fa-solid fa-hourglass-half"></i>  Loading...</div>';
+  fetch('/api/affiliate?action=store-visitors&sellerId=' + encodeURIComponent(String(CU.id)))
+    .then(function(r){ return r.json(); })
+    .then(function(d) {
+      if (!d.ok) { wrap.innerHTML = ''; return; }
+      var tv = d.totalViews || 0, uv = d.uniqueVisitors || 0, l7 = d.last7Days || 0;
+      var bc = d.byCountry || [], bci = d.byCity || [], dl = d.daily || [];
+      function flag(cc) {
+        if (!cc || cc.length !== 2) return '';
+        try { return String.fromCodePoint(cc.charCodeAt(0)-65+0x1F1E6)+String.fromCodePoint(cc.charCodeAt(1)-65+0x1F1E6)+' '; } catch(e){ return ''; }
+      }
+      var mx = dl.reduce(function(m,x){ return Math.max(m,parseInt(x.views||0)); },1);
+      var bars = dl.length
+        ? '<div style="display:flex;align-items:flex-end;gap:3px;height:40px;margin:10px 0 2px">'
+          + dl.map(function(x){ var h=Math.max(3,Math.round(parseInt(x.views||0)/mx*40)); return '<div title="'+x.day+': '+x.views+' views" style="flex:1;background:var(--gold);border-radius:3px 3px 0 0;height:'+h+'px;opacity:.85"></div>'; }).join('')
+          + '</div><div style="display:flex;justify-content:space-between;font-size:.6rem;color:var(--muted)"><span>'+((dl[0]||{}).day||'')+'</span><span>'+((dl[dl.length-1]||{}).day||'')+'</span></div>'
+        : '<div style="font-size:.78rem;color:var(--muted);padding:8px 0">No views recorded yet.</div>';
+      var h = '<h3><i class="fa-solid fa-earth-africa"></i>  Store Visitors <span style="font-size:.7rem;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(who viewed your store)</span></h3>';
+      h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">'
+        +'<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center"><div style="font-size:1.3rem;font-weight:800;color:var(--gold)">'+tv.toLocaleString()+'</div><div style="font-size:.7rem;color:var(--muted);margin-top:2px">Total Views</div></div>'
+        +'<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center"><div style="font-size:1.3rem;font-weight:800;color:var(--blue)">'+uv.toLocaleString()+'</div><div style="font-size:.7rem;color:var(--muted);margin-top:2px">Unique Visitors</div></div>'
+        +'<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center"><div style="font-size:1.3rem;font-weight:800;color:var(--green)">'+l7.toLocaleString()+'</div><div style="font-size:.7rem;color:var(--muted);margin-top:2px">Last 7 Days</div></div>'
+        +'</div>';
+      if (tv === 0) {
+        h += '<div style="text-align:center;padding:16px;font-size:.82rem;color:var(--muted)"><i class="fa-solid fa-map-location-dot"></i>  Share your store link to start seeing visitor locations!</div>';
+        wrap.innerHTML = h; return;
+      }
+      h += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px">'
+        +'<div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Views - Last 14 Days</div>'
+        +bars+'</div>';
+      if (bc.length) {
+        var mv = parseInt(bc[0].views||1);
+        h += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px">'
+          +'<div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px"><i class="fa-solid fa-flag"></i>  Top Countries</div>'
+          + bc.map(function(c){ var pct=Math.round(parseInt(c.views||0)/mv*100); return '<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px"><span style="font-size:.8rem;font-weight:600">'+flag(c.country_code)+(c.country||'Unknown')+'</span><span style="font-size:.76rem;color:var(--muted);font-weight:700">'+c.views+' view'+(c.views!=1?'s':'')+'</span></div><div style="background:var(--bg3);border-radius:20px;height:5px"><div style="background:var(--gold);border-radius:20px;height:100%;width:'+pct+'%"></div></div></div>'; }).join('')
+          +'</div>';
+      }
+      if (bci.length) {
+        h += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px">'
+          +'<div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px"><i class="fa-solid fa-location-dot"></i>  Top Cities</div>'
+          +'<div style="display:flex;flex-wrap:wrap;gap:6px">'
+          + bci.map(function(c){ return '<div style="background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:4px 10px;font-size:.74rem;font-weight:600">'+(c.city||'Unknown')+(c.country?' <span style="color:var(--muted);font-weight:400">· '+c.country+'</span>':'')+' <span style="color:var(--gold);font-weight:700">'+c.views+'</span></div>'; }).join('')
+          +'</div></div>';
+      }
+      wrap.innerHTML = h;
+    })
+    .catch(function(){ if(wrap) wrap.innerHTML=''; });
+}
+window.loadStoreVisitorPanel = loadStoreVisitorPanel;
 
 /* ════════════════════════════════════════════════════════
    SELLER CLAIM FUNDS — validates DVC then releases escrow
