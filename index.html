@@ -12615,14 +12615,49 @@ function loadStoreVisitorPanel() {
         wrap.innerHTML = h; return;
       }
 
-      /* Build views lookup */
+      /* Build views lookup — robust: handles 2-letter code, full-name code, or country field */
       var viewMap = {}, maxV = 0;
+      var NAME2CC = {
+        'nigeria':'NG','united kingdom':'GB','uk':'GB','great britain':'GB',
+        'united states':'US','usa':'US','united states of america':'US',
+        'ghana':'GH','kenya':'KE','south africa':'ZA','canada':'CA','germany':'DE',
+        'france':'FR','india':'IN','china':'CN','australia':'AU','brazil':'BR',
+        'pakistan':'PK','indonesia':'ID','bangladesh':'BD','russia':'RU','mexico':'MX',
+        'ethiopia':'ET','philippines':'PH','egypt':'EG','vietnam':'VN','iran':'IR',
+        'turkey':'TR','thailand':'TH','tanzania':'TZ','uganda':'UG','cameroon':'CM',
+        "ivory coast":'CI',"cote d'ivoire":'CI','senegal':'SN','zambia':'ZM',
+        'zimbabwe':'ZW','rwanda':'RW','mozambique':'MZ','mali':'ML','niger':'NE',
+        'burkina faso':'BF','malawi':'MW','somalia':'SO','chad':'TD','benin':'BJ',
+        'togo':'TG','sierra leone':'SL','liberia':'LR','namibia':'NA','botswana':'BW',
+        'gambia':'GM','gabon':'GA','angola':'AO','sudan':'SD','south sudan':'SS',
+        'eritrea':'ER','italy':'IT','spain':'ES','portugal':'PT','netherlands':'NL',
+        'belgium':'BE','sweden':'SE','norway':'NO','denmark':'DK','finland':'FI',
+        'poland':'PL','ukraine':'UA','romania':'RO','czech republic':'CZ',
+        'hungary':'HU','greece':'GR','austria':'AT','switzerland':'CH','ireland':'IE',
+        'saudi arabia':'SA','uae':'AE','united arab emirates':'AE','qatar':'QA',
+        'kuwait':'KW','jordan':'JO','iraq':'IQ','israel':'IL','malaysia':'MY',
+        'singapore':'SG','myanmar':'MM','nepal':'NP','sri lanka':'LK',
+        'afghanistan':'AF','japan':'JP','south korea':'KR','taiwan':'TW',
+        'new zealand':'NZ','argentina':'AR','colombia':'CO','peru':'PE',
+        'chile':'CL','ecuador':'EC','venezuela':'VE'
+      };
       bc.forEach(function(c){
-        if (c.country_code) {
-          viewMap[c.country_code.toUpperCase()] = parseInt(c.views||0);
-          maxV = Math.max(maxV, parseInt(c.views||0));
+        var views = parseInt(c.views||0);
+        var cc = null;
+        if (c.country_code && c.country_code.length === 2) {
+          cc = c.country_code.toUpperCase();
+        } else if (c.country_code && c.country_code.length > 2) {
+          cc = NAME2CC[c.country_code.toLowerCase()] || null;
+        }
+        if (!cc && c.country) {
+          cc = NAME2CC[c.country.toLowerCase()] || null;
+        }
+        if (cc) {
+          viewMap[cc] = (viewMap[cc] || 0) + views;
+          maxV = Math.max(maxV, viewMap[cc]);
         }
       });
+      if (maxV === 0) maxV = 1;
 
       h += '<div style="background:#0f1120;border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:12px">'
         +'<div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px"><i class="fa-solid fa-map-location-dot"></i>  Visits Map <span style="font-weight:400;text-transform:none;letter-spacing:0">· Countries your visitors are from</span></div>'
