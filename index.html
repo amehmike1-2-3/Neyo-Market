@@ -7808,6 +7808,7 @@ function resetSell() {
   ['s-name','s-type','s-cat','s-price','s-currency','s-comm','s-desc','s-email','s-discount-price','s-sale-ends','s-shipping-fee'].forEach(function (id) { sval(id, ''); });
   var vc = document.getElementById('variants-container'); if (vc) vc.innerHTML = '';
   variantCount = 0;
+  selectedVariants = {}; /* clear variant selections on form reset */
   /* Reset coupon fields */
   var cc = document.getElementById('s-coupon-code'); if (cc) cc.value = '';
   var ct = document.getElementById('s-coupon-type'); if (ct) ct.value = '';
@@ -7971,7 +7972,7 @@ function mkCard(p) {
 }
 /* ═══ PRODUCT VARIANTS ═══ */
 var variantCount = 0;
-var selectedVariants = {}; /* tracks selected variant per product id */
+var selectedVariants = {}; /* tracks selected variant per product — declared here to avoid ReferenceError */
 function addVariant() {
   variantCount++;
   var id = 'variant-' + variantCount;
@@ -8052,11 +8053,11 @@ function selectVariant(productId, variantIdx, btn) {
   btn.style.background  = 'rgba(201,146,42,.1)';
   btn.style.color       = 'var(--gold)';
 
-  if (typeof selectedVariants === 'undefined') selectedVariants = {};
-selectedVariants[productId] = vars[variantIdx].name || variant;
+  var variantName = vars[variantIdx].name || String(variantIdx);
+  selectedVariants[productId] = variantName;
   var label = document.getElementById('variant-selected-' + productId);
-  if (label) label.innerHTML = '<i class="fa-solid fa-check"><\/i>  Selected: ' + (vars[variantIdx] ? vars[variantIdx].name : variant);
-  }
+  if (label) label.innerHTML = '<i class="fa-solid fa-check"><\/i>  Selected: ' + variantName;
+}
 window.selectVariant = selectVariant;
 
 function addCartWithVariant(productId) {
@@ -8068,7 +8069,7 @@ function addCartWithVariant(productId) {
   if (!Array.isArray(vars)) vars = [];
 
   /* If product has variants, require selection */
-  if (vars.length > 0 && (typeof selectedVariants === 'undefined' || !selectedVariants[productId])) {
+  if (vars.length > 0 && (!selectedVariants[productId])) {
     toast('Please select an option first (e.g. color, size).', 'warn');
     return;
   }
@@ -8084,7 +8085,7 @@ function addCartWithVariant(productId) {
   }
 
   /* Attach variant to all newly added items */
-  if (typeof selectedVariants !== 'undefined' && selectedVariants[productId]) {
+  if (selectedVariants[productId]) {
     for (var ci = cart.length - qty; ci < cart.length; ci++) {
       if (cart[ci] && String(cart[ci].id) === String(productId)) {
         cart[ci].selectedVariant = selectedVariants[productId];
@@ -9935,7 +9936,7 @@ function processPaystack(mode) {
             qty:      i.qty || 1,
             emoji:    i.emoji,
             sellerId: i.sellerId || (prod && prod.sellerId) || null,
-            variant: (typeof selectedVariants !== 'undefined' ? selectedVariants[i.id] : null) || i.variant || null,
+            variant: selectedVariants[i.id] || i.variant || null,
             /* The actual downloadable file URL — NOT the product image */
             fileUrl:  (prod && (prod.fileUrl || prod.file_url)) || null,
             fileName: (prod && (prod.fileName || prod.file_name)) || null,
@@ -10072,7 +10073,7 @@ function processPaystack(mode) {
             id: i.id, name: i.name, type: i.type, price: i.price,
             qty: i.qty || 1, emoji: i.emoji,
             sellerId: i.sellerId || (prod && prod.sellerId) || null,
-            variant: (typeof selectedVariants !== 'undefined' ? selectedVariants[i.id] : null) || i.variant || null,
+            variant: selectedVariants[i.id] || i.variant || null,
             fileUrl:  (prod && (prod.fileUrl  || prod.file_url))  || null,
             fileName: (prod && (prod.fileName || prod.file_name)) || null,
             fileExt:  (prod && (prod.fileExt  || prod.file_ext))  || null
@@ -10221,7 +10222,7 @@ function processPaystack(mode) {
           qty:      i.qty || 1,
           emoji:    i.emoji,
           sellerId: i.sellerId || (prod && prod.sellerId) || null,
-          variant: (typeof selectedVariants !== 'undefined' ? selectedVariants[i.id] : null) || i.variant || null,
+          variant: selectedVariants[i.id] || i.variant || null,
           fileUrl:  (prod && (prod.fileUrl || prod.file_url)) || null,
           fileName: (prod && (prod.fileName || prod.file_name)) || null,
           fileExt:  (prod && (prod.fileExt  || prod.file_ext))  || null
