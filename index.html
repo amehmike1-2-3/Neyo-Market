@@ -68,7 +68,7 @@
   "foundingDate": "2026",
   "description": "NeyoMarket is a Nigerian digital and physical marketplace launched in 2026, providing escrow-protected transactions, KYC-verified sellers, and an affiliate commission program.",
   "areaServed": "Nigeria",
-  "email": "support@neyomarket.com.ng",
+  "email": "support@neyomarket.com.ng.ng",
   "telephone": "+2349072212496",
   "address": {
     "@type": "PostalAddress",
@@ -83,7 +83,7 @@
     },
     {
       "@type": "ContactPoint",
-      "email": "support@neyomarket.com.ng",
+      "email": "support@neyomarket.com.ng.ng",
       "contactType": "customer support",
       "availableLanguage": "English"
     }
@@ -6562,11 +6562,11 @@ nav:not(.bottom-nav){
           <div class="contact-ch-value">+234 907 221 2496</div>
         </div>
       </a>
-      <a class="contact-channel em" href="mailto:support@neyomarket.com.ng">
+      <a class="contact-channel em" href="mailto:support@neyomarket.com.ng.ng">
         <div class="contact-ch-icon em-c"><i class="fa-solid fa-envelope"></i> </div>
         <div>
           <div class="contact-ch-label">Support Email</div>
-          <div class="contact-ch-value">support@neyomarket.com.ng</div>
+          <div class="contact-ch-value">support@neyomarket.com.ng.ng</div>
         </div>
       </a>
       <a class="contact-channel wa2" href="mailto:adminneyomarket@gmail.com">
@@ -7487,12 +7487,22 @@ function submitProduct() {
 
   function doSubmitPayload(finalPayload) {
     var payloadStr;
+    var isEdit = !!editingProductId;
+
+    if (isEdit) {
+      finalPayload.id       = editingProductId;
+      finalPayload.sellerId = CU ? String(CU.id) : '';
+    }
+
     try { payloadStr = JSON.stringify(finalPayload); }
     catch(e) { toast('Could not prepare product data: ' + e.message, 'fail'); return; }
-    if (btn) { btn.disabled = true; btn.textContent = 'Saving product...'; }
+    if (btn) { btn.disabled = true; btn.textContent = isEdit ? 'Submitting edit…' : 'Saving product...'; }
 
-    fetch('/api/products', {
-      method:  'POST',
+    var url    = isEdit ? '/api/products?action=update-product' : '/api/products';
+    var method = isEdit ? 'POST' : 'POST';
+
+    fetch(url, {
+      method:  method,
       headers: { 'Content-Type': 'application/json' },
       body:    payloadStr
     })
@@ -7504,26 +7514,43 @@ function submitProduct() {
     })
     .then(function(data) {
       if (data && (data.ok || data.product)) {
-        digitalFileData = null;
-        uploadedImages  = [];
+        digitalFileData  = null;
+        uploadedImages   = [];
+        editingProductId = null;
+        var banner = document.getElementById('edit-mode-banner');
+        if (banner) banner.remove();
         resetSell();
-        if (btn) { btn.disabled = false; btn.textContent = 'Submit for Review'; }
-        if (typeof Swal !== 'undefined') {
-          Swal.fire({
-            icon: 'success', title: 'Product Listed!',
-            html: '<p style="color:var(--text);line-height:1.7">Submitted for admin review.<br/><strong>Goes live within 24 hours.</strong></p>',
-            confirmButtonText: 'View My Listings', confirmButtonColor: '#c9922a', allowOutsideClick: false
-          }).then(function() { go(CU && CU.role === 'admin' ? 'admin' : 'seller'); });
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-lock"></i>  Submit for Review'; }
+
+        if (isEdit) {
+          if (typeof Swal !== 'undefined') {
+            Swal.fire({
+              icon: 'success', title: 'Edit Submitted!',
+              html: '<p style="color:var(--text);line-height:1.7">Your changes are under admin review.<br/><strong>Your product stays live with the current info until approved.</strong></p>',
+              confirmButtonText: 'View My Listings', confirmButtonColor: '#c9922a', allowOutsideClick: false
+            }).then(function() { go('seller'); });
+          } else {
+            toast('<i class="fa-solid fa-pen-to-square"></i>  Edit submitted for admin review. Product stays live!', 'ok');
+            go('seller');
+          }
         } else {
-          toast('Product submitted! Goes live within 24 hours.', 'ok');
-          go(CU && CU.role === 'admin' ? 'admin' : 'seller');
+          if (typeof Swal !== 'undefined') {
+            Swal.fire({
+              icon: 'success', title: 'Product Listed!',
+              html: '<p style="color:var(--text);line-height:1.7">Submitted for admin review.<br/><strong>Goes live within 24 hours.</strong></p>',
+              confirmButtonText: 'View My Listings', confirmButtonColor: '#c9922a', allowOutsideClick: false
+            }).then(function() { go(CU && CU.role === 'admin' ? 'admin' : 'seller'); });
+          } else {
+            toast('Product submitted! Goes live within 24 hours.', 'ok');
+            go(CU && CU.role === 'admin' ? 'admin' : 'seller');
+          }
         }
       } else {
         throw new Error(data.error || 'Submission failed');
       }
     })
     .catch(function(err) {
-      if (btn) { btn.disabled = false; btn.textContent = 'Submit for Review'; }
+      if (btn) { btn.disabled = false; btn.innerHTML = isEdit ? '<i class="fa-solid fa-pen-to-square"></i>  Submit Edit for Review' : '<i class="fa-solid fa-lock"></i>  Submit for Review'; }
       toast('Submission failed: ' + (err.message || 'Please try again'), 'fail');
     });
   }
@@ -7804,7 +7831,9 @@ async function aiGenerateDesc() {
 window.aiGenerateDesc = aiGenerateDesc;
 
 function resetSell() {
-  uploadedImages = []; dReady = false; digitalFileData = null;
+  uploadedImages = []; dReady = false; digitalFileData = null; editingProductId = null;
+  var eb = document.getElementById('edit-mode-banner'); if (eb) eb.remove();
+  var btn2 = document.getElementById('sell-btn'); if (btn2) btn2.innerHTML = '<i class="fa-solid fa-lock"></i>  Submit for Review';
   ['s-name','s-type','s-cat','s-price','s-currency','s-comm','s-desc','s-email','s-discount-price','s-sale-ends','s-shipping-fee'].forEach(function (id) { sval(id, ''); });
   var vc = document.getElementById('variants-container'); if (vc) vc.innerHTML = '';
   variantCount = 0;
@@ -12271,6 +12300,11 @@ function renderSellerDash() {
       + '</div>'
       + '<div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end">'
       + '<button onclick="cpyAffProd(' + p.id + ')" style="background:rgba(240,192,64,.1);border:1px solid rgba(240,192,64,.25);color:var(--gold);padding:5px 12px;border-radius:7px;font-size:.75rem;font-weight:700;cursor:pointer;white-space:nowrap"><i class="fa-solid fa-link"><\/i>  Share</button>'
+      + (CU && p.sellerId && (String(p.sellerId) === String(CU.id) || CU.role === 'admin')
+          ? '<button onclick="editProduct(' + p.id + ')" style="background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);color:#60a5fa;padding:5px 12px;border-radius:7px;font-size:.75rem;font-weight:700;cursor:pointer;white-space:nowrap">'
+            + (p.hasPendingEdit ? '<i class="fa-solid fa-hourglass-half"></i>  Edit Pending' : '<i class="fa-solid fa-pen-to-square"></i>  Edit')
+            + '</button>'
+          : '')
       + (CU && p.sellerId && (String(p.sellerId) === String(CU.id) || CU.role === 'admin') ? '<button onclick="deleteProduct(' + p.id + ')" style="background:rgba(255,58,92,.1);border:1px solid rgba(255,58,92,.25);color:var(--red);padding:5px 12px;border-radius:7px;font-size:.75rem;font-weight:700;cursor:pointer"><i class="fa-solid fa-trash"><\/i> </button>' : '')
       + '</div>'
       + '</div>';
@@ -12435,6 +12469,11 @@ function renderSellerPage() {
           + '<div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">'
           + '<button onclick="viewRawData(' + p.id + ')" style="background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.3);color:#2563eb;padding:5px 12px;border-radius:7px;font-size:.72rem;font-weight:700;cursor:pointer;white-space:nowrap"><i class="fa-solid fa-server"><\/i>  Raw Data</button>'
           + '<button onclick="cpyAffProd(' + p.id + ')" style="background:rgba(240,192,64,.1);border:1px solid rgba(240,192,64,.25);color:var(--gold);padding:5px 12px;border-radius:7px;font-size:.74rem;font-weight:700;cursor:pointer;white-space:nowrap"><i class="fa-solid fa-link"><\/i>  Share Link</button>'
+          + (CU && p.sellerId && String(p.sellerId) === String(CU.id)
+              ? '<button onclick="editProduct(' + p.id + ')" style="background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);color:#60a5fa;padding:5px 12px;border-radius:7px;font-size:.74rem;font-weight:700;cursor:pointer;white-space:nowrap">'
+                + (p.hasPendingEdit ? '<i class=\"fa-solid fa-hourglass-half\"></i>  Edit Pending' : '<i class=\"fa-solid fa-pen-to-square\"></i>  Edit')
+                + '</button> '
+              : '')
           + (CU && p.sellerId && String(p.sellerId) === String(CU.id) ? '<button onclick="deleteProduct(' + p.id + ')" style="background:rgba(255,58,92,.08);border:1px solid rgba(255,58,92,.22);color:var(--red);padding:5px 12px;border-radius:7px;font-size:.74rem;font-weight:700;cursor:pointer"><i class="fa-solid fa-trash"><\/i>  Delete</button>' : '')
           + '</div>'
           + '<div id="raw-data-' + p.id + '" style="display:none;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:10px;margin-top:8px;font-size:.72rem;width:100%;font-family:monospace;white-space:pre-wrap;word-break:break-all;color:var(--text);max-height:200px;overflow-y:auto"></div>'
@@ -14103,6 +14142,7 @@ function aTab(tab, btn) {
       var pending2  = allProds.filter(function(p){ return p.status === 'pending' || p.is_approved === false; });
       var active2   = allProds.filter(function(p){ return p.status === 'active'; });
       var rejected2 = allProds.filter(function(p){ return p.status === 'rejected'; });
+      var editPending = allProds.filter(function(p){ return p.hasPendingEdit; });
 
       function prodRow(p, showApprove) {
         var ih = (p.imgs && p.imgs[0])
@@ -14123,11 +14163,11 @@ function aTab(tab, btn) {
       }
 
       c.innerHTML =
-        '<div class="ah"><h1><i class="fa-solid fa-box"><\/i>  Product Management</h1><p>Approve listings before they go live to buyers</p></div>'
+        '<div class="ah"><h1><i class="fa-solid fa-box"><\/i>  Product Management</h1><p>Approve listings and product edits before they go live</p></div>'
         + '<div class="sr" style="margin-bottom:16px">'
         + '<div class="sc2" style="border:1px solid rgba(251,146,60,.4)"><div class="lb">Awaiting Approval</div><div class="vl" style="color:var(--orange)">' + pending2.length + '</div></div>'
+        + '<div class="sc2" style="border:1px solid rgba(59,130,246,.4)"><div class="lb">Pending Edits</div><div class="vl" style="color:#60a5fa">' + editPending.length + '</div></div>'
         + '<div class="sc2"><div class="lb">Live Products</div><div class="vl" style="color:var(--green)">' + active2.length + '</div></div>'
-        + '<div class="sc2"><div class="lb">Rejected</div><div class="vl" style="color:var(--red)">' + rejected2.length + '</div></div>'
         + '<div class="sc2"><div class="lb">Total</div><div class="vl">' + allProds.length + '</div></div>'
         + '</div>'
         + '<div class="act" style="border:' + (pending2.length ? '2px solid var(--orange)' : '1px solid var(--border)') + ';margin-bottom:12px">'
@@ -14138,6 +14178,11 @@ function aTab(tab, btn) {
         + (pending2.length
           ? pending2.map(function(p){ return prodRow(p, true); }).join('')
           : '<div style="color:var(--muted);font-size:.84rem;padding:8px 0;text-align:center"><i class="fa-solid fa-circle-check"><\/i>  No products waiting for approval.</div>')
+        + '</div>'
+        + '<div id="admin-edit-requests-wrap">'
+        + (editPending.length
+          ? '<div class="act" style="border:2px solid rgba(59,130,246,.5);margin-bottom:12px" id="admin-edit-list"><div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><span style="background:#2563eb;color:#fff;font-size:.7rem;font-weight:800;padding:3px 10px;border-radius:20px">' + editPending.length + ' EDITS</span><h3 style="margin:0"><i class="fa-solid fa-pen-to-square"></i>  Pending Product Edits</h3><span style="color:var(--muted);font-size:.76rem;margin-left:auto">Product stays live until approved</span></div><div style="color:var(--muted);font-size:.8rem;padding:8px 0;text-align:center"><i class="fa-solid fa-hourglass-half"></i>  Loading edit details…</div></div>'
+          : '')
         + '</div>'
         + '<div class="act">'
         + '<h3><i class="fa-solid fa-circle-check"><\/i>  Live Products (' + active2.length + ')</h3>'
@@ -14150,6 +14195,9 @@ function aTab(tab, btn) {
             + rejected2.map(function(p){ return prodRow(p, true); }).join('')
             + '</div>'
           : '');
+
+      /* Load pending edits async after DOM is set */
+      if (editPending.length) setTimeout(loadAdminPendingEdits, 80);
 
     /* ─── ORDERS ─── */
     } else if (tab === 'od') {
@@ -15377,6 +15425,108 @@ function apvP(id) {
   .catch(function(){ toast('Network error — try again', 'fail'); });
 }
 window.apvP = apvP;
+
+/* ═══ LOAD PENDING PRODUCT EDITS (Admin) ═══════════════════════════════ */
+function loadAdminPendingEdits() {
+  var wrap = document.getElementById('admin-edit-list');
+  if (!wrap) return;
+
+  fetch('/api/products?action=pending-edits')
+    .then(function(r){ return r.json(); })
+    .then(function(data) {
+      if (!data.ok || !data.edits || !data.edits.length) {
+        wrap.innerHTML = '<div style="color:var(--muted);font-size:.84rem;padding:8px 0;text-align:center"><i class="fa-solid fa-circle-check"></i>  No pending edits.</div>';
+        return;
+      }
+      wrap.innerHTML = '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">'
+        + '<span style="background:#2563eb;color:#fff;font-size:.7rem;font-weight:800;padding:3px 10px;border-radius:20px">' + data.edits.length + ' EDITS</span>'
+        + '<h3 style="margin:0"><i class="fa-solid fa-pen-to-square"></i>  Pending Product Edits</h3>'
+        + '<span style="color:var(--muted);font-size:.76rem;margin-left:auto">Product stays live until approved</span>'
+        + '</div>'
+        + data.edits.map(function(e) {
+            var ed    = e.edit_data || {};
+            var thumb = (ed.imgs && ed.imgs[0]) || e.current_imgs && (typeof e.current_imgs === 'string' ? JSON.parse(e.current_imgs||'[]') : e.current_imgs)[0] || '';
+            var imgEl = thumb ? '<img src="'+thumb+'" style="width:52px;height:52px;border-radius:8px;object-fit:cover;flex-shrink:0;border:1px solid rgba(59,130,246,.4)"/>' : '<span style="font-size:2rem">📦</span>';
+
+            /* Build diff rows */
+            var diffs = [];
+            if (ed.name        && ed.name        !== e.product_name)        diffs.push(['Title',       e.product_name,     ed.name]);
+            if (ed.price       && String(ed.price) !== String(e.current_price)) diffs.push(['Price', '₦'+parseFloat(e.current_price).toLocaleString(), '₦'+parseFloat(ed.price).toLocaleString()]);
+            if (ed.description && ed.description !== e.current_description) diffs.push(['Description', (e.current_description||'').slice(0,60)+'…', ed.description.slice(0,80)+'…']);
+            if (ed.currency)    diffs.push(['Currency',    '—', ed.currency]);
+            if (ed.condition)   diffs.push(['Condition',   '—', ed.condition]);
+            if (ed.category)    diffs.push(['Category',    '—', ed.category]);
+            if (ed.quantity!=null) diffs.push(['Stock qty', '—', ed.quantity]);
+            if (ed.coupon_code) diffs.push(['Coupon',      '—', ed.coupon_code + ' ('+ed.coupon_type+' '+ed.coupon_value+')']);
+            if (ed.imgs && ed.imgs.length) diffs.push(['Images', 'old set', ed.imgs.length + ' new image(s)']);
+
+            var diffHtml = diffs.length
+              ? '<table style="width:100%;font-size:.75rem;border-collapse:collapse;margin-top:8px">'
+                + '<tr><th style="text-align:left;color:var(--muted);padding:3px 6px 3px 0;font-weight:600;width:80px">Field</th>'
+                + '<th style="text-align:left;color:var(--red);padding:3px 6px;font-weight:600">Before</th>'
+                + '<th style="text-align:left;color:var(--green);padding:3px 6px;font-weight:600">After</th></tr>'
+                + diffs.map(function(d){
+                    return '<tr><td style="color:var(--muted);padding:3px 6px 3px 0;vertical-align:top">'+d[0]+'</td>'
+                      + '<td style="color:rgba(255,100,100,.8);padding:3px 6px;vertical-align:top;text-decoration:line-through">'+d[1]+'</td>'
+                      + '<td style="color:rgba(74,222,128,.9);padding:3px 6px;vertical-align:top">'+d[2]+'</td></tr>';
+                  }).join('')
+                + '</table>'
+              : '<div style="font-size:.76rem;color:var(--muted);margin-top:6px">No text changes — may include image or file update.</div>';
+
+            return '<div style="display:flex;align-items:flex-start;gap:12px;padding:14px 0;border-bottom:1px solid var(--border);flex-wrap:wrap">'
+              + imgEl
+              + '<div style="flex:1;min-width:140px">'
+              + '<div style="font-weight:700;font-size:.9rem">' + (e.product_name||'Product') + '</div>'
+              + '<div style="font-size:.73rem;color:var(--muted);margin-top:2px">by <strong>' + (e.seller_name||'Seller') + '</strong> · Edit submitted ' + new Date(e.created_at).toLocaleDateString() + '</div>'
+              + diffHtml
+              + '</div>'
+              + '<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex-shrink:0">'
+              + '<button onclick="apvEdit(' + e.id + ')" style="background:rgba(74,222,128,.15);border:1px solid rgba(74,222,128,.4);color:#4ade80;padding:9px 18px;border-radius:8px;font-size:.82rem;font-weight:800;cursor:pointer;white-space:nowrap"><i class="fa-solid fa-circle-check"></i>  APPROVE</button>'
+              + '<button onclick="rejEdit(' + e.id + ')" style="background:rgba(255,58,92,.1);border:1px solid rgba(255,58,92,.3);color:var(--red);padding:9px 18px;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer;white-space:nowrap"><i class="fa-solid fa-xmark"></i>  Reject</button>'
+              + '</div>'
+              + '</div>';
+          }).join('');
+    })
+    .catch(function(err){ console.warn('loadAdminPendingEdits failed:', err); });
+}
+window.loadAdminPendingEdits = loadAdminPendingEdits;
+
+function apvEdit(editId) {
+  fetch('/api/products?action=approve-edit', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ editId: editId })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(data) {
+    if (data.ok) {
+      toast('<i class="fa-solid fa-circle-check"></i>  Edit approved — product updated and live!', 'ok');
+      /* Refresh admin products tab */
+      aTab('pr', document.querySelector('.asb[onclick*="pr"]'));
+    } else {
+      toast(data.error || 'Approval failed', 'fail');
+    }
+  })
+  .catch(function(){ toast('Network error — try again', 'fail'); });
+}
+window.apvEdit = apvEdit;
+
+function rejEdit(editId) {
+  if (!confirm('Reject this product edit? The seller\'s changes will be discarded.')) return;
+  fetch('/api/products?action=reject-edit', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ editId: editId })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function() {
+    toast('Product edit rejected.', 'warn');
+    aTab('pr', document.querySelector('.asb[onclick*="pr"]'));
+  })
+  .catch(function(){ toast('Network error — try again', 'fail'); });
+}
+window.rejEdit = rejEdit;
+
 function rejP(id) {
   fetch('/api/products', {
     method:  'PATCH',
