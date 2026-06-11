@@ -14279,9 +14279,7 @@ function aTab(tab, btn) {
           : '<div style="color:var(--muted);font-size:.84rem;padding:8px 0;text-align:center"><i class="fa-solid fa-circle-check"><\/i>  No products waiting for approval.</div>')
         + '</div>'
         + '<div id="admin-edit-requests-wrap">'
-        + (editPending.length
-          ? '<div class="act" style="border:2px solid rgba(59,130,246,.5);margin-bottom:12px" id="admin-edit-list"><div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><span style="background:#2563eb;color:#fff;font-size:.7rem;font-weight:800;padding:3px 10px;border-radius:20px">' + editPending.length + ' EDITS</span><h3 style="margin:0"><i class="fa-solid fa-pen-to-square"></i>  Pending Product Edits</h3><span style="color:var(--muted);font-size:.76rem;margin-left:auto">Product stays live until approved</span></div><div style="color:var(--muted);font-size:.8rem;padding:8px 0;text-align:center"><i class="fa-solid fa-hourglass-half"></i>  Loading edit details…</div></div>'
-          : '')
+        + '<div class="act" style="border:2px solid rgba(59,130,246,.5);margin-bottom:12px" id="admin-edit-list"><div style="color:var(--muted);font-size:.8rem;padding:8px 0;text-align:center"><i class="fa-solid fa-hourglass-half"></i>  Loading edit details…</div></div>'
         + '</div>'
         + '<div class="act">'
         + '<h3><i class="fa-solid fa-circle-check"><\/i>  Live Products (' + active2.length + ')</h3>'
@@ -14295,8 +14293,8 @@ function aTab(tab, btn) {
             + '</div>'
           : '');
 
-      /* Load pending edits async after DOM is set */
-      if (editPending.length) setTimeout(loadAdminPendingEdits, 80);
+      /* Load pending edits async after DOM is set — always fetch fresh, never rely on cache */
+      setTimeout(loadAdminPendingEdits, 80);
 
     /* ─── ORDERS ─── */
     } else if (tab === 'od') {
@@ -15604,8 +15602,8 @@ function apvEdit(editId) {
   .then(function(data) {
     if (data.ok) {
       toast('<i class="fa-solid fa-circle-check"></i>  Edit approved — product updated and live!', 'ok');
-      /* Refresh admin products tab */
-      aTab('pr', document.querySelector('.asb[onclick*="pr"]'));
+      /* Reload just the edit list — don't re-render whole tab which wipes the list */
+      loadAdminPendingEdits();
     } else {
       toast(data.error || 'Approval failed', 'fail');
     }
@@ -15624,7 +15622,8 @@ function rejEdit(editId) {
   .then(function(r){ return r.json(); })
   .then(function() {
     toast('Product edit rejected.', 'warn');
-    aTab('pr', document.querySelector('.asb[onclick*="pr"]'));
+    /* Reload just the edit list — don't re-render whole tab */
+    loadAdminPendingEdits();
   })
   .catch(function(){ toast('Network error — try again', 'fail'); });
 }
