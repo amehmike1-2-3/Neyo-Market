@@ -324,7 +324,7 @@ module.exports = async function handler(req, res) {
         }
 
         const rows = await sql`
-          SELECT * FROM products WHERE id = ${Number(id)} LIMIT 1
+          SELECT * FROM products WHERE id = ${String(id)}::bigint LIMIT 1
         `;
         if (!rows.length) return jsonErr(res, 404, 'Product not found.');
 
@@ -598,7 +598,7 @@ module.exports = async function handler(req, res) {
       const p = req.body || {};
       if (!p.id) return jsonErr(res, 400, 'Product id is required.');
 
-      const productId         = Number(p.id);
+      const productId         = String(p.id || '');
       const newStatus         = (p.status         !== undefined) ? String(p.status)         : null;
       const newBadge          = (p.badge          !== undefined) ? String(p.badge)          : null;
       const newSellerVerified = (p.sellerVerified !== undefined) ? Boolean(p.sellerVerified): null;
@@ -658,7 +658,7 @@ module.exports = async function handler(req, res) {
           coupon_code     = COALESCE(${newCouponCode},     coupon_code),
           coupon_type     = COALESCE(${newCouponType},     coupon_type),
           coupon_value    = COALESCE(${newCouponValue},    coupon_value)
-        WHERE id = ${productId}
+        WHERE id = ${productId}::bigint
       `;
       return res.status(200).json({ ok: true });
     }
@@ -672,13 +672,13 @@ module.exports = async function handler(req, res) {
       const requesterId = req.body && req.body.requesterId;   /* caller must pass their userId */
       if (!rawId) return jsonErr(res, 400, 'Product id is required.');
 
-      const productId = Number(rawId);
+      const productId = String(rawId);
 
       /* If requesterId provided, enforce ownership — never delete someone else's product */
       if (requesterId) {
         const owns = await sql`
           SELECT id FROM products
-          WHERE id = ${productId}
+          WHERE id = ${productId}::bigint
             AND (seller_id = ${String(requesterId)} OR ${String(requesterId)} = 'admin')
           LIMIT 1
         `;
@@ -686,7 +686,7 @@ module.exports = async function handler(req, res) {
           return jsonErr(res, 403, 'You do not have permission to delete this product.');
       }
 
-      await sql`DELETE FROM products WHERE id = ${productId}`;
+      await sql`DELETE FROM products WHERE id = ${productId}::bigint`;
       return res.status(200).json({ ok: true });
     }
 
@@ -697,14 +697,14 @@ module.exports = async function handler(req, res) {
     ════════════════════════════════════════════════ */
     if (req.query.action === 'update-product' && req.method === 'POST') {
       const body      = req.body || {};
-      const productId = Number(body.id);
+      const productId = String(body.id || '');
       const sellerId  = String(body.sellerId || '');
       if (!productId || !sellerId) return jsonErr(res, 400, 'id and sellerId required.');
 
       /* Ownership check */
       const owns = await sql`
         SELECT id FROM products
-        WHERE id = ${productId} AND seller_id = ${sellerId}
+        WHERE id = ${productId}::bigint AND seller_id = ${sellerId}
         LIMIT 1
       `;
       if (!owns.length) return jsonErr(res, 403, 'Not your product.');
@@ -727,7 +727,7 @@ module.exports = async function handler(req, res) {
       /* Cancel any previous pending edit for this product */
       await sql`
         DELETE FROM product_edits
-        WHERE product_id = ${productId} AND status = 'pending'
+        WHERE product_id = ${productId}::bigint AND status = 'pending'
       `;
 
       /* Save the new edit */
@@ -759,12 +759,12 @@ module.exports = async function handler(req, res) {
 
       await sql`
         INSERT INTO product_edits (product_id, seller_id, edit_data, status, created_at)
-        VALUES (${productId}, ${sellerId}, ${JSON.stringify(editData)}, 'pending', NOW())
+        VALUES (${productId}::bigint, ${sellerId}, ${JSON.stringify(editData)}, 'pending', NOW())
       `;
 
       /* Mark the product as having a pending edit (for admin badge) */
       await sql`
-        UPDATE products SET has_pending_edit = true WHERE id = ${productId}
+        UPDATE products SET has_pending_edit = true WHERE id = ${productId}::bigint
       `;
 
       /* Bust cache */
@@ -830,7 +830,7 @@ module.exports = async function handler(req, res) {
       let ed = edit.edit_data;
       if (typeof ed === 'string') { try { ed = JSON.parse(ed); } catch(x) { ed = {}; } }
 
-      const pid = Number(edit.product_id);
+      const pid = String(edit.product_id);
 
       /* Apply all non-null fields from edit_data to the product */
       await sql`
@@ -858,7 +858,7 @@ module.exports = async function handler(req, res) {
           file_name     = COALESCE(${ed.file_name     || null}, file_name),
           file_ext      = COALESCE(${ed.file_ext      || null}, file_ext),
           has_pending_edit = false
-        WHERE id = ${pid}
+        WHERE id = ${pid}::bigint
       `;
 
       await sql`
@@ -892,7 +892,7 @@ module.exports = async function handler(req, res) {
       /* Get product_id to clear the flag */
       const rows2 = await sql`SELECT product_id, seller_id FROM product_edits WHERE id = ${editIdStr}::bigint LIMIT 1`;
       if (rows2.length) {
-        await sql`UPDATE products SET has_pending_edit = false WHERE id = ${rows2[0].product_id}`;
+        await sql`UPDATE products SET has_pending_edit = false WHERE id = ${String(rows2[0].product_id)}::bigint`;
         try {
           const r = _getRedis();
           if (r) { await r.del('products:id:' + rows2[0].product_id); await r.del('products:seller:' + rows2[0].seller_id); }
@@ -912,13 +912,13 @@ module.exports = async function handler(req, res) {
     if (req.query.action === 'track-view' && req.method === 'POST') {
       const { productId } = req.body || {};
       if (!productId) return jsonErr(res, 400, 'productId required.');
-      const pid = Number(productId);
+      const pid = String(productId);
       if (!pid) return jsonErr(res, 400, 'Invalid productId.');
       try {
         const rows = await sql`
           UPDATE products
           SET view_count = COALESCE(view_count, 0) + 1
-          WHERE id = ${pid}
+          WHERE id = ${pid}::bigint
           RETURNING view_count
         `;
         if (!rows.length) return jsonErr(res, 404, 'Product not found.');
@@ -939,11 +939,11 @@ module.exports = async function handler(req, res) {
        Returns current view count for a product without incrementing.
     ════════════════════════════════════════════════ */
     if (req.query.action === 'get-views' && req.method === 'GET') {
-      const pid = Number(req.query.productId);
+      const pid = String(req.query.productId);
       if (!pid) return jsonErr(res, 400, 'Invalid productId.');
       try {
         const rows = await sql`
-          SELECT view_count FROM products WHERE id = ${pid} LIMIT 1
+          SELECT view_count FROM products WHERE id = ${pid}::bigint LIMIT 1
         `;
         if (!rows.length) return jsonErr(res, 404, 'Product not found.');
         return res.status(200).json({ ok: true, viewCount: parseInt(rows[0].view_count || 0, 10) });
@@ -969,13 +969,13 @@ module.exports = async function handler(req, res) {
         await sql`
           UPDATE products 
           SET is_featured = true, featured_expires = ${expiresAt.toISOString()}
-          WHERE id = ${Number(productId)}
+          WHERE id = ${String(productId)}::bigint
         `;
 
         /* Log promotion transaction */
         await sql`
           INSERT INTO promotions (product_id, duration_days, amount, paystack_ref, expires_at, created_at)
-          VALUES (${Number(productId)}, ${Number(duration || 7)}, ${Number(amount)}, ${String(paystackRef)}, ${expiresAt.toISOString()}, NOW())
+          VALUES (${String(productId)}::bigint, ${Number(duration || 7)}, ${Number(amount)}, ${String(paystackRef)}, ${expiresAt.toISOString()}, NOW())
         `;
 
         return res.status(200).json({ ok: true, message: 'Product promoted successfully' });
