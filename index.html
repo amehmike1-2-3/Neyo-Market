@@ -12824,7 +12824,9 @@ function loadStoreVisitorPanel() {
 
         /* Load world-atlas TopoJSON (same CDN already used elsewhere — cached) and draw country outlines */
         var outlineG = document.createElementNS(NS,'g');
-        mainG.insertBefore(outlineG, dotG);
+        mainG.appendChild(outlineG); /* outlines behind dots */
+        var dotG = document.createElementNS(NS,'g');
+        mainG.appendChild(dotG); /* dots on top */
         fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
           .then(function(r){return r.json();})
           .then(function(topo){
@@ -12854,8 +12856,7 @@ function loadStoreVisitorPanel() {
             outlineG.appendChild(frag);
           }).catch(function(){/* grid still shows */});
 
-        var dotG = document.createElementNS(NS, 'g');
-        mainG.appendChild(dotG);
+
 
         /* Zoom/pan */
         var zoom=1, panX=0, panY=0, MIN_Z=1, MAX_Z=10;
