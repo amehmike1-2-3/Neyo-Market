@@ -7416,6 +7416,85 @@ function validateSell() {
 }
 window.validateSell = validateSell;
 
+/* ====================== FIXED EDIT PRODUCT FUNCTION ====================== */
+var editingProductId = null;
+
+function editProduct(productId) {
+  if (!window.CU) {
+    toast('Please sign in first', 'fail');
+    return;
+  }
+
+  var numId = Number(productId);
+  var product = (window.prods || prods || []).find(function(p) { 
+    return Number(p.id) === numId; 
+  });
+
+  if (!product) {
+    toast('Product not found. Please refresh the page.', 'fail');
+    return;
+  }
+
+  // Security check
+  if (String(product.sellerId || product.seller_id || '') !== String(CU.id) && CU.role !== 'admin') {
+    toast('You can only edit your own products', 'fail');
+    return;
+  }
+
+  editingProductId = numId;
+  go('sell');
+
+  setTimeout(function() {
+    // Populate form
+    sval('s-name', product.name || '');
+    sval('s-type', product.type || 'physical');
+    sval('s-cat', product.cat || '');
+    sval('s-price', product.price || '');
+    sval('s-currency', product.currency || 'NGN');
+    sval('s-comm', product.commission || '10');
+    sval('s-desc', product.description || product.desc || '');
+    sval('s-location', product.location || '');
+    sval('s-quantity', product.quantity || '');
+    sval('s-condition', product.condition || '');
+
+    if (product.discountPrice) sval('s-discount-price', product.discountPrice);
+    if (product.saleEndsAt) sval('s-sale-ends', product.saleEndsAt);
+
+    // Images
+    uploadedImages = Array.isArray(product.imgs) ? product.imgs.slice() : [];
+    if (typeof renderUploadedImages === 'function') renderUploadedImages();
+
+    // Edit banner
+    var bannerHTML = `
+      <div id="edit-mode-banner" style="background:rgba(201,146,42,0.15);border:1px solid var(--gold);border-radius:8px;padding:12px 16px;margin:16px 0;color:var(--text);font-size:0.85rem">
+        <strong>✏️ Editing Product:</strong> ${product.name}<br>
+        <small>Changes will be reviewed by admin. Current version stays live until approved.</small>
+        <button onclick="cancelEdit()" style="float:right;background:none;border:none;color:var(--red);font-size:0.8rem;cursor:pointer">Cancel Edit</button>
+      </div>`;
+
+    var formContainer = document.querySelector('.cw') || document.getElementById('sell-form');
+    if (formContainer) {
+      var existing = document.getElementById('edit-mode-banner');
+      if (existing) existing.remove();
+      formContainer.insertAdjacentHTML('afterbegin', bannerHTML);
+    }
+
+    validateSell();
+    toast('Product loaded for editing ✅', 'ok');
+  }, 300);
+}
+
+function cancelEdit() {
+  editingProductId = null;
+  var banner = document.getElementById('edit-mode-banner');
+  if (banner) banner.remove();
+  resetSell();
+  toast('Edit cancelled', 'ok');
+}
+
+window.editProduct = editProduct;
+window.cancelEdit = cancelEdit;
+
 /* ═══ 2b. submitProduct ═══ */
 function submitProduct() {
   /* KYC check — must be verified to list products */
