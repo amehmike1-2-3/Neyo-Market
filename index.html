@@ -15580,8 +15580,8 @@ function loadAdminPendingEdits() {
               + diffHtml
               + '</div>'
               + '<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex-shrink:0">'
-              + '<button onclick="apvEdit(' + e.id + ')" style="background:rgba(74,222,128,.15);border:1px solid rgba(74,222,128,.4);color:#4ade80;padding:9px 18px;border-radius:8px;font-size:.82rem;font-weight:800;cursor:pointer;white-space:nowrap"><i class="fa-solid fa-circle-check"></i>  APPROVE</button>'
-              + '<button onclick="rejEdit(' + e.id + ')" style="background:rgba(255,58,92,.1);border:1px solid rgba(255,58,92,.3);color:var(--red);padding:9px 18px;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer;white-space:nowrap"><i class="fa-solid fa-xmark"></i>  Reject</button>'
+              + '<button onclick="apvEdit(\'' + e.id + '\')" style="background:rgba(74,222,128,.15);border:1px solid rgba(74,222,128,.4);color:#4ade80;padding:9px 18px;border-radius:8px;font-size:.82rem;font-weight:800;cursor:pointer;white-space:nowrap"><i class="fa-solid fa-circle-check"></i>  APPROVE</button>'
+              + '<button onclick="rejEdit(\'' + e.id + '\')" style="background:rgba(255,58,92,.1);border:1px solid rgba(255,58,92,.3);color:var(--red);padding:9px 18px;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer;white-space:nowrap"><i class="fa-solid fa-xmark"></i>  Reject</button>'
               + '</div>'
               + '</div>';
           }).join('');
