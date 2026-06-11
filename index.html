@@ -12860,6 +12860,40 @@ function loadStoreVisitorPanel() {
 
         /* Zoom/pan */
         var zoom=1, panX=0, panY=0, MIN_Z=1, MAX_Z=10;
+
+        /* Auto-zoom to fit all dots after drawing */
+        function autoZoomToDots() {
+          var entries2 = Object.keys(viewMap);
+          if (!entries2.length) return;
+          /* collect all dot SVG positions */
+          var xs=[], ys=[];
+          entries2.forEach(function(cc){
+            if(!viewMap[cc] || !CENTRES[cc]) return;
+            var p = proj(CENTRES[cc][0], CENTRES[cc][1]);
+            xs.push(p[0]); ys.push(p[1]);
+          });
+          if(!xs.length) return;
+          var minX=Math.min.apply(null,xs), maxX=Math.max.apply(null,xs);
+          var minY=Math.min.apply(null,ys), maxY=Math.max.apply(null,ys);
+          /* Add padding */
+          var pad = 80;
+          minX-=pad; maxX+=pad; minY-=pad; maxY+=pad;
+          /* SVG rendered size */
+          var W = wrap2.offsetWidth || 340;
+          var H = Math.round(W * (500/960));
+          var scaleX = W / (maxX - minX);
+          var scaleY = H / (maxY - minY);
+          var newZoom = Math.min(MAX_Z, Math.max(1, Math.min(scaleX, scaleY)));
+          /* Centre the bounding box */
+          var cx = (minX + maxX) / 2;
+          var cy = (minY + maxY) / 2;
+          /* SVG coords scale by (W/960) before our zoom */
+          var baseScale = W / 960;
+          panX = W/2 - cx * baseScale * newZoom;
+          panY = H/2 - cy * baseScale * newZoom;
+          zoom = newZoom;
+          applyT();
+        }
         var drag=false, lx=0, ly=0;
         var ts=null, pd0=0, z0=1, px0=0, py0=0;
         function applyT(){ mainG.setAttribute('transform','translate('+panX+','+panY+') scale('+zoom+')'); }
@@ -12955,6 +12989,7 @@ function loadStoreVisitorPanel() {
 
         wrap2.appendChild(svg);
         svg.addEventListener('click',function(){hideTT(0);});
+        setTimeout(autoZoomToDots, 120); /* zoom to visitor dots after render */
       }, 80);
     })
     .catch(function(){ if(wrap) wrap.innerHTML=''; });
