@@ -7417,6 +7417,105 @@ function validateSell() {
 window.validateSell = validateSell;
 
 /* ═══ 2b. submitProduct ═══ */
+/* ====================== FIXED EDIT PRODUCT ====================== */
+var editingProductId = null;
+
+function editProduct(productId) {
+  if (!window.CU && !localStorage.getItem('nm_current_user')) {
+    toast('Please sign in first', 'fail');
+    go('signin');
+    return;
+  }
+
+  // Load current user from multiple sources
+  var currentUser = window.CU;
+  if (!currentUser) {
+    try {
+      var saved = localStorage.getItem('nm_current_user') || sessionStorage.getItem('nm_session');
+      if (saved) currentUser = JSON.parse(saved);
+    } catch(e) {}
+  }
+  if (!currentUser) {
+    toast('Please sign in first', 'fail');
+    go('signin');
+    return;
+  }
+
+  var numId = Number(productId);
+  var product = (window.prods || prods || []).find(function(p) { 
+    return Number(p.id) === numId; 
+  });
+
+  if (!product) {
+    toast('Product not found. Refreshing...', 'fail');
+    // Try to reload products
+    fetch('/api/products').then(r => r.json()).then(d => {
+      if (d.products) window.prods = prods = d.products;
+    });
+    return;
+  }
+
+  // Security check
+  if (String(product.sellerId || product.seller_id || '') !== String(currentUser.id) && currentUser.role !== 'admin') {
+    toast('You can only edit your own products', 'fail');
+    return;
+  }
+
+  editingProductId = numId;
+  window.CU = currentUser; // Ensure global is set
+
+  go('sell');
+
+  setTimeout(function() {
+    // Populate form
+    sval('s-name', product.name || '');
+    sval('s-type', product.type || 'physical');
+    sval('s-cat', product.cat || '');
+    sval('s-price', product.price || '');
+    sval('s-currency', product.currency || 'NGN');
+    sval('s-comm', product.commission || '10');
+    sval('s-desc', product.description || product.desc || '');
+    sval('s-location', product.location || '');
+    sval('s-quantity', product.quantity || '');
+    sval('s-condition', product.condition || '');
+
+    if (product.discountPrice) sval('s-discount-price', product.discountPrice);
+    if (product.saleEndsAt) sval('s-sale-ends', product.saleEndsAt);
+
+    // Images
+    uploadedImages = Array.isArray(product.imgs) ? product.imgs.slice() : [];
+    if (typeof renderUploadedImages === 'function') renderUploadedImages();
+
+    // Edit banner
+    var bannerHTML = `
+      <div id="edit-mode-banner" style="background:rgba(201,146,42,0.15);border:1px solid var(--gold);border-radius:8px;padding:12px 16px;margin:16px 0;color:var(--text);font-size:0.85rem">
+        <strong>✏️ Editing Product:</strong> ${product.name}<br>
+        <small>Changes will be reviewed by admin. Current version stays live until approved.</small>
+        <button onclick="cancelEdit()" style="float:right;background:none;border:none;color:var(--red);font-size:0.8rem;cursor:pointer">Cancel Edit</button>
+      </div>`;
+
+    var formContainer = document.querySelector('.cw') || document.getElementById('sell-form');
+    if (formContainer) {
+      var existing = document.getElementById('edit-mode-banner');
+      if (existing) existing.remove();
+      formContainer.insertAdjacentHTML('afterbegin', bannerHTML);
+    }
+
+    validateSell();
+    toast('Product loaded for editing ✅', 'ok');
+  }, 350);
+}
+window.editProduct = editProduct;
+
+function cancelEdit() {
+  editingProductId = null;
+  var banner = document.getElementById('edit-mode-banner');
+  if (banner) banner.remove();
+  resetSell();
+  toast('Edit cancelled', 'ok');
+}
+window.cancelEdit = cancelEdit;
+
 function submitProduct() {
   /* KYC check — must be verified to list products */
   if (CU && CU.role !== 'admin') {
