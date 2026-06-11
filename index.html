@@ -12802,13 +12802,57 @@ function loadStoreVisitorPanel() {
         bg.setAttribute('fill','#0d1117');
         mainG.appendChild(bg);
 
-        /* World map SVG base layer */
-        var img = document.createElementNS(NS, 'image');
-        img.setAttribute('href','https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/svg/ne_110m_admin_0_countries.svg');
-        img.setAttribute('x','0'); img.setAttribute('y','15');
-        img.setAttribute('width','960'); img.setAttribute('height','470');
-        img.setAttribute('opacity','0.25');
-        mainG.appendChild(img);
+        /* Grid lines always visible */
+        var grid = document.createElementNS(NS,'g');
+        [0,30,60,90,120,150,180,210,240,270,300,330].forEach(function(lon){
+          var x=(lon/360)*960, l=document.createElementNS(NS,'line');
+          l.setAttribute('x1',x);l.setAttribute('y1',0);l.setAttribute('x2',x);l.setAttribute('y2',500);
+          l.setAttribute('stroke','rgba(255,255,255,0.05)');l.setAttribute('stroke-width','0.5');
+          grid.appendChild(l);
+        });
+        [30,60,90,120,150].forEach(function(lat){
+          var y=(lat/180)*500, l=document.createElementNS(NS,'line');
+          l.setAttribute('x1',0);l.setAttribute('y1',y);l.setAttribute('x2',960);l.setAttribute('y2',y);
+          l.setAttribute('stroke','rgba(255,255,255,0.05)');l.setAttribute('stroke-width','0.5');
+          grid.appendChild(l);
+        });
+        var eq=document.createElementNS(NS,'line');
+        eq.setAttribute('x1',0);eq.setAttribute('y1',250);eq.setAttribute('x2',960);eq.setAttribute('y2',250);
+        eq.setAttribute('stroke','rgba(255,255,255,0.1)');eq.setAttribute('stroke-width','1');
+        grid.appendChild(eq);
+        mainG.appendChild(grid);
+
+        /* Load world-atlas TopoJSON (same CDN already used elsewhere — cached) and draw country outlines */
+        var outlineG = document.createElementNS(NS,'g');
+        mainG.insertBefore(outlineG, dotG);
+        fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
+          .then(function(r){return r.json();})
+          .then(function(topo){
+            var countries = topoToGeo(topo, topo.objects.countries);
+            var frag = document.createDocumentFragment();
+            countries.features.forEach(function(f){
+              if(!f.geometry) return;
+              var geoms = f.geometry.type==='MultiPolygon' ? f.geometry.coordinates : [f.geometry.coordinates];
+              geoms.forEach(function(poly){
+                poly.forEach(function(ring){
+                  var d='', first=true;
+                  ring.forEach(function(coord){
+                    var px=(coord[0]+180)*(960/360), py=(90-coord[1])*(500/180);
+                    d += (first?'M':'L')+px.toFixed(1)+','+py.toFixed(1);
+                    first=false;
+                  });
+                  d+='Z';
+                  var path=document.createElementNS(NS,'path');
+                  path.setAttribute('d',d);
+                  path.setAttribute('fill','rgba(255,255,255,0.04)');
+                  path.setAttribute('stroke','rgba(255,255,255,0.18)');
+                  path.setAttribute('stroke-width','0.5');
+                  frag.appendChild(path);
+                });
+              });
+            });
+            outlineG.appendChild(frag);
+          }).catch(function(){/* grid still shows */});
 
         var dotG = document.createElementNS(NS, 'g');
         mainG.appendChild(dotG);
