@@ -790,6 +790,8 @@ module.exports = async function handler(req, res) {
           reviewed_at  TIMESTAMPTZ
         )
       `;
+      /* Ensure has_pending_edit column exists */
+      await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS has_pending_edit BOOLEAN DEFAULT false`;
       const edits = await sql`
         SELECT pe.*, p.name AS product_name, p.seller AS seller_name,
                p.price AS current_price, p.imgs AS current_imgs,
