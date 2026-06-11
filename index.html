@@ -15586,7 +15586,11 @@ function loadAdminPendingEdits() {
               + '</div>';
           }).join('');
     })
-    .catch(function(err){ console.warn('loadAdminPendingEdits failed:', err); });
+    .catch(function(err){
+      console.warn('loadAdminPendingEdits failed:', err);
+      var wrap = document.getElementById('admin-edit-list');
+      if (wrap) wrap.innerHTML = '<div style="color:var(--red);font-size:.82rem;padding:8px">Failed to load pending edits. Check console.</div>';
+    });
 }
 window.loadAdminPendingEdits = loadAdminPendingEdits;
 
