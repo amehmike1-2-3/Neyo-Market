@@ -709,10 +709,10 @@ module.exports = async function handler(req, res) {
       `;
       if (!owns.length) return jsonErr(res, 403, 'Not your product.');
 
-      /* Ensure product_edits table exists */
+      /* Ensure product_edits table exists — use BIGSERIAL to handle timestamp-based IDs */
       await sql`
         CREATE TABLE IF NOT EXISTS product_edits (
-          id           SERIAL PRIMARY KEY,
+          id           BIGSERIAL PRIMARY KEY,
           product_id   INTEGER NOT NULL,
           seller_id    TEXT    NOT NULL,
           edit_data    JSONB   NOT NULL,
@@ -720,6 +720,18 @@ module.exports = async function handler(req, res) {
           created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
           reviewed_at  TIMESTAMPTZ
         )
+      `;
+      /* Migrate existing id column from INTEGER to BIGINT if needed */
+      await sql`
+        DO $$ BEGIN
+          IF EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_name='product_edits' AND column_name='id'
+            AND data_type='integer'
+          ) THEN
+            ALTER TABLE product_edits ALTER COLUMN id TYPE BIGINT;
+          END IF;
+        END $$
       `;
 
       /* Cancel any previous pending edit for this product */
@@ -781,7 +793,7 @@ module.exports = async function handler(req, res) {
     if (req.query.action === 'pending-edits' && req.method === 'GET') {
       await sql`
         CREATE TABLE IF NOT EXISTS product_edits (
-          id           SERIAL PRIMARY KEY,
+          id           BIGSERIAL PRIMARY KEY,
           product_id   INTEGER NOT NULL,
           seller_id    TEXT    NOT NULL,
           edit_data    JSONB   NOT NULL,
@@ -789,6 +801,18 @@ module.exports = async function handler(req, res) {
           created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
           reviewed_at  TIMESTAMPTZ
         )
+      `;
+      /* Migrate existing id column from INTEGER to BIGINT if needed */
+      await sql`
+        DO $$ BEGIN
+          IF EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_name='product_edits' AND column_name='id'
+            AND data_type='integer'
+          ) THEN
+            ALTER TABLE product_edits ALTER COLUMN id TYPE BIGINT;
+          END IF;
+        END $$
       `;
       /* Ensure has_pending_edit column exists */
       await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS has_pending_edit BOOLEAN DEFAULT false`;
@@ -816,8 +840,10 @@ module.exports = async function handler(req, res) {
       const { editId } = req.body || {};
       if (!editId) return jsonErr(res, 400, 'editId required.');
 
+      const editIdStr = String(editId);
+
       const editRows = await sql`
-        SELECT * FROM product_edits WHERE id = ${Number(editId)} AND status = 'pending' LIMIT 1
+        SELECT * FROM product_edits WHERE id = ${editIdStr}::bigint AND status = 'pending' LIMIT 1
       `;
       if (!editRows.length) return jsonErr(res, 404, 'Edit not found or already reviewed.');
 
@@ -858,7 +884,7 @@ module.exports = async function handler(req, res) {
 
       await sql`
         UPDATE product_edits SET status = 'approved', reviewed_at = NOW()
-        WHERE id = ${Number(editId)}
+        WHERE id = ${editIdStr}::bigint
       `;
 
       /* Bust cache */
@@ -878,13 +904,15 @@ module.exports = async function handler(req, res) {
       const { editId } = req.body || {};
       if (!editId) return jsonErr(res, 400, 'editId required.');
 
+      const editIdStr = String(editId);
+
       await sql`
         UPDATE product_edits SET status = 'rejected', reviewed_at = NOW()
-        WHERE id = ${Number(editId)} AND status = 'pending'
+        WHERE id = ${editIdStr}::bigint AND status = 'pending'
       `;
 
       /* Get product_id to clear the flag */
-      const rows2 = await sql`SELECT product_id, seller_id FROM product_edits WHERE id = ${Number(editId)} LIMIT 1`;
+      const rows2 = await sql`SELECT product_id, seller_id FROM product_edits WHERE id = ${editIdStr}::bigint LIMIT 1`;
       if (rows2.length) {
         await sql`UPDATE products SET has_pending_edit = false WHERE id = ${rows2[0].product_id}`;
         try {
