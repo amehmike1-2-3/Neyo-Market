@@ -12562,7 +12562,7 @@ function renderSellerPage() {
           + imgH
           + '<div style="flex:1;min-width:140px">'
           + '<div style="font-weight:600;font-size:.88rem;margin-bottom:3px">' + p.name + '</div>'
-          + '<div style="font-size:.77rem;color:var(--muted);margin-bottom:6px">₦' + p.price.toLocaleString() + ' · ' + p.type + ' · ' + p.commission + '% affiliate</div>'
+          + '<div style="font-size:.77rem;color:var(--muted);margin-bottom:6px">' + currSymbol(p.currency) + p.price.toLocaleString() + ' · ' + p.type + ' · ' + p.commission + '% affiliate</div>'
           + '<span style="font-size:.72rem;font-weight:600;padding:2px 9px;border-radius:50px;' + statusStyle + '">' + statusMsg + '</span>'
           + '</div>'
           + '<div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">'
