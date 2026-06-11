@@ -14243,25 +14243,23 @@ function aTab(tab, btn) {
       var rejected2 = allProds.filter(function(p){ return p.status === 'rejected'; });
       var editPending = allProds.filter(function(p){ return p.hasPendingEdit; });
 
-      function prodRow(p, showApprove, isEdit) {
-  var editHtml = editPending.length > 0 ? editPending.map(function(p) {
-    var ed = (typeof p.edit_data === 'string') ? JSON.parse(p.edit_data || '{}') : (p.edit_data || {});
-    var name = ed.name || p.name || 'Untitled';
-    var price = ed.price || p.price || 0;
-    
-    return '<div style="background:#fff; border:1px solid #ddd; padding:15px; margin-bottom:10px; border-radius:8px;">' +
-             '<div style="font-weight:bold; font-size:16px;">' + name + '</div>' +
-             '<div style="font-size:13px; color:#666; margin:5px 0;">Proposed Price: ₦' + price + '</div>' +
-             '<button onclick="apvP(' + p.id + ')" style="background:green; color:white; border:none; padding:8px 15px; cursor:pointer; border-radius:4px;">APPROVE</button> ' +
-             '<button onclick="rejP(' + p.id + ')" style="background:red; color:white; border:none; padding:8px 15px; cursor:pointer; border-radius:4px;">REJECT</button>' +
-           '</div>';
-}).join('') : '<div style="padding:20px; text-align:center;">No pending edits found.</div>';
-
-/* Now, inject this directly into your container */
-var container = document.getElementById('admin-edit-requests-wrap');
-if (container) {
-    container.innerHTML = editHtml;
-  }
+      function prodRow(p, showApprove) {
+        var ih = (p.imgs && p.imgs[0])
+          ? '<img src="' + p.imgs[0] + '" style="width:48px;height:48px;border-radius:6px;object-fit:cover;border:1px solid var(--border)" onerror="this.style.display=\'none\'"/>'
+          : '<span style="font-size:2rem">' + (p.emoji || '<i class="fa-solid fa-box"><\/i> ') + '</span>';
+        return '<div id="prow-' + p.id + '" style="display:flex;align-items:flex-start;gap:12px;padding:14px 0;border-bottom:1px solid var(--border);flex-wrap:wrap">'
+          + ih
+          + '<div style="flex:1;min-width:140px">'
+          + '<div style="font-weight:700;font-size:.92rem">' + p.name + '</div>'
+          + '<div style="font-size:.75rem;color:var(--muted);margin-top:2px">by <strong>' + (p.seller||'—') + '</strong> · ' + currSymbol(p.currency) + p.price.toLocaleString() + ' · ' + (p.type||'digital') + '</div>'
+          + '<div style="font-size:.73rem;color:var(--muted);margin-top:2px">' + (p.description||'').slice(0,60) + (p.description && p.description.length > 60 ? '…' : '') + '</div>'
+          + '</div>'
+          + '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'
+          + (showApprove ? '<button class="at aok" style="padding:10px 20px;font-size:.85rem;font-weight:800" onclick="apvP(' + p.id + ')"><i class="fa-solid fa-circle-check"><\/i>  APPROVE</button>' : '')
+          + '<button class="at ade" onclick="rejP(' + p.id + ')"><i class="fa-solid fa-xmark"><\/i>  Reject</button>'
+          + '</div>'
+          + '</div>';
+      }
 
       c.innerHTML =
         '<div class="ah"><h1><i class="fa-solid fa-box"><\/i>  Product Management</h1><p>Approve listings and product edits before they go live</p></div>'
