@@ -7416,12 +7416,28 @@ function validateSell() {
 }
 window.validateSell = validateSell;
 
-/* ====================== FIXED EDIT PRODUCT FUNCTION ====================== */
+/* ═══ 2b. submitProduct ═══ */
+/* ====================== FIXED EDIT PRODUCT ====================== */
 var editingProductId = null;
 
 function editProduct(productId) {
-  if (!window.CU) {
+  if (!window.CU && !localStorage.getItem('nm_current_user')) {
     toast('Please sign in first', 'fail');
+    go('signin');
+    return;
+  }
+
+  // Load current user from multiple sources
+  var currentUser = window.CU;
+  if (!currentUser) {
+    try {
+      var saved = localStorage.getItem('nm_current_user') || sessionStorage.getItem('nm_session');
+      if (saved) currentUser = JSON.parse(saved);
+    } catch(e) {}
+  }
+  if (!currentUser) {
+    toast('Please sign in first', 'fail');
+    go('signin');
     return;
   }
 
@@ -7431,17 +7447,23 @@ function editProduct(productId) {
   });
 
   if (!product) {
-    toast('Product not found. Please refresh the page.', 'fail');
+    toast('Product not found. Refreshing...', 'fail');
+    // Try to reload products
+    fetch('/api/products').then(r => r.json()).then(d => {
+      if (d.products) window.prods = prods = d.products;
+    });
     return;
   }
 
   // Security check
-  if (String(product.sellerId || product.seller_id || '') !== String(CU.id) && CU.role !== 'admin') {
+  if (String(product.sellerId || product.seller_id || '') !== String(currentUser.id) && currentUser.role !== 'admin') {
     toast('You can only edit your own products', 'fail');
     return;
   }
 
   editingProductId = numId;
+  window.CU = currentUser; // Ensure global is set
+
   go('sell');
 
   setTimeout(function() {
@@ -7481,8 +7503,9 @@ function editProduct(productId) {
 
     validateSell();
     toast('Product loaded for editing ✅', 'ok');
-  }, 300);
+  }, 350);
 }
+window.editProduct = editProduct;
 
 function cancelEdit() {
   editingProductId = null;
@@ -7491,11 +7514,8 @@ function cancelEdit() {
   resetSell();
   toast('Edit cancelled', 'ok');
 }
-
-window.editProduct = editProduct;
 window.cancelEdit = cancelEdit;
 
-/* ═══ 2b. submitProduct ═══ */
 function submitProduct() {
   /* KYC check — must be verified to list products */
   if (CU && CU.role !== 'admin') {
