@@ -709,7 +709,7 @@ module.exports = async function handler(req, res) {
       `;
       if (!owns.length) return jsonErr(res, 403, 'Not your product.');
 
-      /* Ensure product_edits table exists — use BIGSERIAL to handle timestamp-based IDs */
+      /* Ensure product_edits table exists with BIGINT id */
       await sql`
         CREATE TABLE IF NOT EXISTS product_edits (
           id           BIGSERIAL PRIMARY KEY,
@@ -721,18 +721,8 @@ module.exports = async function handler(req, res) {
           reviewed_at  TIMESTAMPTZ
         )
       `;
-      /* Migrate existing id column from INTEGER to BIGINT if needed */
-      await sql`
-        DO $$ BEGIN
-          IF EXISTS (
-            SELECT 1 FROM information_schema.columns
-            WHERE table_name='product_edits' AND column_name='id'
-            AND data_type='integer'
-          ) THEN
-            ALTER TABLE product_edits ALTER COLUMN id TYPE BIGINT;
-          END IF;
-        END $$
-      `;
+      /* Unconditionally migrate id to BIGINT — safe no-op if already BIGINT */
+      await sql`ALTER TABLE product_edits ALTER COLUMN id TYPE BIGINT`;
 
       /* Cancel any previous pending edit for this product */
       await sql`
@@ -802,18 +792,8 @@ module.exports = async function handler(req, res) {
           reviewed_at  TIMESTAMPTZ
         )
       `;
-      /* Migrate existing id column from INTEGER to BIGINT if needed */
-      await sql`
-        DO $$ BEGIN
-          IF EXISTS (
-            SELECT 1 FROM information_schema.columns
-            WHERE table_name='product_edits' AND column_name='id'
-            AND data_type='integer'
-          ) THEN
-            ALTER TABLE product_edits ALTER COLUMN id TYPE BIGINT;
-          END IF;
-        END $$
-      `;
+      /* Unconditionally migrate id to BIGINT — safe no-op if already BIGINT */
+      await sql`ALTER TABLE product_edits ALTER COLUMN id TYPE BIGINT`;
       /* Ensure has_pending_edit column exists */
       await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS has_pending_edit BOOLEAN DEFAULT false`;
       const edits = await sql`
@@ -841,7 +821,6 @@ module.exports = async function handler(req, res) {
       if (!editId) return jsonErr(res, 400, 'editId required.');
 
       const editIdStr = String(editId);
-
       const editRows = await sql`
         SELECT * FROM product_edits WHERE id = ${editIdStr}::bigint AND status = 'pending' LIMIT 1
       `;
@@ -905,7 +884,6 @@ module.exports = async function handler(req, res) {
       if (!editId) return jsonErr(res, 400, 'editId required.');
 
       const editIdStr = String(editId);
-
       await sql`
         UPDATE product_edits SET status = 'rejected', reviewed_at = NOW()
         WHERE id = ${editIdStr}::bigint AND status = 'pending'
