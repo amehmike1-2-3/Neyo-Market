@@ -7887,12 +7887,12 @@ async function aiGenerateDesc() {
   if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-hourglass-half"><\/i>  Generating...'; }
   if (status) { status.style.display = 'block'; status.textContent = 'Writing your description...'; }
 
-  var sym = currency === 'NGN' ? '₦' : currency === 'USD' ? '$' : currency === 'GBP' ? '£' : currency;
-  var prompt = 'Write a persuasive, SEO-friendly product description for a Nigerian marketplace listing.'
+  var sym = (typeof currSymbol === 'function') ? currSymbol(currency) : currency;
+  var prompt = 'Write a persuasive, SEO-friendly product description for an online marketplace listing.'
     + ' Product: "' + name + '".'
     + (cat    ? ' Category: ' + cat + '.'    : '')
     + (type   ? ' Type: ' + type + '.'       : '')
-    + (price  ? ' Price: ' + sym + price + '.' : '')
+    + (price  ? ' Price: ' + sym + price + '. Use the ' + currency + ' currency symbol (' + sym + ') if mentioning the price.' : '')
     + (variants ? ' Available options: ' + variants + '.' : '')
     + ' Write 3-4 sentences. Be specific, highlight benefits, include a call to action.'
     + ' Do NOT use markdown, asterisks, or headers. Plain text only.';
@@ -8781,7 +8781,7 @@ function renderRelatedProducts(p) {
         var imgs = r.imgs || r.images || [];
         if (typeof imgs === 'string') try { imgs = JSON.parse(imgs); } catch(e){ imgs=[]; }
         var img  = imgs && imgs.length ? imgs[0] : '';
-        var sym  = r.currency === 'USD' ? '$' : r.currency === 'GBP' ? '£' : '₦';
+        var sym  = currSymbol(r.currency);
         return '<div data-opn="'+r.id+'" style="cursor:pointer;border-radius:8px;overflow:hidden;border:1px solid var(--border);background:var(--bg3)">'
           + (img ? '<img src="'+img+'" style="width:100%;aspect-ratio:1/1;object-fit:cover" loading="lazy">'
                  : '<div style="width:100%;aspect-ratio:1/1;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:1.4rem">'+r.emoji+'</div>')
@@ -8969,7 +8969,7 @@ function renderRecentlyViewed(currentId) {
         var imgs = r.imgs || r.images || [];
         if (typeof imgs === 'string') try { imgs = JSON.parse(imgs); } catch(e){ imgs=[]; }
         var img  = imgs && imgs.length ? imgs[0] : '';
-        var sym  = r.currency === 'USD' ? '$' : r.currency === 'GBP' ? '£' : '₦';
+        var sym  = currSymbol(r.currency);
         return '<div data-opn="'+r.id+'" style="cursor:pointer;flex-shrink:0;width:80px">'
           + (img ? '<img src="'+img+'" style="width:80px;height:80px;object-fit:cover;border-radius:8px;border:1px solid var(--border)">'
                  : '<div style="width:80px;height:80px;background:var(--bg3);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.5rem">'+r.emoji+'</div>')
@@ -9011,7 +9011,7 @@ function renderPriceHistory(productId, currency) {
     var hist = JSON.parse(localStorage.getItem('nm_ph_' + productId) || '[]');
     if (hist.length < 2) return; /* need at least 2 data points */
 
-    var sym    = currency === 'USD' ? '$' : currency === 'GBP' ? '£' : '₦';
+    var sym    = currSymbol(currency);
     var prices = hist.map(function(h){ return h.price; });
     var maxP   = Math.max.apply(null, prices);
     var minP   = Math.min.apply(null, prices);
@@ -9091,7 +9091,7 @@ function renderHomeRecentlyViewed() {
     var imgs = r.imgs || r.images || [];
     if (typeof imgs === 'string') try { imgs = JSON.parse(imgs); } catch(e){ imgs=[]; }
     var img = imgs && imgs.length ? imgs[0] : '';
-    var sym = r.currency === 'USD' ? '$' : r.currency === 'GBP' ? '£' : '₦';
+    var sym = currSymbol(r.currency);
     return '<div data-opn="\'+r.id+\'" style="cursor:pointer;flex-shrink:0;width:100px">'
       + (img ? '<img src="'+img+'" style="width:100px;height:100px;object-fit:cover;border-radius:10px;border:1px solid var(--border)">'
              : '<div style="width:100px;height:100px;background:var(--bg3);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.8rem">'+r.emoji+'</div>')
@@ -10278,9 +10278,9 @@ function processPaystack(mode) {
             if (rf) rf.innerHTML =
               '<div>Name: '         + name + '</div>' +
               '<div>WhatsApp: '     + (wa || 'N/A') + '</div>' +
-              '<div>Amount Paid: ₦' + total.toLocaleString() + '</div>' +
-              (data.affiliateFee ? '<div>Affiliate: ₦' + data.affiliateFee.toLocaleString() + ' (5%)</div>' : '') +
-              '<div>Seller Gets: ₦' + (data.sellerAmount || Math.round(total * 0.90)).toLocaleString() + '</div>' +
+              '<div>Amount Paid: ' + currSymbol(cartCurrency) + total.toLocaleString() + '</div>' +
+              (data.affiliateFee ? '<div>Affiliate: ' + currSymbol(cartCurrency) + data.affiliateFee.toLocaleString() + ' (5%)</div>' : '') +
+              '<div>Seller Gets: ' + currSymbol(cartCurrency) + (data.sellerAmount || Math.round(total * 0.90)).toLocaleString() + '</div>' +
               '<div>Date: ' + new Date().toLocaleDateString() + '</div>' +
               '<div style="margin-top:8px;color:var(--green)"><i class="fa-solid fa-circle-check"><\/i>  Payment confirmed & saved. Escrow active.</div>';
             cM('m-cart'); cM('m-pd');
@@ -11703,7 +11703,7 @@ function renderPromoteProducts() {
         img +
         '<div style="flex:1;min-width:0">' +
           '<div style="font-weight:600;font-size:.84rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + p.name + '</div>' +
-          '<div style="font-size:.72rem;color:var(--gold);margin-top:2px">₦' + Number(p.price||0).toLocaleString() + '</div>' +
+          '<div style="font-size:.72rem;color:var(--gold);margin-top:2px">' + currSymbol(p.currency) + Number(p.price||0).toLocaleString() + '</div>' +
         '</div>' +
         (isPromoted ? '<span class="promo-badge"><i class="fa-solid fa-bolt"><\/i>  Live</span>' : '') +
       '</div>' +
@@ -12390,7 +12390,7 @@ function renderSellerDash() {
       + img
       + '<div style="flex:1;min-width:120px">'
       + '<div style="font-weight:600;font-size:.87rem;margin-bottom:3px">' + p.name.substring(0, 36) + (p.name.length > 36 ? '…' : '') + '</div>'
-      + '<div style="font-size:.76rem;color:var(--muted)">' + sym + p.price.toLocaleString() + ' · ' + p.commission + '% commission</div>'
+      + '<div style="font-size:.76rem;color:var(--muted)">' + currSymbol(p.currency) + p.price.toLocaleString() + ' · ' + p.commission + '% commission</div>'
       + '<div style="font-size:.72rem;color:var(--muted);margin-top:2px">'
       + (p.reviews > 0 ? '<i class="fa-solid fa-star" style="color:#f39c12;"><\/i>  ' + p.rating + ' (' + p.reviews + ' reviews) · ' : '')
       + (p.quantity !== null && p.quantity !== undefined ? '<i class="fa-solid fa-box"><\/i>  ' + p.quantity + ' in stock' : '')
@@ -12678,7 +12678,7 @@ function renderSellerPage() {
               + shipCard
               + digNote
               + '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">'
-              + '<div style="font-size:.8rem;color:var(--muted)">Your payout: <strong style="color:var(--green);font-size:.9rem">₦' + myPayout.toLocaleString() + '</strong> <span style="font-size:.72rem">(90%)</span></div>'
+              + '<div style="font-size:.8rem;color:var(--muted)">Your payout: <strong style="color:var(--green);font-size:.9rem">' + currSymbol(o.currency) + myPayout.toLocaleString() + '</strong> <span style="font-size:.72rem">(90%)</span></div>'
               + (custPhone ? '<a href="https://wa.me/' + custPhone.replace(/\D/g,'') + '" target="_blank" style="background:rgba(30,216,128,.1);border:1px solid rgba(30,216,128,.22);color:var(--green);padding:5px 12px;border-radius:7px;font-size:.76rem;font-weight:700;text-decoration:none"><i class="fa-solid fa-comment-dots"><\/i>  WhatsApp Buyer</a>' : '')
               + '</div>'
               /* ── DVC CLAIM INPUT: physical orders waiting for confirmation ── */
@@ -13989,7 +13989,7 @@ function aTab(tab, btn) {
                 + ih
                 + '<div style="flex:1;min-width:120px">'
                 + '<div style="font-weight:600;font-size:.9rem">'+p.name+'</div>'
-                + '<div style="font-size:.75rem;color:var(--muted);margin-top:2px">by '+p.seller+' · ₦'+p.price.toLocaleString()+'</div>'
+                + '<div style="font-size:.75rem;color:var(--muted);margin-top:2px">by '+p.seller+' · '+currSymbol(p.currency)+p.price.toLocaleString()+'</div>'
                 + '</div>'
                 + '<div class="ar2">'
                 + '<button class="at aok" onclick="apvP('+p.id+')"><i class="fa-solid fa-check"><\/i>  Approve</button>'
@@ -14251,7 +14251,7 @@ function aTab(tab, btn) {
           + ih
           + '<div style="flex:1;min-width:140px">'
           + '<div style="font-weight:700;font-size:.92rem">' + p.name + '</div>'
-          + '<div style="font-size:.75rem;color:var(--muted);margin-top:2px">by <strong>' + (p.seller||'—') + '</strong> · ₦' + p.price.toLocaleString() + ' · ' + (p.type||'digital') + '</div>'
+          + '<div style="font-size:.75rem;color:var(--muted);margin-top:2px">by <strong>' + (p.seller||'—') + '</strong> · ' + currSymbol(p.currency) + p.price.toLocaleString() + ' · ' + (p.type||'digital') + '</div>'
           + '<div style="font-size:.73rem;color:var(--muted);margin-top:2px">' + (p.description||'').slice(0,60) + (p.description && p.description.length > 60 ? '…' : '') + '</div>'
           + '</div>'
           + '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'
@@ -15209,7 +15209,7 @@ function startCartAbandonTimer() {
 
     var itemName = cart[0].name || 'your item';
     var total    = cart.reduce(function(s, i){ return s + (parseFloat(i.price)||0) * (i.qty||1); }, 0);
-    var sym      = cart[0] && cart[0].currency === 'USD' ? '$' : '₦';
+    var sym      = currSymbol((cart[0] && cart[0].currency) || 'NGN');
 
     sendLocalNotification(
       '?? You left something behind!',
@@ -15288,7 +15288,7 @@ function showShareMenu(p) {
   if (imgUrl && !imgUrl.startsWith('http')) imgUrl = 'https://' + imgUrl.replace(/^\/+/, '');
 
   var productTitle = p.name + ' | NeyoMarket';
-  var productDesc  = '₦' + price.toLocaleString() + ' — ' + (desc || 'Buy safely on NeyoMarket Nigeria');
+  var productDesc  = currSymbol(p.currency) + price.toLocaleString() + ' — ' + (desc || 'Buy safely on NeyoMarket Nigeria');
   document.title   = productTitle;
 
   /* Build modal */
@@ -15314,7 +15314,7 @@ function showShareMenu(p) {
   var bs = 'display:flex;align-items:center;gap:12px;width:100%;padding:13px 16px;margin-bottom:8px;border-radius:10px;background:var(--bg2);font-weight:600;font-size:.9rem;cursor:pointer;text-decoration:none;color:inherit';
 
   /* WhatsApp — ogUrl in message so WA scrapes the image */
-  var waMsg  = p.name + ' — ₦' + price.toLocaleString() + (desc ? '\n' + desc : '') + '\n\n' + ogUrl;
+  var waMsg  = p.name + ' — ' + currSymbol(p.currency) + price.toLocaleString() + (desc ? '\n' + desc : '') + '\n\n' + ogUrl;
   var waLink = document.createElement('a');
   waLink.href = 'https://wa.me/?text=' + encodeURIComponent(waMsg);
   waLink.target = '_blank'; waLink.rel = 'noopener noreferrer';
@@ -15325,7 +15325,7 @@ function showShareMenu(p) {
 
   /* Twitter */
   var twLink = document.createElement('a');
-  twLink.href = 'https://twitter.com/intent/tweet?url=' + encodeURIComponent(ogUrl) + '&text=' + encodeURIComponent(p.name + ' ₦' + price.toLocaleString() + ' on NeyoMarket');
+  twLink.href = 'https://twitter.com/intent/tweet?url=' + encodeURIComponent(ogUrl) + '&text=' + encodeURIComponent(p.name + ' ' + currSymbol(p.currency) + price.toLocaleString() + ' on NeyoMarket');
   twLink.target = '_blank'; twLink.rel = 'noopener noreferrer';
   twLink.style.cssText = bs + ';border:1.5px solid #1DA1F2;color:#1DA1F2';
   twLink.innerHTML = '𝕏 <span>Twitter / X</span>';
@@ -15550,7 +15550,7 @@ function loadAdminPendingEdits() {
             /* Build diff rows */
             var diffs = [];
             if (ed.name        && ed.name        !== e.product_name)        diffs.push(['Title',       e.product_name,     ed.name]);
-            if (ed.price       && String(ed.price) !== String(e.current_price)) diffs.push(['Price', '₦'+parseFloat(e.current_price).toLocaleString(), '₦'+parseFloat(ed.price).toLocaleString()]);
+            if (ed.price       && String(ed.price) !== String(e.current_price)) diffs.push(['Price', currSymbol(e.currency||'NGN')+parseFloat(e.current_price).toLocaleString(), currSymbol(ed.currency||e.currency||'NGN')+parseFloat(ed.price).toLocaleString()]);
             if (ed.description && ed.description !== e.current_description) diffs.push(['Description', (e.current_description||'').slice(0,60)+'…', ed.description.slice(0,80)+'…']);
             if (ed.currency)    diffs.push(['Currency',    '—', ed.currency]);
             if (ed.condition)   diffs.push(['Condition',   '—', ed.condition]);
@@ -16986,7 +16986,7 @@ function updateOGTags(product) {
   
   if (titleEl) titleEl.setAttribute('content', product.name + ' | NeyoMarket');
   if (descEl) {
-    var desc = '₦' + (product.price || 0).toLocaleString() + ' · ' + (product.description || '').substring(0, 100);
+    var desc = currSymbol(product.currency) + (product.price || 0).toLocaleString() + ' · ' + (product.description || '').substring(0, 100);
     descEl.setAttribute('content', desc);
   }
   if (imgEl && product.imgs && product.imgs.length > 0) {
@@ -17013,7 +17013,7 @@ function shareProductWithAffiliate(productId) {
   if (navigator.share) {
     navigator.share({
       title: prod.name,
-      text: '₦' + (prod.price || 0).toLocaleString(),
+      text: currSymbol(prod.currency) + (prod.price || 0).toLocaleString(),
       url: shareUrl
     }).catch(function(){});
   } else {
