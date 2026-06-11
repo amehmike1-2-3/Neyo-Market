@@ -1,4 +1,4 @@
-// /api/products.js — NeyoMarket Products API
+// /api/products.js — NeyoMarket Products API 
 // ✅ FIX 1: Share button now uses absolute URLs (https://neyomarket.com.ng)
 // ✅ FIX 2: Digital products MUST have a file_url — 400 returned if missing
 // ✅ FIX 3: GET with sellerId uses WHERE seller_id = $1 (authenticated session ID)
