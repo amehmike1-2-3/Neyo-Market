@@ -7461,12 +7461,12 @@ function editProduct(productId) {
     return;
   }
 
-  editingProductId = numId;
   window.CU = currentUser; // Ensure global is set
 
   go('sell');
 
   setTimeout(function() {
+    editingProductId = numId; /* set AFTER go('sell') so resetSell() cannot clear it */
     // Populate form
     sval('s-name', product.name || '');
     sval('s-type', product.type || 'physical');
@@ -12390,7 +12390,7 @@ function renderSellerDash() {
       + img
       + '<div style="flex:1;min-width:120px">'
       + '<div style="font-weight:600;font-size:.87rem;margin-bottom:3px">' + p.name.substring(0, 36) + (p.name.length > 36 ? '…' : '') + '</div>'
-      + '<div style="font-size:.76rem;color:var(--muted)">' + currSymbol(p.currency) + p.price.toLocaleString() + ' · ' + p.commission + '% commission</div>'
+      + '<div style="font-size:.76rem;color:var(--muted)">' + sym + p.price.toLocaleString() + ' · ' + p.commission + '% commission</div>'
       + '<div style="font-size:.72rem;color:var(--muted);margin-top:2px">'
       + (p.reviews > 0 ? '<i class="fa-solid fa-star" style="color:#f39c12;"><\/i>  ' + p.rating + ' (' + p.reviews + ' reviews) · ' : '')
       + (p.quantity !== null && p.quantity !== undefined ? '<i class="fa-solid fa-box"><\/i>  ' + p.quantity + ' in stock' : '')
