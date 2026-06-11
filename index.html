@@ -7930,7 +7930,7 @@ async function aiGenerateDesc() {
 window.aiGenerateDesc = aiGenerateDesc;
 
 function resetSell() {
-  uploadedImages = []; dReady = false; digitalFileData = null; editingProductId = null;
+  uploadedImages = []; dReady = false; digitalFileData = null;
   var eb = document.getElementById('edit-mode-banner'); if (eb) eb.remove();
   var btn2 = document.getElementById('sell-btn'); if (btn2) btn2.innerHTML = '<i class="fa-solid fa-lock"></i>  Submit for Review';
   ['s-name','s-type','s-cat','s-price','s-currency','s-comm','s-desc','s-email','s-discount-price','s-sale-ends','s-shipping-fee'].forEach(function (id) { sval(id, ''); });
