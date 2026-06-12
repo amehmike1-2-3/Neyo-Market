@@ -112,9 +112,12 @@ function computeSplit(total, hasPhysical, hasValidAff, membershipTier) {
   /* If affiliate commission would exceed base, cap platform at 1% */
   const platformRate = Math.max(0.01, baseRate - (hasValidAff ? 0.02 : 0));
   const sellerRate   = 1 - platformRate - affiliateRate;
-  const platformFee  = Math.round(total * platformRate);
+  
+  // FIX: Use Math.ceil() instead of Math.round() to ensure a minimum fee is always collected
+  const platformFee  = Math.ceil(total * platformRate); 
   const affiliateFee = Math.round(total * affiliateRate);
   const sellerPayout = Math.round(total * sellerRate);
+  
   return { platformFee, affiliateFee, sellerPayout, platformRate };
 }
 
