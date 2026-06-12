@@ -12600,7 +12600,7 @@ function renderSellerDash() {
   var pending = myProds.filter(function (p) { return p.status === 'pending'; }).length;
 
   var myOrds        = sellerOrds;
-  var completedOrds = myOrds.filter(function(o){ return o.status === 'delivered'; }).length;
+  var completedOrds = myOrds.filter(function(o){ return o.status === 'completed'; }).length;
   var topProd      = myProds.sort(function(a,b){ return (b.reviews||0)-(a.reviews||0); })[0];
 
   /* stats row — fetch fresh revenue from Neon to match analytics */
