@@ -799,8 +799,7 @@ module.exports = async function handler(req, res) {
       const edits = await sql`
         SELECT pe.*, p.name AS product_name, p.seller AS seller_name,
                p.price AS current_price, p.imgs AS current_imgs,
-               p.description AS current_description, p.status AS product_status,
-               p.currency AS current_currency
+               p.description AS current_description, p.status AS product_status
         FROM product_edits pe
         JOIN products p ON p.id = pe.product_id
         WHERE pe.status = 'pending'
@@ -910,6 +909,26 @@ module.exports = async function handler(req, res) {
        in the request — no double-counting on refresh.
        No auth required — anonymous views count too.
     ════════════════════════════════════════════════ */
+    /* ════════════════════════════════════════════════
+       POST ?action=bulk-approve
+       Admin approves ALL pending products at once.
+    ════════════════════════════════════════════════ */
+    if (req.query.action === 'bulk-approve' && req.method === 'POST') {
+      const { adminId } = req.body || {};
+      if (!adminId) return jsonErr(res, 400, 'adminId required.');
+      /* Verify admin */
+      const adminCheck = await sql`SELECT role FROM users WHERE id = ${String(adminId)} LIMIT 1`;
+      if (!adminCheck.length || adminCheck[0].role !== 'admin') return jsonErr(res, 403, 'Admins only.');
+      /* Approve all pending products */
+      const result = await sql`
+        UPDATE products
+        SET status = 'active', reviewed_by = ${String(adminId)}, reviewed_at = NOW()
+        WHERE status = 'pending'
+        RETURNING id
+      `;
+      return res.status(200).json({ ok: true, count: result.length });
+    }
+
     if (req.query.action === 'track-view' && req.method === 'POST') {
       const { productId } = req.body || {};
       if (!productId) return jsonErr(res, 400, 'productId required.');
