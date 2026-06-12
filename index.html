@@ -229,6 +229,273 @@
   --shadow-md:0 4px 6px rgba(0,0,0,.07);
   color-scheme:light;
 }
+
+/* ══════════════════════════════════════════════════════════════
+   LIGHT MODE FIXES — all hardcoded dark colors overridden
+══════════════════════════════════════════════════════════════ */
+
+/* How-it-works section — dark background with white text, needs light override */
+[data-theme="light"] .hiw-section {
+  background: #f8f6f0 !important;
+}
+[data-theme="light"] .hiw-title {
+  color: #111827 !important;
+}
+[data-theme="light"] .hiw-sub {
+  color: #6b7280 !important;
+}
+[data-theme="light"] .hiw-step {
+  background: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,.06) !important;
+}
+[data-theme="light"] .hiw-step h4 {
+  color: #111827 !important;
+}
+[data-theme="light"] .hiw-step p {
+  color: #6b7280 !important;
+}
+[data-theme="light"] .hiw-illus-card {
+  background: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,.06) !important;
+}
+[data-theme="light"] .hiw-illus-card h4 {
+  color: #111827 !important;
+}
+[data-theme="light"] .hiw-illus-card p {
+  color: #6b7280 !important;
+}
+[data-theme="light"] .hiw-money {
+  background: rgba(201,146,42,.06) !important;
+  border-color: rgba(201,146,42,.2) !important;
+}
+
+/* Accordion active header — gold gradient keeps white text fine */
+[data-theme="light"] .accordion-header {
+  background: #f3f4f6 !important;
+}
+[data-theme="light"] .accordion-header:not(.active) h4 {
+  color: #111827 !important;
+}
+[data-theme="light"] .accordion-header:not(.active) .accordion-toggle {
+  color: #111827 !important;
+}
+[data-theme="light"] .accordion-content,
+[data-theme="light"] .accordion-body {
+  background: #ffffff !important;
+  color: #111827 !important;
+}
+
+/* Store name on seller page header — white text on image */
+[data-theme="light"] #store-name {
+  color: #fff !important;
+  text-shadow: 0 1px 4px rgba(0,0,0,.5) !important;
+}
+
+/* Product detail price text — hardcoded #111827 is fine in light, fix for readability */
+[data-theme="light"] #pd-body span[style*="color:#111827"] {
+  color: #111827 !important;
+}
+
+/* Review textarea hardcoded #f9fafb bg — fine in light */
+[data-theme="light"] textarea[style*="background:#f9fafb"] {
+  background: #f9fafb !important;
+  color: #111827 !important;
+}
+
+/* Affiliate link input using var(--dark) — undefined in light */
+[data-theme="light"] input[style*="var(--dark)"],
+[data-theme="light"] input[id^="link-"] {
+  background: #f3f4f6 !important;
+  color: #374151 !important;
+  border-color: #e5e7eb !important;
+}
+
+/* Flash sale banner — always dark, keep white text */
+[data-theme="light"] .flash-banner,
+[data-theme="light"] .flash-cd-block {
+  color: #fff !important;
+}
+
+/* Tier cards */
+[data-theme="light"] .tier-card {
+  background: #ffffff !important;
+  border-color: #e5e7eb !important;
+}
+[data-theme="light"] .tier-card.active-tier {
+  background: rgba(201,146,42,.06) !important;
+}
+
+/* Wallet card stays dark gradient in light mode — keep white text */
+[data-theme="light"] #wallet-card {
+  background: linear-gradient(135deg,#1a1a2e,#16213e) !important;
+}
+[data-theme="light"] #wallet-card * {
+  color: #fff !important;
+}
+[data-theme="light"] #wallet-card .vl { color: var(--gold) !important; }
+
+/* Admin wallet card */
+[data-theme="light"] .adl { background: #f3f4f6 !important; }
+[data-theme="light"] .ads {
+  background: #ffffff !important;
+  border-color: #e5e7eb !important;
+}
+
+/* Seller dashboard stats */
+[data-theme="light"] .sc2 .lb { color: #6b7280 !important; }
+[data-theme="light"] .sc2 .vl { color: #111827 !important; }
+[data-theme="light"] .sc2 .ch { color: #9ca3af !important; }
+
+/* Pending edit diff table */
+[data-theme="light"] #admin-edit-list { background: #ffffff !important; }
+
+/* Modals in light */
+[data-theme="light"] .mo,
+[data-theme="light"] .mod-box {
+  background: #ffffff !important;
+  color: #111827 !important;
+}
+[data-theme="light"] .mh {
+  background: #ffffff !important;
+  border-bottom-color: #e5e7eb !important;
+  color: #111827 !important;
+}
+[data-theme="light"] .mb {
+  background: #ffffff !important;
+  color: #111827 !important;
+}
+
+/* Inputs / selects / textareas — ensure visible in light */
+[data-theme="light"] input:not([type="checkbox"]):not([type="radio"]),
+[data-theme="light"] select,
+[data-theme="light"] textarea,
+[data-theme="light"] .fi {
+  background: #f9fafb !important;
+  color: #111827 !important;
+  border-color: #d1d5db !important;
+}
+[data-theme="light"] input::placeholder,
+[data-theme="light"] textarea::placeholder {
+  color: #9ca3af !important;
+}
+[data-theme="light"] .fi option {
+  background: #ffffff !important;
+  color: #111827 !important;
+}
+
+/* .cin (AI chat input) — keep dark since chat widget is always dark */
+[data-theme="light"] .cin {
+  background: rgba(220,38,38,.08) !important;
+  color: #f5e8e8 !important;
+  border-color: rgba(220,38,38,.25) !important;
+}
+
+/* Tags/badges with hardcoded light bg — ensure contrast in light */
+[data-theme="light"] .pcard span[style*="background:#f3f4f6"] {
+  background: #f3f4f6 !important;
+  color: #374151 !important;
+}
+[data-theme="light"] .pcard span[style*="background:#fef3c7"] {
+  background: #fef3c7 !important;
+  color: #92400e !important;
+}
+[data-theme="light"] .pcard span[style*="background:#d1fae5"] {
+  background: #d1fae5 !important;
+  color: #065f46 !important;
+}
+
+/* Order cards */
+[data-theme="light"] .ord {
+  background: #ffffff !important;
+  border-color: #e5e7eb !important;
+}
+[data-theme="light"] .ordh h4,
+[data-theme="light"] .ordi {
+  color: #111827 !important;
+}
+
+/* Checkout bar */
+[data-theme="light"] .checkout-bar,
+[data-theme="light"] .cos {
+  background: #ffffff !important;
+  border-color: #e5e7eb !important;
+}
+
+/* Bottom nav */
+[data-theme="light"] .bottom-nav {
+  background: rgba(255,255,255,.97) !important;
+  border-top-color: #e5e7eb !important;
+}
+[data-theme="light"] .bnb { color: #6b7280 !important; }
+[data-theme="light"] .bnb.on { color: var(--gold) !important; }
+
+/* Top navbar */
+[data-theme="light"] nav {
+  background: rgba(255,255,255,.97) !important;
+  border-bottom-color: #e5e7eb !important;
+}
+
+/* Search input */
+[data-theme="light"] .search-input-wrap input {
+  background: #ffffff !important;
+  color: #111827 !important;
+  border-color: #d1d5db !important;
+}
+
+/* Leaderboard cards */
+[data-theme="light"] .leaderboard-card {
+  background: #ffffff !important;
+  border-color: #e5e7eb !important;
+}
+[data-theme="light"] .lb-row {
+  background: #f3f4f6 !important;
+}
+
+/* Notif panel */
+[data-theme="light"] .notif-panel {
+  background: #ffffff !important;
+  border-color: #e5e7eb !important;
+}
+[data-theme="light"] .notif-item {
+  border-bottom-color: #f3f4f6 !important;
+}
+[data-theme="light"] .notif-item.unread {
+  background: #fefce8 !important;
+}
+
+/* Image upload slots */
+[data-theme="light"] .isl {
+  background: #f9fafb !important;
+  border-color: #d1d5db !important;
+  color: #6b7280 !important;
+}
+
+/* dash/seller sidebar */
+[data-theme="light"] .dw,
+[data-theme="light"] .cw,
+[data-theme="light"] .aw {
+  background: #f9fafb !important;
+}
+[data-theme="light"] .asbs {
+  background: #ffffff !important;
+  border-color: #e5e7eb !important;
+}
+[data-theme="light"] .asb { color: #6b7280 !important; }
+[data-theme="light"] .asb.on { color: var(--gold) !important; border-bottom-color: var(--gold) !important; }
+
+/* Product cards price — hardcoded dark text fine in light */
+[data-theme="light"] .pcard { background: #ffffff !important; border-color: #e5e7eb !important; }
+
+/* Footer — always dark, keep white text */
+[data-theme="light"] footer { background: #111827 !important; }
+
+/* hiw-section dark overrides */
+[data-theme="light"] .hiw-section {
+  background: linear-gradient(180deg, #faf8f4 0%, #f3ede0 100%) !important;
+}
+
 /* ── FIX 1: Default :root is now LIGHT — clean white professional theme ── */
 :root{
   --gold:#c9922a;--gold2:#a67318;--gold3:#f5e6c8;
@@ -8424,6 +8691,16 @@ window.fHome = fHome;
 ═══════════════════════════════════════════════════════════════════════ */
 window.NM_NOTIFS = { items: [], readIds: new Set() };
 
+/* Push a notification into the bell panel instead of browser popup */
+function addBellNotif(title, text, icon) {
+  var id = 'local_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+  var item = { id: id, title: title, content: text, created_at: new Date().toISOString(), _icon: icon || 'fa-bell' };
+  window.NM_NOTIFS.items.unshift(item);
+  if (window.NM_NOTIFS.items.length > 30) window.NM_NOTIFS.items = window.NM_NOTIFS.items.slice(0, 30);
+  renderNotifPanel(window.NM_NOTIFS.items);
+}
+window.addBellNotif = addBellNotif;
+
 function toggleNotifPanel() {
   var panel = document.getElementById('notif-panel');
   var overlay = document.getElementById('notif-overlay');
@@ -9256,7 +9533,9 @@ function opn(id) {
     + '<div style="padding:0 14px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">'
     + '<div style="display:flex;align-items:baseline;gap:8px">'
     + (saleActive ? '<span style="text-decoration:line-through;color:#9ca3af;font-size:.9rem">' + sym + p.price.toLocaleString() + '</span>' : '')
+    + (p.hasPendingEdit && !saleActive ? '<span style="text-decoration:line-through;color:#9ca3af;font-size:.9rem" title="Edit pending approval">' + sym + p.price.toLocaleString() + '</span>' : '')
     + '<span style="font-size:1.6rem;font-weight:800;color:' + (saleActive?'#dc2626':'#111827') + ';font-family:serif">' + sym + displayP.toLocaleString() + '</span>'
+    + (p.hasPendingEdit ? '<span style="background:rgba(59,130,246,.15);color:#60a5fa;padding:2px 7px;border-radius:4px;font-size:.62rem;font-weight:700;margin-left:4px"><i class="fa-solid fa-pen-to-square"></i> Edit pending</span>' : '')
     + (saving > 0 ? '<span style="background:#fee2e2;color:#dc2626;padding:2px 6px;border-radius:4px;font-size:.65rem;font-weight:700">Save ' + sym + saving.toLocaleString() + '</span>' : '')
     + '</div>'
     + '<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">'
@@ -12227,25 +12506,27 @@ window.awardReferralBonus = awardReferralBonus;
    PWA PUSH NOTIFICATIONS
 ═══════════════════════════════════════════════════════ */
 function requestPushPermission() {
-  if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
-  if (Notification.permission === 'granted') return;
-  Notification.requestPermission().then(function(permission) {
-    if (permission === 'granted') {
-      toast('<i class="fa-solid fa-bell"><\/i>  Notifications enabled! You\'ll be notified of flash sales and orders.', 'ok');
-    }
-  });
+  /* No longer auto-prompts — notifications go to bell panel instead */
+  /* Push permission only requested if user explicitly enables it in settings */
 }
 window.requestPushPermission = requestPushPermission;
 
 function sendLocalNotification(title, body, icon) {
-  if (!('Notification' in window) || Notification.permission !== 'granted') return;
-  try {
-    new Notification(title, {
-      body:  body  || '',
-      icon:  icon  || 'https://neyomarket.com.ng/neyomarket-logo.webp',
-      badge: 'https://neyomarket.com.ng/neyomarket-logo.webp'
-    });
-  } catch(e) {}
+  /* Route ALL notifications into the bell panel — no browser popups */
+  addBellNotif(title, body, icon);
+  /* Still fire browser push ONLY for critical order events if already granted */
+  if (('Notification' in window) && Notification.permission === 'granted') {
+    var isOrder = title && (title.indexOf('Order') !== -1 || title.indexOf('Paid') !== -1);
+    if (isOrder) {
+      try {
+        new Notification(title, {
+          body:  body  || '',
+          icon:  icon  || 'https://neyomarket.com.ng/neyomarket-logo.webp',
+          badge: 'https://neyomarket.com.ng/neyomarket-logo.webp'
+        });
+      } catch(e) {}
+    }
+  }
 }
 window.sendLocalNotification = sendLocalNotification;
 
@@ -12703,9 +12984,6 @@ function renderSellerPage() {
 window.renderSellerPage = renderSellerPage;
 
 
-/* ================================================================
-   STORE VISITOR MAP — Real world map via TopoJSON + D3 projection
-================================================================ */
 function loadStoreVisitorPanel() {
   if (!CU) return;
   var wrap = document.getElementById('sel-visitors-panel');
@@ -12722,467 +13000,43 @@ function loadStoreVisitorPanel() {
     if (ordWrap) dw.insertBefore(wrap, ordWrap);
     else dw.appendChild(wrap);
   }
-  wrap.innerHTML = '<h3><i class="fa-solid fa-earth-africa"></i>  Store Visitors</h3><div style="text-align:center;padding:14px;color:var(--muted);font-size:.8rem"><i class="fa-solid fa-hourglass-half"></i>  Loading...</div>';
-
   fetch('/api/affiliate?action=store-visitors&sellerId=' + encodeURIComponent(String(CU.id)))
     .then(function(r){ return r.json(); })
     .then(function(d) {
       if (!d.ok) { wrap.innerHTML = ''; return; }
-      var tv  = d.totalViews     || 0;
-      var uv  = d.uniqueVisitors || 0;
-      var l7  = d.last7Days      || 0;
-      var bc  = d.byCountry      || [];
-      var bci = d.byCity         || [];
-      var dl  = d.daily          || [];
-
+      var tv = d.totalViews || 0, uv = d.uniqueVisitors || 0, l7 = d.last7Days || 0;
+      var bc = d.byCountry || [], dl = d.daily || [];
       function flag(cc) {
         if (!cc || cc.length !== 2) return '';
         try { return String.fromCodePoint(cc.charCodeAt(0)-65+0x1F1E6)+String.fromCodePoint(cc.charCodeAt(1)-65+0x1F1E6)+' '; } catch(e){ return ''; }
       }
-
-      var h = '<h3><i class="fa-solid fa-earth-africa"></i>  Store Visitors <span style="font-size:.7rem;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(who viewed your store)</span></h3>';
-
+      var h = '<h3><i class="fa-solid fa-earth-africa"></i>  Store Visitors</h3>';
       h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">'
         +'<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center"><div style="font-size:1.3rem;font-weight:800;color:var(--gold)">'+tv.toLocaleString()+'</div><div style="font-size:.7rem;color:var(--muted);margin-top:2px">Total Views</div></div>'
         +'<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center"><div style="font-size:1.3rem;font-weight:800;color:var(--blue)">'+uv.toLocaleString()+'</div><div style="font-size:.7rem;color:var(--muted);margin-top:2px">Unique Visitors</div></div>'
         +'<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center"><div style="font-size:1.3rem;font-weight:800;color:var(--green)">'+l7.toLocaleString()+'</div><div style="font-size:.7rem;color:var(--muted);margin-top:2px">Last 7 Days</div></div>'
         +'</div>';
-
-      if (tv === 0) {
-        h += '<div style="text-align:center;padding:20px;font-size:.82rem;color:var(--muted)"><i class="fa-solid fa-map-location-dot"></i>  Share your store link to start seeing visitor locations!</div>';
-        wrap.innerHTML = h; return;
-      }
-
-      /* Build views lookup — robust: handles 2-letter code, full-name code, or country field */
-      var viewMap = {}, maxV = 0;
-      var NAME2CC = {
-        'nigeria':'NG','united kingdom':'GB','uk':'GB','great britain':'GB',
-        'united states':'US','usa':'US','united states of america':'US',
-        'ghana':'GH','kenya':'KE','south africa':'ZA','canada':'CA','germany':'DE',
-        'france':'FR','india':'IN','china':'CN','australia':'AU','brazil':'BR',
-        'pakistan':'PK','indonesia':'ID','bangladesh':'BD','russia':'RU','mexico':'MX',
-        'ethiopia':'ET','philippines':'PH','egypt':'EG','vietnam':'VN','iran':'IR',
-        'turkey':'TR','thailand':'TH','tanzania':'TZ','uganda':'UG','cameroon':'CM',
-        "ivory coast":'CI',"cote d'ivoire":'CI','senegal':'SN','zambia':'ZM',
-        'zimbabwe':'ZW','rwanda':'RW','mozambique':'MZ','mali':'ML','niger':'NE',
-        'burkina faso':'BF','malawi':'MW','somalia':'SO','chad':'TD','benin':'BJ',
-        'togo':'TG','sierra leone':'SL','liberia':'LR','namibia':'NA','botswana':'BW',
-        'gambia':'GM','gabon':'GA','angola':'AO','sudan':'SD','south sudan':'SS',
-        'eritrea':'ER','italy':'IT','spain':'ES','portugal':'PT','netherlands':'NL',
-        'belgium':'BE','sweden':'SE','norway':'NO','denmark':'DK','finland':'FI',
-        'poland':'PL','ukraine':'UA','romania':'RO','czech republic':'CZ',
-        'hungary':'HU','greece':'GR','austria':'AT','switzerland':'CH','ireland':'IE',
-        'saudi arabia':'SA','uae':'AE','united arab emirates':'AE','qatar':'QA',
-        'kuwait':'KW','jordan':'JO','iraq':'IQ','israel':'IL','malaysia':'MY',
-        'singapore':'SG','myanmar':'MM','nepal':'NP','sri lanka':'LK',
-        'afghanistan':'AF','japan':'JP','south korea':'KR','taiwan':'TW',
-        'new zealand':'NZ','argentina':'AR','colombia':'CO','peru':'PE',
-        'chile':'CL','ecuador':'EC','venezuela':'VE'
-      };
-      bc.forEach(function(c){
-        var views = parseInt(c.views||0);
-        var cc = null;
-        if (c.country_code && c.country_code.length === 2) {
-          cc = c.country_code.toUpperCase();
-        } else if (c.country_code && c.country_code.length > 2) {
-          cc = NAME2CC[c.country_code.toLowerCase()] || null;
-        }
-        if (!cc && c.country) {
-          cc = NAME2CC[c.country.toLowerCase()] || null;
-        }
-        if (cc) {
-          viewMap[cc] = (viewMap[cc] || 0) + views;
-          maxV = Math.max(maxV, viewMap[cc]);
-        }
-      });
-      if (maxV === 0) maxV = 1;
-
-      h += '<div style="background:#0f1120;border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:12px">'
-        +'<div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px"><i class="fa-solid fa-map-location-dot"></i>  Visits Map <span style="font-weight:400;text-transform:none;letter-spacing:0">· Countries your visitors are from</span></div>'
-        +'<div id="vmap-container" style="position:relative;width:100%;border-radius:8px;overflow:hidden;background:#0f1120;touch-action:none;cursor:grab">'
-        +'<div id="vmap-tooltip" style="display:none;position:fixed;background:rgba(10,10,25,.96);color:#fff;padding:7px 13px;border-radius:8px;font-size:.75rem;font-weight:600;pointer-events:none;z-index:9999;white-space:nowrap;border:1px solid rgba(74,222,128,.4);box-shadow:0 4px 16px rgba(0,0,0,.6)"></div>'
-        +'<div id="vmap-svg-wrap" style="width:100%;display:block;border-radius:8px;line-height:0"></div>'
-        +'<div id="vmap-zoom-hint" style="position:absolute;bottom:6px;right:8px;font-size:.58rem;color:rgba(255,255,255,.3);pointer-events:none">pinch or scroll to zoom · tap for details</div>'
-        +'</div>'
-        +'<div style="display:flex;align-items:center;gap:8px;margin-top:8px;padding:0 2px">'
-        +'<span style="font-size:.62rem;color:var(--muted)">Low</span>'
-        +'<div style="flex:1;height:6px;border-radius:3px;background:linear-gradient(to right,#14532d,#166534,#16a34a,#4ade80)"></div>'
-        +'<span style="font-size:.62rem;color:var(--muted)">High</span>'
-        +'</div>'
-        +'</div>';
-
-      /* Daily chart */
+      if (tv === 0) { h += '<div style="text-align:center;padding:20px;font-size:.82rem;color:var(--muted)"><i class="fa-solid fa-map-location-dot"></i>  Share your store link to start seeing visitor locations!</div>'; wrap.innerHTML = h; return; }
       var mx2 = dl.reduce(function(m,x){ return Math.max(m,parseInt(x.views||0)); },1);
       if (dl.length) {
         h += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px">'
-          +'<div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Views \u2014 Last 14 Days</div>'
+          +'<div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Views — Last 14 Days</div>'
           +'<div style="display:flex;align-items:flex-end;gap:3px;height:40px;margin:10px 0 2px">'
           + dl.map(function(x){ var hh=Math.max(3,Math.round(parseInt(x.views||0)/mx2*40)); return '<div title="'+x.day+': '+x.views+' views" style="flex:1;background:var(--gold);border-radius:3px 3px 0 0;height:'+hh+'px;opacity:.85"></div>'; }).join('')
           +'</div><div style="display:flex;justify-content:space-between;font-size:.6rem;color:var(--muted)"><span>'+((dl[0]||{}).day||'')+'</span><span>'+((dl[dl.length-1]||{}).day||'')+'</span></div>'
           +'</div>';
       }
-
-      /* Top countries */
       if (bc.length) {
         var mv = parseInt(bc[0].views||1);
-        h += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px">'
+        h += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px">'
           +'<div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px"><i class="fa-solid fa-flag"></i>  Top Countries</div>'
           + bc.map(function(c){ var pct=Math.round(parseInt(c.views||0)/mv*100); return '<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px"><span style="font-size:.8rem;font-weight:600">'+flag(c.country_code)+(c.country||'Unknown')+'</span><span style="font-size:.76rem;color:var(--muted);font-weight:700">'+c.views+' view'+(c.views!=1?'s':'')+'</span></div><div style="background:var(--bg3);border-radius:20px;height:5px"><div style="background:var(--gold);border-radius:20px;height:100%;width:'+pct+'%"></div></div></div>'; }).join('')
           +'</div>';
       }
-
-      /* Top cities */
-      if (bci.length) {
-        h += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px">'
-          +'<div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px"><i class="fa-solid fa-location-dot"></i>  Top Cities</div>'
-          +'<div style="display:flex;flex-wrap:wrap;gap:6px">'
-          + bci.map(function(c){ return '<div style="background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:4px 10px;font-size:.74rem;font-weight:600">'+(c.city||'Unknown')+(c.country?' <span style="color:var(--muted);font-weight:400">\u00b7 '+c.country+'</span>':'')+' <span style="color:var(--gold);font-weight:700">'+c.views+'</span></div>'; }).join('')
-          +'</div></div>';
-      }
-
       wrap.innerHTML = h;
-
-/* ── Dot map: glowing dots pinned on world map ── */
-      setTimeout(function() {
-        var wrap2   = document.getElementById('vmap-svg-wrap');
-        var tooltip = document.getElementById('vmap-tooltip');
-        if (!wrap2) return;
-
-        var CENTRES = {
-          'AF':[67.7,33.9],'AL':[20.2,41.2],'DZ':[2.6,28.0],'AO':[17.9,-11.2],
-          'AR':[-64.0,-34.0],'AU':[133.8,-25.3],'AT':[14.6,47.7],'AZ':[47.6,40.1],
-          'BD':[90.4,23.7],'BE':[4.5,50.5],'BJ':[2.3,9.3],'BO':[-64.7,-16.3],
-          'BR':[-51.9,-14.2],'BF':[-1.6,12.4],'BI':[29.9,-3.4],'BY':[28.0,53.7],
-          'CA':[-96.8,56.1],'CD':[24.0,-2.9],'CF':[20.9,6.6],'CG':[15.8,-0.2],
-          'CH':[8.2,46.8],'CI':[-5.6,7.5],'CL':[-71.5,-35.7],'CM':[12.4,3.9],
-          'CN':[104.2,35.9],'CO':[-74.3,4.6],'CR':[-84.2,9.7],'CU':[-79.5,21.5],
-          'CZ':[15.5,49.8],'DE':[10.5,51.2],'DJ':[42.6,11.8],'DK':[10.0,56.3],
-          'DO':[-70.2,18.7],'EC':[-78.1,-1.8],'EG':[30.8,26.8],'ER':[39.8,15.2],
-          'ES':[-3.7,40.2],'ET':[40.5,9.1],'FI':[26.0,64.0],'FR':[2.2,46.2],
-          'GA':[11.6,-0.8],'GB':[-3.4,55.4],'GE':[43.4,42.3],'GH':[-1.0,7.9],
-          'GM':[-15.3,13.4],'GN':[-11.8,10.9],'GQ':[10.3,1.7],'GR':[21.8,39.1],
-          'GT':[-90.2,15.8],'GW':[-15.2,12.0],'GY':[-58.9,5.0],'HN':[-86.6,15.2],
-          'HR':[15.2,45.2],'HT':[-73.1,18.9],'HU':[19.5,47.2],'ID':[117.9,-2.2],
-          'IE':[-8.2,53.2],'IL':[34.9,31.5],'IN':[79.6,22.4],'IQ':[44.4,33.2],
-          'IR':[53.7,32.4],'IS':[-19.0,65.0],'IT':[12.6,42.5],'JM':[-77.3,18.1],
-          'JO':[36.2,30.6],'JP':[138.3,36.2],'KE':[37.9,0.0],'KG':[74.8,41.2],
-          'KH':[105.0,12.6],'KR':[127.8,36.5],'KW':[47.5,29.3],'KZ':[67.0,48.0],
-          'LA':[103.0,18.2],'LB':[35.9,33.9],'LK':[80.7,7.9],'LR':[-9.4,6.4],
-          'LS':[28.2,-29.6],'LY':[17.2,26.3],'MA':[-7.1,31.8],'MD':[28.4,47.4],
-          'MG':[46.9,-19.4],'ML':[-2.0,17.6],'MM':[96.5,17.1],'MN':[103.8,46.9],
-          'MR':[-11.8,20.3],'MW':[34.3,-13.3],'MX':[-102.6,23.6],'MY':[109.7,4.2],
-          'MZ':[35.5,-18.7],'NA':[18.5,-22.0],'NE':[8.1,16.1],'NG':[8.7,9.1],
-          'NI':[-85.2,12.9],'NL':[5.3,52.1],'NO':[8.5,60.5],'NP':[84.1,28.4],
-          'NZ':[172.5,-41.3],'OM':[57.6,21.5],'PA':[-80.1,8.5],'PE':[-75.0,-9.2],
-          'PG':[143.9,-6.3],'PH':[122.9,12.9],'PK':[69.3,30.4],'PL':[19.1,52.1],
-          'PT':[-8.2,39.6],'PY':[-58.4,-23.4],'QA':[51.2,25.4],'RO':[24.9,45.9],
-          'RS':[21.0,44.0],'RU':[99.5,61.5],'RW':[29.9,-2.0],'SA':[44.6,24.1],
-          'SD':[30.2,12.9],'SE':[18.6,62.2],'SI':[14.8,46.1],'SL':[-11.8,8.5],
-          'SN':[-14.5,14.5],'SO':[46.2,5.2],'SS':[31.3,6.9],'SV':[-88.9,13.8],
-          'SY':[38.5,35.0],'SZ':[31.5,-26.5],'TD':[18.7,15.5],'TG':[0.8,8.6],
-          'TH':[101.0,15.9],'TJ':[71.3,38.9],'TL':[125.7,-8.9],'TM':[59.6,40.0],
-          'TN':[9.6,33.9],'TR':[35.2,38.9],'TT':[-61.3,10.7],'TW':[121.0,23.7],
-          'TZ':[34.9,-6.4],'UA':[32.0,49.0],'UG':[32.3,1.4],'US':[-99.1,38.5],
-          'UY':[-56.0,-32.5],'UZ':[63.9,41.4],'VE':[-66.6,8.0],'VN':[108.3,14.1],
-          'AE':[54.0,24.0],'YE':[47.6,16.0],'ZA':[25.1,-29.0],'ZM':[27.8,-13.1],
-          'ZW':[29.9,-19.0]
-        };
-
-        var CNAMES = {
-          'AF':'Afghanistan','AL':'Albania','DZ':'Algeria','AO':'Angola','AR':'Argentina',
-          'AU':'Australia','AT':'Austria','AZ':'Azerbaijan','BD':'Bangladesh','BE':'Belgium',
-          'BJ':'Benin','BO':'Bolivia','BR':'Brazil','BF':'Burkina Faso','BI':'Burundi',
-          'BY':'Belarus','CA':'Canada','CD':'DR Congo','CF':'Central African Rep.',
-          'CG':'Congo','CH':'Switzerland','CI':"Cote d Ivoire",'CL':'Chile','CM':'Cameroon',
-          'CN':'China','CO':'Colombia','CR':'Costa Rica','CU':'Cuba','CZ':'Czech Republic',
-          'DE':'Germany','DJ':'Djibouti','DK':'Denmark','DO':'Dominican Rep.',
-          'EC':'Ecuador','EG':'Egypt','ER':'Eritrea','ES':'Spain','ET':'Ethiopia',
-          'FI':'Finland','FR':'France','GA':'Gabon','GB':'United Kingdom','GE':'Georgia',
-          'GH':'Ghana','GM':'Gambia','GN':'Guinea','GQ':'Eq. Guinea','GR':'Greece',
-          'GT':'Guatemala','GW':'Guinea-Bissau','GY':'Guyana','HN':'Honduras',
-          'HR':'Croatia','HT':'Haiti','HU':'Hungary','ID':'Indonesia','IE':'Ireland',
-          'IL':'Israel','IN':'India','IQ':'Iraq','IR':'Iran','IS':'Iceland','IT':'Italy',
-          'JM':'Jamaica','JO':'Jordan','JP':'Japan','KE':'Kenya','KG':'Kyrgyzstan',
-          'KH':'Cambodia','KR':'South Korea','KW':'Kuwait','KZ':'Kazakhstan','LA':'Laos',
-          'LB':'Lebanon','LR':'Liberia','LS':'Lesotho','LK':'Sri Lanka','LY':'Libya',
-          'MA':'Morocco','MD':'Moldova','MG':'Madagascar','ML':'Mali','MM':'Myanmar',
-          'MN':'Mongolia','MR':'Mauritania','MW':'Malawi','MX':'Mexico','MY':'Malaysia',
-          'MZ':'Mozambique','NA':'Namibia','NE':'Niger','NG':'Nigeria','NI':'Nicaragua',
-          'NL':'Netherlands','NO':'Norway','NP':'Nepal','NZ':'New Zealand','OM':'Oman',
-          'PA':'Panama','PE':'Peru','PG':'Papua New Guinea','PH':'Philippines',
-          'PK':'Pakistan','PL':'Poland','PT':'Portugal','PY':'Paraguay','QA':'Qatar',
-          'RO':'Romania','RS':'Serbia','RU':'Russia','RW':'Rwanda','SA':'Saudi Arabia',
-          'SD':'Sudan','SE':'Sweden','SI':'Slovenia','SL':'Sierra Leone','SN':'Senegal',
-          'SO':'Somalia','SS':'South Sudan','SV':'El Salvador','SY':'Syria','SZ':'Eswatini',
-          'TD':'Chad','TG':'Togo','TH':'Thailand','TJ':'Tajikistan','TL':'Timor-Leste',
-          'TM':'Turkmenistan','TN':'Tunisia','TR':'Turkey','TT':'Trinidad and Tobago',
-          'TW':'Taiwan','TZ':'Tanzania','UA':'Ukraine','UG':'Uganda','US':'United States',
-          'UY':'Uruguay','UZ':'Uzbekistan','VE':'Venezuela','VN':'Vietnam','AE':'UAE',
-          'YE':'Yemen','ZA':'South Africa','ZM':'Zambia','ZW':'Zimbabwe'
-        };
-
-        function proj(lon, lat) {
-          return [(lon + 180) * (960 / 360), (90 - lat) * (500 / 180)];
-        }
-
-        var NS = 'http://www.w3.org/2000/svg';
-        var svg = document.createElementNS(NS, 'svg');
-        svg.setAttribute('viewBox', '0 0 960 500');
-        svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-        svg.style.cssText = 'width:100%;display:block;border-radius:8px;touch-action:none;cursor:grab';
-
-        var mainG = document.createElementNS(NS, 'g');
-        svg.appendChild(mainG);
-
-        /* Dark ocean background */
-        var bg = document.createElementNS(NS, 'rect');
-        bg.setAttribute('width','960'); bg.setAttribute('height','500');
-        bg.setAttribute('fill','#0d1117');
-        mainG.appendChild(bg);
-
-        /* Grid lines always visible */
-        var grid = document.createElementNS(NS,'g');
-        [0,30,60,90,120,150,180,210,240,270,300,330].forEach(function(lon){
-          var x=(lon/360)*960, l=document.createElementNS(NS,'line');
-          l.setAttribute('x1',x);l.setAttribute('y1',0);l.setAttribute('x2',x);l.setAttribute('y2',500);
-          l.setAttribute('stroke','rgba(255,255,255,0.05)');l.setAttribute('stroke-width','0.5');
-          grid.appendChild(l);
-        });
-        [30,60,90,120,150].forEach(function(lat){
-          var y=(lat/180)*500, l=document.createElementNS(NS,'line');
-          l.setAttribute('x1',0);l.setAttribute('y1',y);l.setAttribute('x2',960);l.setAttribute('y2',y);
-          l.setAttribute('stroke','rgba(255,255,255,0.05)');l.setAttribute('stroke-width','0.5');
-          grid.appendChild(l);
-        });
-        var eq=document.createElementNS(NS,'line');
-        eq.setAttribute('x1',0);eq.setAttribute('y1',250);eq.setAttribute('x2',960);eq.setAttribute('y2',250);
-        eq.setAttribute('stroke','rgba(255,255,255,0.1)');eq.setAttribute('stroke-width','1');
-        grid.appendChild(eq);
-        mainG.appendChild(grid);
-
-        /* Load world-atlas TopoJSON (same CDN already used elsewhere — cached) and draw country outlines */
-        var outlineG = document.createElementNS(NS,'g');
-        mainG.appendChild(outlineG); /* outlines behind dots */
-        var dotG = document.createElementNS(NS,'g');
-        mainG.appendChild(dotG); /* dots on top */
-        fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
-          .then(function(r){return r.json();})
-          .then(function(topo){
-            var countries = topoToGeo(topo, topo.objects.countries);
-            var frag = document.createDocumentFragment();
-            countries.features.forEach(function(f){
-              if(!f.geometry) return;
-              var geoms = f.geometry.type==='MultiPolygon' ? f.geometry.coordinates : [f.geometry.coordinates];
-              geoms.forEach(function(poly){
-                poly.forEach(function(ring){
-                  var d='', first=true;
-                  ring.forEach(function(coord){
-                    var px=(coord[0]+180)*(960/360), py=(90-coord[1])*(500/180);
-                    d += (first?'M':'L')+px.toFixed(1)+','+py.toFixed(1);
-                    first=false;
-                  });
-                  d+='Z';
-                  var path=document.createElementNS(NS,'path');
-                  path.setAttribute('d',d);
-                  path.setAttribute('fill','rgba(255,255,255,0.04)');
-                  path.setAttribute('stroke','rgba(255,255,255,0.18)');
-                  path.setAttribute('stroke-width','0.5');
-                  frag.appendChild(path);
-                });
-              });
-            });
-            outlineG.appendChild(frag);
-          }).catch(function(){/* grid still shows */});
-
-
-
-        /* Zoom/pan */
-        var zoom=1, panX=0, panY=0, MIN_Z=1, MAX_Z=10;
-
-        /* Auto-zoom to fit all dots after drawing */
-        function autoZoomToDots() {
-          var entries2 = Object.keys(viewMap);
-          if (!entries2.length) return;
-          /* collect all dot SVG positions */
-          var xs=[], ys=[];
-          entries2.forEach(function(cc){
-            if(!viewMap[cc] || !CENTRES[cc]) return;
-            var p = proj(CENTRES[cc][0], CENTRES[cc][1]);
-            xs.push(p[0]); ys.push(p[1]);
-          });
-          if(!xs.length) return;
-          var minX=Math.min.apply(null,xs), maxX=Math.max.apply(null,xs);
-          var minY=Math.min.apply(null,ys), maxY=Math.max.apply(null,ys);
-          /* Add padding */
-          var pad = 80;
-          minX-=pad; maxX+=pad; minY-=pad; maxY+=pad;
-          /* SVG rendered size */
-          var W = wrap2.offsetWidth || 340;
-          var H = Math.round(W * (500/960));
-          var scaleX = W / (maxX - minX);
-          var scaleY = H / (maxY - minY);
-          var newZoom = Math.min(MAX_Z, Math.max(1, Math.min(scaleX, scaleY)));
-          /* Centre the bounding box */
-          var cx = (minX + maxX) / 2;
-          var cy = (minY + maxY) / 2;
-          /* SVG coords scale by (W/960) before our zoom */
-          var baseScale = W / 960;
-          panX = W/2 - cx * baseScale * newZoom;
-          panY = H/2 - cy * baseScale * newZoom;
-          zoom = newZoom;
-          applyT();
-        }
-        var drag=false, lx=0, ly=0;
-        var ts=null, pd0=0, z0=1, px0=0, py0=0;
-        function applyT(){ mainG.setAttribute('transform','translate('+panX+','+panY+') scale('+zoom+')'); }
-
-        svg.addEventListener('wheel',function(e){
-          e.preventDefault();
-          var r=svg.getBoundingClientRect(), cx=e.clientX-r.left, cy=e.clientY-r.top;
-          var f=e.deltaY<0?1.2:0.83, nz=Math.min(MAX_Z,Math.max(MIN_Z,zoom*f));
-          var ratio=nz/zoom; panX=cx-ratio*(cx-panX); panY=cy-ratio*(cy-panY);
-          zoom=nz; applyT();
-        },{passive:false});
-        svg.addEventListener('mousedown',function(e){drag=true;lx=e.clientX;ly=e.clientY;svg.style.cursor='grabbing';});
-        window.addEventListener('mousemove',function(e){if(!drag)return;panX+=e.clientX-lx;panY+=e.clientY-ly;lx=e.clientX;ly=e.clientY;applyT();});
-        window.addEventListener('mouseup',function(){drag=false;if(svg)svg.style.cursor='grab';});
-        svg.addEventListener('touchstart',function(e){
-          if(e.touches.length===1){drag=true;lx=e.touches[0].clientX;ly=e.touches[0].clientY;}
-          else if(e.touches.length===2){drag=false;var dx=e.touches[0].clientX-e.touches[1].clientX,dy=e.touches[0].clientY-e.touches[1].clientY;pd0=Math.sqrt(dx*dx+dy*dy);z0=zoom;px0=panX;py0=panY;ts=({x:(e.touches[0].clientX+e.touches[1].clientX)/2,y:(e.touches[0].clientY+e.touches[1].clientY)/2});}
-          e.preventDefault();
-        },{passive:false});
-        svg.addEventListener('touchmove',function(e){
-          e.preventDefault();
-          if(e.touches.length===1&&drag){panX+=e.touches[0].clientX-lx;panY+=e.touches[0].clientY-ly;lx=e.touches[0].clientX;ly=e.touches[0].clientY;applyT();}
-          else if(e.touches.length===2&&ts){var dx=e.touches[0].clientX-e.touches[1].clientX,dy=e.touches[0].clientY-e.touches[1].clientY,d=Math.sqrt(dx*dx+dy*dy),nz=Math.min(MAX_Z,Math.max(MIN_Z,z0*(d/pd0))),r2=svg.getBoundingClientRect(),cx=ts.x-r2.left,cy=ts.y-r2.top,ratio=nz/z0;panX=cx-ratio*(cx-px0);panY=cy-ratio*(cy-py0);zoom=nz;applyT();}
-        },{passive:false});
-        svg.addEventListener('touchend',function(e){if(e.touches.length<2)ts=null;if(e.touches.length===0)drag=false;});
-
-        /* Tooltip */
-        var _tt=null;
-        function showTT(name,views,cx,cy){
-          tooltip.innerHTML='<strong>'+name+'</strong> &nbsp;<span style="color:#4ade80;font-size:.82rem">'+views+' view'+(views!==1?'s':'')+'</span>';
-          tooltip.style.display='block';
-          tooltip.style.left=(cx+14)+'px';
-          tooltip.style.top=(cy-40)+'px';
-          if(_tt)clearTimeout(_tt);
-        }
-        function hideTT(ms){_tt=setTimeout(function(){tooltip.style.display='none';},ms||0);}
-
-        /* Draw dots */
-        var entries = Object.keys(viewMap);
-        if (!entries.length) {
-          var nt = document.createElementNS(NS,'text');
-          nt.setAttribute('x','480');nt.setAttribute('y','260');
-          nt.setAttribute('text-anchor','middle');
-          nt.setAttribute('fill','rgba(255,255,255,.3)');
-          nt.setAttribute('font-size','14');
-          nt.textContent='Share your store link to see visitor locations';
-          dotG.appendChild(nt);
-        } else {
-          entries.forEach(function(cc){
-            var views=viewMap[cc]||0; if(!views) return;
-            var centre=CENTRES[cc]; if(!centre) return;
-            var pos=proj(centre[0],centre[1]), x=pos[0], y=pos[1];
-            var r=Math.min(22,8+Math.round((views/maxV)*14));
-            var name=CNAMES[cc]||cc;
-
-            /* pulse ring */
-            var pulse=document.createElementNS(NS,'circle');
-            pulse.setAttribute('cx',x);pulse.setAttribute('cy',y);
-            pulse.setAttribute('r',r+6);
-            pulse.setAttribute('fill','rgba(74,222,128,0.12)');
-            pulse.setAttribute('stroke','rgba(74,222,128,0.35)');
-            pulse.setAttribute('stroke-width','1');
-            dotG.appendChild(pulse);
-
-            /* dot */
-            var dot=document.createElementNS(NS,'circle');
-            dot.setAttribute('cx',x);dot.setAttribute('cy',y);
-            dot.setAttribute('r',r);
-            dot.setAttribute('fill','#16a34a');
-            dot.setAttribute('stroke','#4ade80');
-            dot.setAttribute('stroke-width','1.5');
-            dot.style.cursor='pointer';
-            dotG.appendChild(dot);
-
-            /* count label */
-            var lbl=document.createElementNS(NS,'text');
-            lbl.setAttribute('x',x);lbl.setAttribute('y',y+4);
-            lbl.setAttribute('text-anchor','middle');
-            lbl.setAttribute('fill','#fff');
-            lbl.setAttribute('font-size',Math.max(7,r-3));
-            lbl.setAttribute('font-weight','700');
-            lbl.setAttribute('pointer-events','none');
-            lbl.textContent=views;
-            dotG.appendChild(lbl);
-
-            /* events */
-            dot.addEventListener('mouseenter',function(e){dot.setAttribute('fill','#22c55e');showTT(name,views,e.clientX,e.clientY);});
-            dot.addEventListener('mouseleave',function(){dot.setAttribute('fill','#16a34a');hideTT(200);});
-            dot.addEventListener('click',function(e){e.stopPropagation();showTT(name,views,e.clientX,e.clientY);hideTT(3000);});
-            dot.addEventListener('touchend',function(e){e.stopPropagation();var t=e.changedTouches[0];showTT(name,views,t.clientX,t.clientY);hideTT(3000);});
-          });
-        }
-
-        wrap2.appendChild(svg);
-        svg.addEventListener('click',function(){hideTT(0);});
-        setTimeout(autoZoomToDots, 120); /* zoom to visitor dots after render */
-      }, 80);
     })
-    .catch(function(){ if(wrap) wrap.innerHTML=''; });
+    .catch(function(){ if(wrap) wrap.innerHTML = ''; });
 }
-
-/* ── Minimal TopoJSON → GeoJSON converter (no library needed) ── */
-function topoToGeo(topology, object) {
-  var arcs = topology.arcs;
-  var scale = topology.transform ? topology.transform.scale : [1,1];
-  var translate = topology.transform ? topology.transform.translate : [0,0];
-
-  /* Decode delta-encoded arc */
-  function decodeArc(arcIdx) {
-    var reverse = arcIdx < 0;
-    var arc = arcs[reverse ? ~arcIdx : arcIdx];
-    var coords = [], x = 0, y = 0;
-    arc.forEach(function(pt) {
-      x += pt[0]; y += pt[1];
-      coords.push([x * scale[0] + translate[0], y * scale[1] + translate[1]]);
-    });
-    if (reverse) coords.reverse();
-    return coords;
-  }
-
-  function stitchArcs(arcIdxList) {
-    var ring = [];
-    arcIdxList.forEach(function(idx) {
-      var coords = decodeArc(idx);
-      if (ring.length) coords = coords.slice(1);
-      ring = ring.concat(coords);
-    });
-    return ring;
-  }
-
-  function convertGeometry(geom) {
-    if (geom.type === 'Polygon') {
-      return { type:'Polygon', coordinates: geom.arcs.map(stitchArcs) };
-    } else if (geom.type === 'MultiPolygon') {
-      return { type:'MultiPolygon', coordinates: geom.arcs.map(function(poly){ return poly.map(stitchArcs); }) };
-    }
-    return geom;
-  }
-
-  var features = object.geometries.map(function(geom) {
-    return {
-      type: 'Feature',
-      id: geom.id,
-      properties: geom.properties || {},
-      geometry: convertGeometry(geom)
-    };
-  });
-
-  return { type:'FeatureCollection', features: features };
-}
-
 window.loadStoreVisitorPanel = loadStoreVisitorPanel;
 
 /* ════════════════════════════════════════════════════════
@@ -14273,6 +14127,7 @@ function aTab(tab, btn) {
         + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">'
         + (pending2.length ? '<span style="background:var(--orange);color:#fff;font-size:.7rem;font-weight:800;padding:3px 10px;border-radius:20px">' + pending2.length + ' PENDING</span>' : '')
         + '<h3 style="margin:0"><i class="fa-solid fa-hourglass-half"><\/i>  Awaiting Your Approval</h3>'
+        + (pending2.length > 1 ? '<button onclick="bulkApproveAll()" style="margin-left:auto;background:var(--green);color:#fff;border:none;padding:8px 18px;border-radius:8px;font-size:.78rem;font-weight:800;cursor:pointer;white-space:nowrap"><i class="fa-solid fa-circle-check"></i>  Approve All (' + pending2.length + ')</button>' : '')
         + '</div>'
         + (pending2.length
           ? pending2.map(function(p){ return prodRow(p, true); }).join('')
@@ -15548,7 +15403,9 @@ function loadAdminPendingEdits() {
             /* Build diff rows */
             var diffs = [];
             if (ed.name        && ed.name        !== e.product_name)        diffs.push(['Title',       e.product_name,     ed.name]);
-            if (ed.price       && String(ed.price) !== String(e.current_price)) diffs.push(['Price', currSymbol(e.currency||'NGN')+parseFloat(e.current_price).toLocaleString(), currSymbol(ed.currency||e.currency||'NGN')+parseFloat(ed.price).toLocaleString()]);
+            var beforeCurr = e.current_currency || e.currency || 'NGN';
+            var afterCurr  = ed.currency || beforeCurr;
+            if (ed.price && String(ed.price) !== String(e.current_price)) diffs.push(['Price', currSymbol(beforeCurr)+parseFloat(e.current_price).toLocaleString(), currSymbol(afterCurr)+parseFloat(ed.price).toLocaleString()]);
             if (ed.description && ed.description !== e.current_description) diffs.push(['Description', (e.current_description||'').slice(0,60)+'…', ed.description.slice(0,80)+'…']);
             if (ed.currency)    diffs.push(['Currency',    '—', ed.currency]);
             if (ed.condition)   diffs.push(['Condition',   '—', ed.condition]);
@@ -15611,6 +15468,28 @@ function apvEdit(editId) {
   .catch(function(){ toast('Network error — try again', 'fail'); });
 }
 window.apvEdit = apvEdit;
+
+function bulkApproveAll() {
+  if (!confirm('Approve ALL pending products at once?')) return;
+  var btn = document.querySelector('[onclick="bulkApproveAll()"]');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-hourglass-half"></i>  Approving…'; }
+  fetch('/api/products?action=bulk-approve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ adminId: CU ? String(CU.id) : '' }) })
+    .then(function(r){ return r.json(); })
+    .then(function(data) {
+      if (data.ok) {
+        toast('<i class="fa-solid fa-circle-check"></i>  All ' + (data.count || '') + ' products approved and live!', 'ok');
+        aTab('pr', document.querySelector('.asb[onclick*="pr"]'));
+      } else {
+        toast(data.error || 'Bulk approve failed', 'fail');
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-circle-check"></i>  Approve All'; }
+      }
+    })
+    .catch(function() {
+      toast('Network error — try again', 'fail');
+      if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-circle-check"></i>  Approve All'; }
+    });
+}
+window.bulkApproveAll = bulkApproveAll;
 
 function rejEdit(editId) {
   if (!confirm('Reject this product edit? The seller\'s changes will be discarded.')) return;
