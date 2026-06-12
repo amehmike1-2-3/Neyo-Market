@@ -4226,6 +4226,18 @@ nav:not(.bottom-nav){
 .impact-card-label{font-size:.72rem;color:var(--muted);text-transform:uppercase;
   letter-spacing:.08em;font-weight:600}
 [data-theme="dark"] .impact-card{background:#1a1a1a}
+
+/* ══════════════════════════════════════
+   COOKIE CONSENT BANNER
+══════════════════════════════════════ */
+@keyframes cookiePop{from{opacity:0;transform:translateX(-50%) translateY(20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+@keyframes cookieShimmer{0%{background-position:0% 50%}100%{background-position:200% 50%}}
+@media(max-width:480px){
+  #cookie-card{bottom:calc(var(--bnav,64px) + 8px) !important;border-radius:16px !important;}
+}
+@media(min-width:769px){
+  #cookie-card{bottom:24px !important;}
+}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
 </head>
@@ -5063,7 +5075,7 @@ nav:not(.bottom-nav){
       </div>
       <div class="fli"><h4>Marketplace</h4><a onclick="go('market')">Browse</a><a onclick="go('sell')">Sell</a><a onclick="go('aff')">Affiliate</a><a onclick="go('rules')">Rules</a></div>
       <div class="fli"><h4>Company</h4><a onclick="go('about')">About Us</a><a onclick="go('contact')">Contact</a><a onclick="go('blog')">Blog</a><a onclick="go('press')">Press</a></div>
-      <div class="fli"><h4>Support</h4><a onclick="go('contact')">Help Centre</a><a onclick="go('contact')">Disputes</a><a>Privacy</a><a onclick="oM('m-terms')">Terms</a></div>
+      <div class="fli"><h4>Support</h4><a onclick="go('contact')">Help Centre</a><a onclick="go('contact')">Disputes</a><a onclick="oM('m-privacy')" style="cursor:pointer">Privacy Policy</a><a onclick="oM('m-terms')">Terms</a><a onclick="document.getElementById('cookie-banner').style.display='block';document.getElementById('cookie-backdrop')&&(document.getElementById('cookie-backdrop').style.display='block')" style="cursor:pointer">Cookie Settings</a></div>
       <div class="fli"><h4>Community</h4>
         <a href="https://chat.whatsapp.com/FQxy9Zeb2ODIuPTtBxqNuD" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:6px"><i class="fa-solid fa-comment-dots"></i>  WhatsApp Group</a>
         <a href="https://whatsapp.com/channel/0029Vb8IrLkH5JLvjk897y3o/100" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:6px"><i class="fa-solid fa-bullhorn"></i>  WhatsApp Channel</a>
@@ -6943,13 +6955,196 @@ nav:not(.bottom-nav){
 
 <!-- Receipt -->
 <div class="ov" id="m-rec">
-  <div class="mo">
-    <div class="mh"><h3><i class="fa-solid fa-circle-check"></i>  Order Confirmed</h3><button class="mx" onclick="cM('m-rec')"><i class="fa-solid fa-xmark"></i> </button></div>
-    <div class="mb">
-      <div class="ri2"><i class="fa-solid fa-champagne-glasses"></i> </div>
-      <div class="rid" id="rec-id">NYO-0000</div>
-      <div class="rinf" id="rec-info"></div>
-      <button class="bg" style="width:100%;margin-top:14px;padding:11px" onclick="cM('m-rec');go('profile')">View My Orders →</button>
+  <div class="mo" style="max-width:440px">
+    <div class="mh">
+      <h3><i class="fa-solid fa-circle-check" style="color:var(--green)"></i>&nbsp; Order Confirmed</h3>
+      <button class="mx" onclick="cM('m-rec')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="mb" style="padding:0 16px 24px">
+
+      <!-- Success animation banner -->
+      <div style="background:linear-gradient(135deg,#064e3b,#065f46);border-radius:12px;padding:18px 16px;text-align:center;margin:16px 0 18px;position:relative;overflow:hidden">
+        <div style="position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.05);pointer-events:none"></div>
+        <div style="font-size:2.4rem;margin-bottom:6px">🎉</div>
+        <div style="font-size:1rem;font-weight:800;color:#fff;margin-bottom:3px">Payment Successful!</div>
+        <div style="font-size:.74rem;color:rgba(255,255,255,.65);line-height:1.5">Your escrow is now <strong style="color:#6ee7b7">ACTIVE</strong> — funds held safely by Paystack</div>
+      </div>
+
+      <!-- Order ID -->
+      <div style="text-align:center;margin-bottom:16px">
+        <div style="font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:5px">Order ID</div>
+        <div class="rid" id="rec-id" style="font-size:1.35rem;letter-spacing:2px">NYO-0000</div>
+      </div>
+
+      <!-- Buyer details card -->
+      <div style="background:var(--bg3);border:1.5px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:14px">
+        <div style="padding:11px 14px 0;font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)">Buyer Details</div>
+        <div id="rec-buyer-name"  style="display:flex;justify-content:space-between;padding:8px 14px;border-bottom:1px solid var(--border);font-size:.82rem"><span style="color:var(--muted)">Name</span><span id="rec-name-val" style="font-weight:600;color:var(--text)">—</span></div>
+        <div id="rec-buyer-wa"    style="display:flex;justify-content:space-between;padding:8px 14px;font-size:.82rem"><span style="color:var(--muted)">WhatsApp</span><span id="rec-wa-val" style="font-weight:600;color:var(--text)">—</span></div>
+      </div>
+
+      <!-- Payment breakdown card -->
+      <div style="background:var(--bg3);border:1.5px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:14px">
+        <div style="padding:11px 14px 0;font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)">Payment Summary</div>
+        <div style="display:flex;justify-content:space-between;padding:9px 14px;border-bottom:1px solid var(--border);font-size:.82rem">
+          <span style="color:var(--muted)">Amount Paid</span>
+          <span id="rec-amount-val" style="font-weight:700;color:var(--text)">—</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:9px 14px;border-bottom:1px solid var(--border);font-size:.82rem">
+          <span style="color:var(--muted);display:flex;align-items:center;gap:5px">Platform Fee (5%) <span id="rec-fee-info" title="This small fee keeps NeyoMarket running safely" style="cursor:help;background:rgba(37,99,235,.12);color:var(--blue);width:15px;height:15px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:800">ⓘ</span></span>
+          <span id="rec-fee-val" style="font-weight:600;color:var(--orange)">—</span>
+        </div>
+        <div id="rec-aff-row" style="display:none;justify-content:space-between;padding:9px 14px;border-bottom:1px solid var(--border);font-size:.82rem">
+          <span style="color:var(--muted)">Affiliate (5%)</span>
+          <span id="rec-aff-val" style="font-weight:600;color:var(--blue)">—</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:9px 14px;border-bottom:1px solid var(--border);font-size:.82rem">
+          <span style="color:var(--muted)">Seller Gets</span>
+          <span id="rec-seller-val" style="font-weight:700;color:var(--green)">—</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:9px 14px;font-size:.82rem">
+          <span style="color:var(--muted)">Date</span>
+          <span id="rec-date-val" style="font-weight:600;color:var(--text)">—</span>
+        </div>
+      </div>
+
+      <!-- NGN charge note -->
+      <div style="background:rgba(37,99,235,.06);border:1px solid rgba(37,99,235,.15);border-radius:8px;padding:8px 12px;font-size:.72rem;color:var(--blue);margin-bottom:14px;display:flex;align-items:flex-start;gap:7px">
+        <i class="fa-solid fa-circle-info" style="margin-top:2px;flex-shrink:0"></i>
+        <span>Charged in <strong>NGN</strong> by Paystack at live exchange rate. International cards accepted.</span>
+      </div>
+
+      <!-- Confirmation badge -->
+      <div style="background:var(--green-bg);border:1.5px solid rgba(5,150,105,.25);border-radius:10px;padding:11px 14px;display:flex;align-items:center;gap:10px;margin-bottom:16px">
+        <i class="fa-solid fa-circle-check" style="color:var(--green);font-size:1.2rem;flex-shrink:0"></i>
+        <div>
+          <div style="font-size:.8rem;font-weight:700;color:var(--green);margin-bottom:2px">Payment confirmed &amp; saved. Escrow active.</div>
+          <div style="font-size:.71rem;color:var(--muted);line-height:1.4">Your money is protected until you confirm delivery.</div>
+        </div>
+      </div>
+
+      <!-- Privacy note -->
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:.69rem;color:var(--muted2);line-height:1.5;margin-bottom:16px;display:flex;gap:7px;align-items:flex-start">
+        <i class="fa-solid fa-lock" style="margin-top:2px;flex-shrink:0"></i>
+        <span>Your personal data (name, WhatsApp) is used solely to process this order and contact you about delivery. We never sell or share your data with third parties. <a onclick="cM('m-rec');oM('m-privacy')" style="color:var(--gold);cursor:pointer;font-weight:600">Privacy Policy</a></span>
+      </div>
+
+      <div style="display:flex;gap:8px">
+        <button class="bo" style="flex:1;padding:11px;font-size:.82rem" onclick="cM('m-rec')"><i class="fa-solid fa-xmark"></i> Close</button>
+        <button class="bg" style="flex:2;padding:11px;font-size:.82rem" onclick="cM('m-rec');go('profile')"><i class="fa-solid fa-bag-shopping"></i> View My Orders →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Privacy Policy Modal -->
+<div class="ov" id="m-privacy">
+  <div class="mo" style="max-width:480px">
+    <div class="mh">
+      <h3><i class="fa-solid fa-lock" style="color:var(--gold)"></i>&nbsp; Privacy Policy</h3>
+      <button class="mx" onclick="cM('m-privacy')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="mb" style="padding:16px 18px 24px">
+      <p style="font-size:.72rem;color:var(--muted);margin-bottom:16px">Last updated: June 2026 · NeyoMarket (neyomarket.com.ng)</p>
+
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div>
+          <div style="font-size:.84rem;font-weight:700;color:var(--text);margin-bottom:5px"><i class="fa-solid fa-database" style="color:var(--gold)"></i>&nbsp; What We Collect</div>
+          <p style="font-size:.78rem;color:var(--muted);line-height:1.7">Name, email, phone/WhatsApp, payment reference (processed by Paystack — we never see full card numbers). For sellers: NIN/BVN verification data and bank account details for payouts.</p>
+        </div>
+        <div>
+          <div style="font-size:.84rem;font-weight:700;color:var(--text);margin-bottom:5px"><i class="fa-solid fa-circle-question" style="color:var(--blue)"></i>&nbsp; Why We Use It</div>
+          <p style="font-size:.78rem;color:var(--muted);line-height:1.7">To process orders, release escrow payments, prevent fraud, send order notifications via WhatsApp/email, and comply with Nigerian financial regulations.</p>
+        </div>
+        <div>
+          <div style="font-size:.84rem;font-weight:700;color:var(--text);margin-bottom:5px"><i class="fa-solid fa-share-nodes" style="color:var(--red)"></i>&nbsp; Who We Share With</div>
+          <p style="font-size:.78rem;color:var(--muted);line-height:1.7"><strong style="color:var(--text)">Paystack</strong> — payment processing. <strong style="color:var(--text)">Cloudinary</strong> — image hosting. <strong style="color:var(--text)">Seller</strong> — only your name and WhatsApp to fulfil your order. We <strong style="color:var(--text)">never sell</strong> your data to advertisers.</p>
+        </div>
+        <div>
+          <div style="font-size:.84rem;font-weight:700;color:var(--text);margin-bottom:5px"><i class="fa-solid fa-cookie-bite" style="color:var(--orange)"></i>&nbsp; Cookies</div>
+          <p style="font-size:.78rem;color:var(--muted);line-height:1.7">We use essential cookies to keep you logged in and remember your cart. We use analytical cookies to improve performance. No advertising/tracking cookies. You can clear cookies anytime in your browser settings.</p>
+        </div>
+        <div>
+          <div style="font-size:.84rem;font-weight:700;color:var(--text);margin-bottom:5px"><i class="fa-solid fa-shield-halved" style="color:var(--green)"></i>&nbsp; Your Rights</div>
+          <p style="font-size:.78rem;color:var(--muted);line-height:1.7">You can request deletion of your account and data at any time by contacting us on WhatsApp: <strong style="color:var(--text)">+2349072212496</strong> or email: <strong style="color:var(--text)">support@neyomarket.com.ng</strong>.</p>
+        </div>
+        <div>
+          <div style="font-size:.84rem;font-weight:700;color:var(--text);margin-bottom:5px"><i class="fa-solid fa-clock" style="color:var(--muted)"></i>&nbsp; Data Retention</div>
+          <p style="font-size:.78rem;color:var(--muted);line-height:1.7">Order records retained for 2 years for dispute resolution and tax compliance. Account data deleted within 30 days of deletion request.</p>
+        </div>
+      </div>
+
+      <div style="background:rgba(201,146,42,.06);border:1px solid rgba(201,146,42,.2);border-radius:8px;padding:10px 13px;font-size:.72rem;color:var(--muted);margin-top:16px;line-height:1.6">
+        <i class="fa-solid fa-envelope" style="color:var(--gold)"></i>&nbsp; Questions? Contact us at <strong style="color:var(--text)">support@neyomarket.com.ng</strong> or WhatsApp <strong style="color:var(--text)">+2349072212496</strong>
+      </div>
+      <button class="bg" style="width:100%;margin-top:14px;padding:11px" onclick="cM('m-privacy')">Got It — Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Cookie Consent Banner -->
+<div id="cookie-banner" style="display:none" role="dialog" aria-label="Cookie consent" aria-live="polite">
+  <!-- Backdrop blur overlay (mobile subtle) -->
+  <div id="cookie-backdrop" style="position:fixed;inset:0;z-index:1039;background:rgba(0,0,0,.25);backdrop-filter:blur(2px);pointer-events:none"></div>
+  <!-- Banner card -->
+  <div id="cookie-card" style="position:fixed;bottom:calc(var(--bnav,64px) + 14px);left:50%;transform:translateX(-50%);z-index:1040;width:min(480px,calc(100vw - 24px));background:var(--bg2);border:1.5px solid var(--border);border-radius:20px;box-shadow:0 24px 64px rgba(0,0,0,.22),0 4px 16px rgba(0,0,0,.12);overflow:hidden;animation:cookiePop .38s cubic-bezier(.22,1,.36,1)">
+
+    <!-- Gold accent top bar -->
+    <div style="height:3px;background:linear-gradient(90deg,var(--gold),#f5c842,var(--gold));background-size:200% 100%;animation:cookieShimmer 3s linear infinite"></div>
+
+    <!-- Header row -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px 0">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,rgba(201,146,42,.15),rgba(201,146,42,.06));border:1.5px solid rgba(201,146,42,.25);display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0">🍪</div>
+        <div>
+          <div style="font-size:.88rem;font-weight:800;color:var(--text);letter-spacing:-.01em">We value your privacy</div>
+          <div style="font-size:.68rem;color:var(--muted);margin-top:1px;font-weight:400">NeyoMarket · neyomarket.com.ng</div>
+        </div>
+      </div>
+      <button onclick="cookieDismiss()" aria-label="Dismiss" style="background:var(--bg3);border:1px solid var(--border);color:var(--muted);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.82rem;cursor:pointer;flex-shrink:0;transition:.15s" onmouseover="this.style.background='var(--red-bg)';this.style.color='var(--red)'" onmouseout="this.style.background='var(--bg3)';this.style.color='var(--muted)'"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
+    <!-- Body text -->
+    <div style="padding:12px 18px 0;font-size:.78rem;color:var(--muted);line-height:1.65;font-weight:400">
+      We use <strong style="color:var(--text)">essential cookies</strong> to keep you signed in and save your cart, and <strong style="color:var(--text)">analytics cookies</strong> to improve your experience. No advertising or third-party tracking.
+      <a onclick="oM('m-privacy')" style="color:var(--gold);font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:2px">Privacy Policy</a>
+    </div>
+
+    <!-- Cookie type pills -->
+    <div style="display:flex;gap:7px;padding:12px 18px 0;flex-wrap:wrap">
+      <div style="display:inline-flex;align-items:center;gap:5px;background:var(--green-bg);border:1px solid rgba(5,150,105,.2);color:var(--green);padding:4px 10px;border-radius:20px;font-size:.65rem;font-weight:700">
+        <i class="fa-solid fa-circle-check"></i> Essential
+      </div>
+      <div id="cookie-pill-analytics" style="display:inline-flex;align-items:center;gap:5px;background:rgba(37,99,235,.08);border:1px solid rgba(37,99,235,.2);color:var(--blue);padding:4px 10px;border-radius:20px;font-size:.65rem;font-weight:700;cursor:pointer;transition:.15s" onclick="toggleAnalyticsPill()">
+        <i class="fa-solid fa-chart-bar"></i> Analytics <span id="cookie-analytics-check" style="display:none"><i class="fa-solid fa-check"></i></span>
+      </div>
+      <div style="display:inline-flex;align-items:center;gap:5px;background:var(--red-bg);border:1px solid rgba(220,38,38,.15);color:var(--red);padding:4px 10px;border-radius:20px;font-size:.65rem;font-weight:700">
+        <i class="fa-solid fa-ban"></i> No Ad Tracking
+      </div>
+    </div>
+
+    <!-- Action buttons -->
+    <div style="display:flex;gap:8px;padding:14px 18px 18px">
+      <button onclick="acceptCookies('essential')" style="flex:1;padding:10px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg3);color:var(--muted);font-family:inherit;font-size:.76rem;font-weight:600;cursor:pointer;transition:all .18s" onmouseover="this.style.borderColor='var(--border2)';this.style.color='var(--text)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
+        Essential Only
+      </button>
+      <button onclick="acceptCookies('all')" style="flex:2;padding:10px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--gold),#d4943a);color:#fff;font-family:inherit;font-size:.78rem;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(201,146,42,.3);transition:all .18s;letter-spacing:.02em" onmouseover="this.style.boxShadow='0 6px 20px rgba(201,146,42,.45)';this.style.transform='translateY(-1px)'" onmouseout="this.style.boxShadow='0 4px 14px rgba(201,146,42,.3)';this.style.transform='none'">
+        <i class="fa-solid fa-circle-check"></i>&nbsp; Accept All &amp; Continue
+      </button>
+    </div>
+
+    <!-- Powered by strip -->
+    <div style="border-top:1px solid var(--border);padding:8px 18px;background:var(--bg3);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <div style="font-size:.62rem;color:var(--muted2);font-weight:500;display:flex;align-items:center;gap:5px">
+        <i class="fa-solid fa-shield-halved" style="color:var(--green)"></i> 256-bit SSL · Secured by Paystack
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <a onclick="oM('m-privacy')" style="font-size:.62rem;color:var(--muted2);cursor:pointer;text-decoration:underline;text-underline-offset:2px">Privacy</a>
+        <span style="color:var(--border2);font-size:.62rem">·</span>
+        <a onclick="oM('m-terms')" style="font-size:.62rem;color:var(--muted2);cursor:pointer;text-decoration:underline;text-underline-offset:2px">Terms</a>
+        <span style="color:var(--border2);font-size:.62rem">·</span>
+        <span style="font-size:.62rem;color:var(--muted2)">NeyoMarket © 2026</span>
+      </div>
     </div>
   </div>
 </div>
@@ -10418,18 +10613,16 @@ function processPaystack(mode) {
 
         /* Show receipt */
         var ri = document.getElementById('rec-id');
-        var rf = document.getElementById('rec-info');
-        if (ri) ri.textContent = trackId;
-        if (rf) rf.innerHTML =
-          '<div>Name: '         + name + '</div>' +
-          '<div>WhatsApp: '     + (wa || 'N/A') + '</div>' +
-          '<div>Amount Paid: '  + currSymbol(cartCurrency) + total.toLocaleString() + '</div>' +
-          '<div>Platform Fee: ' + currSymbol(cartCurrency) + (data.platformFee || Math.round(total * 0.05)).toLocaleString() + ' (5%)</div>' +
-          (data.affiliateFee ? '<div>Affiliate: ' + currSymbol(cartCurrency) + data.affiliateFee.toLocaleString() + ' (5%)</div>' : '') +
-          '<div>Seller Gets: '  + currSymbol(cartCurrency) + (data.sellerAmount || Math.round(total * 0.90)).toLocaleString() + '</div>' +
-          '<div>Date: ' + new Date().toLocaleDateString() + '</div>' +
-          '<div style="margin-top:8px;color:var(--green)"><i class="fa-solid fa-circle-check"><\/i>  Payment confirmed & saved. Escrow active.</div>';
-
+        if (typeof buildReceiptInfo === 'function') buildReceiptInfo({
+          name: name, wa: wa || 'N/A',
+          total: total,
+          platformFee:  data.platformFee  || parseFloat((total*0.05).toFixed(2)),
+          affiliateFee: data.affiliateFee || 0,
+          sellerAmount: data.sellerAmount || parseFloat((total*0.90).toFixed(2)),
+          currency: cartCurrency,
+          date: new Date().toLocaleDateString('en-NG',{day:'numeric',month:'short',year:'numeric'})
+        });
+        if (typeof pushOrderNotif === 'function') pushOrderNotif('order_paid', trackId, 'Amount: ' + currSymbol(cartCurrency) + total.toLocaleString());
         cM('m-cart'); cM('m-pd');
         oM('m-rec');
         toast('\u2705 Payment confirmed! Order ' + trackId, 'ok');
@@ -10556,17 +10749,17 @@ function processPaystack(mode) {
             saveAll();
             /* Show receipt */
             var ri = document.getElementById('rec-id');
-            var rf = document.getElementById('rec-info');
-            if (ri) ri.textContent = trackId;
-            if (rf) rf.innerHTML =
-              '<div>Name: '         + name + '</div>' +
-              '<div>WhatsApp: '     + (wa || 'N/A') + '</div>' +
-              '<div>Amount Paid: ' + currSymbol(cartCurrency) + total.toLocaleString() + '</div>' +
-              (data.affiliateFee ? '<div>Affiliate: ' + currSymbol(cartCurrency) + data.affiliateFee.toLocaleString() + ' (5%)</div>' : '') +
-              '<div>Seller Gets: ' + currSymbol(cartCurrency) + (data.sellerAmount || Math.round(total * 0.90)).toLocaleString() + '</div>' +
-              '<div>Date: ' + new Date().toLocaleDateString() + '</div>' +
-              '<div style="margin-top:8px;color:var(--green)"><i class="fa-solid fa-circle-check"><\/i>  Payment confirmed & saved. Escrow active.</div>';
-            cM('m-cart'); cM('m-pd');
+            if (typeof buildReceiptInfo === 'function') buildReceiptInfo({
+          name: name, wa: wa || 'N/A',
+          total: total,
+          platformFee:  data.platformFee  || parseFloat((total*0.05).toFixed(2)),
+          affiliateFee: data.affiliateFee || 0,
+          sellerAmount: data.sellerAmount || parseFloat((total*0.90).toFixed(2)),
+          currency: cartCurrency,
+          date: new Date().toLocaleDateString('en-NG',{day:'numeric',month:'short',year:'numeric'})
+        });
+        if (typeof pushOrderNotif === 'function') pushOrderNotif('order_paid', trackId, 'Amount: ' + currSymbol(cartCurrency) + total.toLocaleString());
+        cM('m-cart'); cM('m-pd');
             oM('m-rec');
             toast('<i class="fa-solid fa-circle-check"><\/i>  Payment confirmed! Order ' + trackId, 'ok');
             if (typeof awardLoyaltyPoints === 'function') awardLoyaltyPoints(10, 'Purchase: ' + trackId);
@@ -11039,6 +11232,7 @@ function updateOrderStatus(orderId, status) {
       var o = ords.find(function(x){ return x.id === orderId; });
       if (o) { o.status = status; sv('nm_orders', ords); }
       renderOrders();
+      if (status === 'delivered' && typeof pushOrderNotif === 'function') pushOrderNotif('order_delivered', orderId);
     } else {
       toast('Could not update: ' + (data.error||'Try again'), 'fail');
     }
@@ -15570,6 +15764,129 @@ function oM(id) {
 function cM(id) { var el = document.getElementById(id); if (el) el.classList.remove('open'); }
 window.oM = oM; window.cM = cM;
 document.addEventListener('click', function (e) { if (e.target.classList.contains('ov')) e.target.classList.remove('open'); });
+
+/* ═══ RECEIPT MODAL BUILDER ═══════════════════════════════════════════
+   Populates the new structured receipt modal fields.
+   Call: buildReceiptInfo({ name, wa, total, platformFee, affiliateFee, sellerAmount, currency, date })
+═════════════════════════════════════════════════════════════════════ */
+function buildReceiptInfo(opts) {
+  var sym   = (opts.currency && typeof currSymbol === 'function') ? currSymbol(opts.currency) : '₦';
+  var fmt   = function(n){ return parseFloat(n||0).toLocaleString('en-NG',{minimumFractionDigits:2,maximumFractionDigits:2}); };
+  var total = parseFloat(opts.total || 0);
+  var fee   = parseFloat(opts.platformFee  || (total * 0.05).toFixed(2));
+  var aff   = parseFloat(opts.affiliateFee || 0);
+  var sel   = parseFloat(opts.sellerAmount || (total * 0.90).toFixed(2));
+  var date  = opts.date || new Date().toLocaleDateString('en-NG',{day:'numeric',month:'short',year:'numeric'});
+
+  var set = function(id, val){ var el = document.getElementById(id); if(el) el.textContent = val; };
+  set('rec-name-val',   opts.name  || '—');
+  set('rec-wa-val',     opts.wa    || '—');
+  set('rec-amount-val', sym + fmt(total));
+  set('rec-fee-val',    sym + fmt(fee));
+  set('rec-seller-val', sym + fmt(sel));
+  set('rec-date-val',   date);
+
+  var affRow = document.getElementById('rec-aff-row');
+  if (affRow) {
+    if (aff > 0) {
+      affRow.style.display = 'flex';
+      set('rec-aff-val', sym + fmt(aff));
+    } else {
+      affRow.style.display = 'none';
+    }
+  }
+}
+window.buildReceiptInfo = buildReceiptInfo;
+
+/* ═══ ORDER NOTIFICATION PUSH ══════════════════════════════════════════
+   Injects a real-time notification into the bell panel.
+   type: 'order_paid' | 'order_delivered'
+═════════════════════════════════════════════════════════════════════ */
+function pushOrderNotif(type, orderId, extra) {
+  var notif;
+  if (type === 'order_paid') {
+    notif = {
+      id:         'order_paid_' + orderId,
+      title:      '✅ Order Paid — ' + orderId,
+      content:    'Payment confirmed & escrow active. ' + (extra || 'Your order is being prepared.'),
+      badge_text: 'PAID',
+      created_at: new Date().toISOString()
+    };
+  } else if (type === 'order_delivered') {
+    notif = {
+      id:         'order_delivered_' + orderId,
+      title:      '📦 Order Delivered — ' + orderId,
+      content:    'Your order has been marked as delivered. Tap "Confirm Collection" to release payment to the seller.',
+      badge_text: 'DELIVERED',
+      created_at: new Date().toISOString()
+    };
+  } else {
+    notif = { id: 'notif_' + Date.now(), title: extra || 'Notification', created_at: new Date().toISOString() };
+  }
+
+  if (!window.NM_NOTIFS) window.NM_NOTIFS = { items: [], readIds: new Set() };
+  window.NM_NOTIFS.items = [notif].concat(window.NM_NOTIFS.items || []);
+  if (typeof renderNotifPanel === 'function') renderNotifPanel(window.NM_NOTIFS.items);
+}
+window.pushOrderNotif = pushOrderNotif;
+
+/* ═══ COOKIES ══════════════════════════════════════════════════════════ */
+/* Analytics pill toggle */
+var _cookieAnalytics = true;
+function toggleAnalyticsPill() {
+  _cookieAnalytics = !_cookieAnalytics;
+  var pill = document.getElementById('cookie-pill-analytics');
+  var check = document.getElementById('cookie-analytics-check');
+  if (pill) {
+    pill.style.background = _cookieAnalytics ? 'rgba(37,99,235,.16)' : 'var(--bg3)';
+    pill.style.borderColor = _cookieAnalytics ? 'rgba(37,99,235,.3)' : 'var(--border)';
+    pill.style.color = _cookieAnalytics ? 'var(--blue)' : 'var(--muted)';
+  }
+  if (check) check.style.display = _cookieAnalytics ? 'inline' : 'none';
+}
+window.toggleAnalyticsPill = toggleAnalyticsPill;
+
+function cookieDismiss() {
+  var banner = document.getElementById('cookie-banner');
+  var backdrop = document.getElementById('cookie-backdrop');
+  var card = document.getElementById('cookie-card');
+  if (card) { card.style.animation = 'none'; card.style.opacity = '0'; card.style.transform = 'translateX(-50%) translateY(20px)'; card.style.transition = 'all .25s ease'; }
+  setTimeout(function(){
+    if (banner) banner.style.display = 'none';
+    if (backdrop) backdrop.style.display = 'none';
+  }, 250);
+}
+window.cookieDismiss = cookieDismiss;
+
+function acceptCookies(level) {
+  try {
+    localStorage.setItem('nm_cookie_consent', level);
+    localStorage.setItem('nm_cookie_date', new Date().toISOString());
+  } catch(e) {}
+  cookieDismiss();
+}
+window.acceptCookies = acceptCookies;
+
+function initCookieBanner() {
+  try {
+    var consent = localStorage.getItem('nm_cookie_consent');
+    if (!consent) {
+      setTimeout(function() {
+        var banner = document.getElementById('cookie-banner');
+        var backdrop = document.getElementById('cookie-backdrop');
+        if (banner) banner.style.display = 'block';
+        /* backdrop only on desktop — subtle on mobile */
+        if (backdrop && window.innerWidth > 560) backdrop.style.pointerEvents = 'none';
+      }, 2000);
+    }
+  } catch(e) {}
+}
+/* Run after DOM ready */
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initCookieBanner);
+} else {
+  setTimeout(initCookieBanner, 100);
+}
 
 /* ═══ PROMOTE PRODUCT ═══ */
 function openPromoteModal() {
