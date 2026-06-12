@@ -10174,23 +10174,27 @@ function bSum(pageId) {
     savings  += (base - disc) * qty;
   });
   var total    = subtotal + shipping;
-  var platFee  = Math.round(total * 0.05);
-  var sellerPay = total - platFee;
-  var cSym     = currSymbol((cart[0]&&cart[0].currency)||'NGN');
+  var cartCurr  = (cart[0]&&cart[0].currency)||'NGN';
+  var isNGN     = cartCurr === 'NGN';
+  /* Use 2dp for foreign currencies so small amounts like CA$5 don't round to 0 */
+  function fmtAmt(n) { return isNGN ? Math.round(n).toLocaleString() : parseFloat(n.toFixed(2)).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  var platFee   = isNGN ? Math.round(total * 0.05) : parseFloat((total * 0.05).toFixed(2));
+  var sellerPay = isNGN ? Math.round(total - platFee) : parseFloat((total - platFee).toFixed(2));
+  var cSym      = currSymbol(cartCurr);
 
   /* Apply promo discount if active */
   var promoDiscount = (appliedPromo && appliedPromo.discount > 0) ? appliedPromo.discount : 0;
-  if (promoDiscount > 0) total = Math.max(1, total - promoDiscount);
+  if (promoDiscount > 0) total = Math.max(0.01, total - promoDiscount);
 
   var html = (savings > 0
-    ? '<div class="cor" style="color:var(--green)"><span>You Save</span><span>-' + cSym + savings.toLocaleString() + '</span></div>'
+    ? '<div class="cor" style="color:var(--green)"><span>You Save</span><span>-' + cSym + fmtAmt(savings) + '</span></div>'
     : '')
-    + (promoDiscount > 0 ? '<div class="cor" style="color:#16a34a"><span>?? Promo Discount</span><span>-' + cSym + promoDiscount.toLocaleString() + '</span></div>' : '')
-    + '<div class="cor"><span>Subtotal</span><span>' + cSym + subtotal.toLocaleString() + '</span></div>'
-    + (shipping > 0 ? '<div class="cor"><span>Shipping</span><span>' + cSym + shipping.toLocaleString() + '</span></div>' : '')
-    + '<div class="cor"><span>Platform Fee (5%)</span><span>' + cSym + platFee.toLocaleString() + '</span></div>'
-    + '<div class="cor"><span>Seller Receives (95%)</span><span style="color:var(--green)">' + cSym + sellerPay.toLocaleString() + '</span></div>'
-    + '<div class="cot"><span>You Pay</span><span style="color:var(--gold)">' + cSym + total.toLocaleString() + '</span></div>';
+    + (promoDiscount > 0 ? '<div class="cor" style="color:#16a34a"><span>?? Promo Discount</span><span>-' + cSym + fmtAmt(promoDiscount) + '</span></div>' : '')
+    + '<div class="cor"><span>Subtotal</span><span>' + cSym + fmtAmt(subtotal) + '</span></div>'
+    + (shipping > 0 ? '<div class="cor"><span>Shipping</span><span>' + cSym + fmtAmt(shipping) + '</span></div>' : '')
+    + '<div class="cor"><span>Platform Fee (5%)</span><span>' + cSym + fmtAmt(platFee) + '</span></div>'
+    + '<div class="cor"><span>Seller Receives (95%)</span><span style="color:var(--green)">' + cSym + fmtAmt(sellerPay) + '</span></div>'
+    + '<div class="cot"><span>You Pay</span><span style="color:var(--gold)">' + cSym + fmtAmt(total) + '</span></div>';
   var sid = pageId === 'shipping' ? 'ship-sum' : 'co-sum';
   var el = document.getElementById(sid); if (el) el.innerHTML = html;
   if (pageId === 'shipping') vShip(); else vCo();
@@ -10380,8 +10384,8 @@ function processPaystack(mode) {
           customer:     orderPayload.customer,
           items:        orderPayload.items,
           total:        total,
-          platformFee:  data.platformFee  || Math.round(total * 0.05),
-          sellerPayout: data.sellerAmount || Math.round(total * 0.90),
+          platformFee:  data.platformFee  || parseFloat((total * 0.05).toFixed(2)),
+          sellerPayout: data.sellerAmount || parseFloat((total * 0.90).toFixed(2)),
           affiliateFee: data.affiliateFee || 0,
           status:       data.status || 'paid',
           mode:         mode,
@@ -10416,27 +10420,15 @@ function processPaystack(mode) {
         var ri = document.getElementById('rec-id');
         var rf = document.getElementById('rec-info');
         if (ri) ri.textContent = trackId;
-        if (rf) {
-          function fmtR(n, curr) {
-            var isN = (curr||'NGN')==='NGN';
-            return isN ? Math.round(n).toLocaleString() : parseFloat(n.toFixed(2)).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
-          }
-          var rSym = currSymbol(cartCurrency);
-          var isNgnCart = cartCurrency === 'NGN';
-          var ngnNote = !isNgnCart ? '<div style="font-size:.75rem;color:var(--muted);margin-top:4px"><i class="fa-solid fa-info-circle"></i>  Charged in NGN by Paystack at live exchange rate</div>' : '';
-          var pFee = data.platformFee || parseFloat((total*0.05).toFixed(2));
-          var sAmt = data.sellerAmount || parseFloat((total*0.90).toFixed(2));
-          rf.innerHTML =
+        if (rf) rf.innerHTML =
           '<div>Name: '         + name + '</div>' +
           '<div>WhatsApp: '     + (wa || 'N/A') + '</div>' +
-          '<div>Amount Paid: '  + rSym + fmtR(total, cartCurrency) + (isNgnCart ? '' : ' (≈ NGN equivalent via Paystack)') + '</div>' +
-          '<div>Platform Fee (5%): ' + rSym + fmtR(pFee, cartCurrency) + '</div>' +
-          (data.affiliateFee ? '<div>Affiliate (5%): ' + rSym + fmtR(data.affiliateFee, cartCurrency) + '</div>' : '') +
-          '<div>Seller Gets: '  + rSym + fmtR(sAmt, cartCurrency) + '</div>' +
-          ngnNote +
+          '<div>Amount Paid: '  + currSymbol(cartCurrency) + total.toLocaleString() + '</div>' +
+          '<div>Platform Fee: ' + currSymbol(cartCurrency) + (data.platformFee || Math.round(total * 0.05)).toLocaleString() + ' (5%)</div>' +
+          (data.affiliateFee ? '<div>Affiliate: ' + currSymbol(cartCurrency) + data.affiliateFee.toLocaleString() + ' (5%)</div>' : '') +
+          '<div>Seller Gets: '  + currSymbol(cartCurrency) + (data.sellerAmount || Math.round(total * 0.90)).toLocaleString() + '</div>' +
           '<div>Date: ' + new Date().toLocaleDateString() + '</div>' +
           '<div style="margin-top:8px;color:var(--green)"><i class="fa-solid fa-circle-check"><\/i>  Payment confirmed & saved. Escrow active.</div>';
-        }
 
         cM('m-cart'); cM('m-pd');
         oM('m-rec');
@@ -10538,8 +10530,8 @@ function processPaystack(mode) {
               customer:     verifyPayload.customer,
               items:        verifyPayload.items,
               total:        total,
-              platformFee:  data.platformFee  || Math.round(total * 0.05),
-              sellerPayout: data.sellerAmount || Math.round(total * 0.90),
+              platformFee:  data.platformFee  || parseFloat((total * 0.05).toFixed(2)),
+              sellerPayout: data.sellerAmount || parseFloat((total * 0.90).toFixed(2)),
               affiliateFee: data.affiliateFee || 0,
               status:       data.status || 'paid',
               mode:         mode,
@@ -10566,27 +10558,14 @@ function processPaystack(mode) {
             var ri = document.getElementById('rec-id');
             var rf = document.getElementById('rec-info');
             if (ri) ri.textContent = trackId;
-            if (rf) {
-              function fmtR(n, curr) {
-            var isN = (curr||'NGN')==='NGN';
-            return isN ? Math.round(n).toLocaleString() : parseFloat(n.toFixed(2)).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
-          }
-          var rSym = currSymbol(cartCurrency);
-          var isNgnCart = cartCurrency === 'NGN';
-          var ngnNote = !isNgnCart ? '<div style="font-size:.75rem;color:var(--muted);margin-top:4px"><i class="fa-solid fa-info-circle"></i>  Charged in NGN by Paystack at live exchange rate</div>' : '';
-          var pFee = data.platformFee || parseFloat((total*0.05).toFixed(2));
-          var sAmt = data.sellerAmount || parseFloat((total*0.90).toFixed(2));
-              rf.innerHTML =
+            if (rf) rf.innerHTML =
               '<div>Name: '         + name + '</div>' +
               '<div>WhatsApp: '     + (wa || 'N/A') + '</div>' +
-              '<div>Amount Paid: ' + rSym + fmtR(total, cartCurrency) + (isNgnCart ? '' : ' (≈ NGN equivalent via Paystack)') + '</div>' +
-              '<div>Platform Fee (5%): ' + rSym + fmtR(pFee, cartCurrency) + '</div>' +
-              (data.affiliateFee ? '<div>Affiliate (5%): ' + rSym + fmtR(data.affiliateFee, cartCurrency) + '</div>' : '') +
-              '<div>Seller Gets: ' + rSym + fmtR(sAmt, cartCurrency) + '</div>' +
-              ngnNote +
+              '<div>Amount Paid: ' + currSymbol(cartCurrency) + total.toLocaleString() + '</div>' +
+              (data.affiliateFee ? '<div>Affiliate: ' + currSymbol(cartCurrency) + data.affiliateFee.toLocaleString() + ' (5%)</div>' : '') +
+              '<div>Seller Gets: ' + currSymbol(cartCurrency) + (data.sellerAmount || Math.round(total * 0.90)).toLocaleString() + '</div>' +
               '<div>Date: ' + new Date().toLocaleDateString() + '</div>' +
               '<div style="margin-top:8px;color:var(--green)"><i class="fa-solid fa-circle-check"><\/i>  Payment confirmed & saved. Escrow active.</div>';
-            }
             cM('m-cart'); cM('m-pd');
             oM('m-rec');
             toast('<i class="fa-solid fa-circle-check"><\/i>  Payment confirmed! Order ' + trackId, 'ok');
@@ -11010,9 +10989,11 @@ function markCol(id) {
   var sellerRate   = 1 - platformRate - affiliateRate;
 
   var total        = parseFloat(o.total || 0);
-  var platformFee  = Math.round(total * platformRate);
-  var affiliateFee = Math.round(total * affiliateRate);
-  var sellerPayout = Math.round(total * sellerRate);
+  var isNGNOrder   = (o.currency || 'NGN') === 'NGN';
+  function roundFee(n) { return isNGNOrder ? Math.round(n) : parseFloat(n.toFixed(2)); }
+  var platformFee  = roundFee(total * platformRate);
+  var affiliateFee = roundFee(total * affiliateRate);
+  var sellerPayout = roundFee(total * sellerRate);
 
   o.collected    = true;
   o.status       = 'completed';
@@ -11083,8 +11064,8 @@ function markDLEscrow(id) {
   var affiliateRate = validAff ? 0.05 : 0;
   var sellerRate    = 1 - platformRate - affiliateRate;
   var total         = parseFloat(o.total || 0);
-  var platformFee   = Math.round(total * platformRate);
-  var affiliateFee  = Math.round(total * affiliateRate);
+  var platformFee   = parseFloat((total * platformRate).toFixed(2));
+  var affiliateFee  = parseFloat((total * affiliateRate).toFixed(2));
   var sellerPayout  = Math.round(total * sellerRate);
   var now           = new Date().toISOString();
 
