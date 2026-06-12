@@ -309,50 +309,6 @@ module.exports = async function handler(req, res) {
     /* ════════════════════════════════════════════════
        GET
     ════════════════════════════════════════════════ */
-    /* ── Action-based GET routes must come BEFORE generic GET handler ── */
-    if (req.query.action === 'pending-edits' && req.method === 'GET') {
-      await sql`
-        CREATE TABLE IF NOT EXISTS product_edits (
-          id           BIGSERIAL PRIMARY KEY,
-          product_id   BIGINT NOT NULL,
-          seller_id    TEXT    NOT NULL,
-          edit_data    JSONB   NOT NULL,
-          status       TEXT    NOT NULL DEFAULT 'pending',
-          created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-          reviewed_at  TIMESTAMPTZ
-        )
-      `;
-      await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS has_pending_edit BOOLEAN DEFAULT false`;
-      const edits = await sql`
-        SELECT pe.*, p.name AS product_name, p.seller AS seller_name,
-               p.price AS current_price, p.imgs AS current_imgs,
-               p.description AS current_description, p.status AS product_status
-        FROM product_edits pe
-        JOIN products p ON p.id = pe.product_id
-        WHERE pe.status = 'pending'
-        ORDER BY pe.created_at DESC
-      `;
-      return res.status(200).json({ ok: true, edits: edits.map(function(e) {
-        let ed = e.edit_data;
-        if (typeof ed === 'string') { try { ed = JSON.parse(ed); } catch(x) { ed = {}; } }
-        return { ...e, edit_data: ed };
-      })});
-    }
-
-    if (req.query.action === 'get-views' && req.method === 'GET') {
-      const pid = String(req.query.productId);
-      if (!pid) return jsonErr(res, 400, 'Invalid productId.');
-      try {
-        const rows = await sql`
-          SELECT view_count FROM products WHERE id = ${pid}::bigint LIMIT 1
-        `;
-        if (!rows.length) return jsonErr(res, 404, 'Product not found.');
-        return res.status(200).json({ ok: true, viewCount: parseInt(rows[0].view_count || 0, 10) });
-      } catch (err) {
-        return jsonErr(res, 500, 'Could not fetch views.', err.message);
-      }
-    }
-
     if (req.method === 'GET') {
       const { admin, sellerId, status, id } = req.query;
 
@@ -843,7 +799,8 @@ module.exports = async function handler(req, res) {
       const edits = await sql`
         SELECT pe.*, p.name AS product_name, p.seller AS seller_name,
                p.price AS current_price, p.imgs AS current_imgs,
-               p.description AS current_description, p.status AS product_status
+               p.description AS current_description, p.status AS product_status,
+               p.currency AS current_currency
         FROM product_edits pe
         JOIN products p ON p.id = pe.product_id
         WHERE pe.status = 'pending'
