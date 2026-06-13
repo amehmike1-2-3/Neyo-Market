@@ -5635,7 +5635,26 @@ nav:not(.bottom-nav){
       <div class="cos" id="ship-sum"></div>
       <div class="fg"><label>Full Name <span class="rq">*</span></label><input class="fi" type="text" id="sh-name" placeholder="Your full name" oninput="vShip()"/></div>
       <div class="fg"><label>WhatsApp Number <span class="rq">*</span></label><input class="fi" type="tel" id="sh-wa" placeholder="+234…" oninput="vShip()"/></div>
-      <div class="fg"><label>Delivery Address <span class="rq">*</span></label><textarea class="fi" id="sh-addr" rows="3" placeholder="Full street, city, state" oninput="vShip()"></textarea></div>
+      <div class="fg"><label>Delivery State <span class="rq">*</span></label>
+        <select class="fi" id="sh-state" onchange="onShipStateChange()">
+          <option value="">-- Select your state --</option>
+          <option>Abia</option><option>Adamawa</option><option>Akwa Ibom</option>
+          <option>Anambra</option><option>Bauchi</option><option>Bayelsa</option>
+          <option>Benue</option><option>Borno</option><option>Cross River</option>
+          <option>Delta</option><option>Ebonyi</option><option>Edo</option>
+          <option>Ekiti</option><option>Enugu</option><option>FCT - Abuja</option>
+          <option>Gombe</option><option>Imo</option><option>Jigawa</option>
+          <option>Kaduna</option><option>Kano</option><option>Katsina</option>
+          <option>Kebbi</option><option>Kogi</option><option>Kwara</option>
+          <option>Lagos</option><option>Nasarawa</option><option>Niger</option>
+          <option>Ogun</option><option>Ondo</option><option>Osun</option>
+          <option>Oyo</option><option>Plateau</option><option>Rivers</option>
+          <option>Sokoto</option><option>Taraba</option><option>Yobe</option>
+          <option>Zamfara</option>
+        </select>
+        <div id="sh-state-fee-info" style="display:none;margin-top:6px;padding:8px 12px;border-radius:8px;font-size:.78rem;font-weight:600"></div>
+      </div>
+      <div class="fg"><label>Delivery Address <span class="rq">*</span></label><textarea class="fi" id="sh-addr" rows="3" placeholder="Full street address" oninput="vShip()"></textarea></div>
       <div class="fg"><label>Email <span class="rq">*</span></label><input class="fi" type="email" id="sh-email" placeholder="you@email.com" oninput="vShip()"/></div>
       <div class="tr2"><input type="checkbox" id="sh-cb" onchange="vShip()"/><label for="sh-cb">I agree to the <a onclick="oM('m-terms')">Terms of Service</a> and escrow release process.</label></div>
       <div class="em" id="sh-err"></div>
@@ -7950,7 +7969,9 @@ function validateSell() {
   if (!comm || comm < 5 || comm > 40)    issues.push('Commission must be 5–40%');
   if (desc.length < 20)                  issues.push('Description too short (min 20 chars)');
   if (!email || !email.includes('@'))    issues.push('Valid payout email required');
-  if (needF && !dReady)                  issues.push('Upload the product file');
+  var _lM = document.getElementById('dfile-type-link') && document.getElementById('dfile-type-link').checked;
+  var _lV = _lM ? ((document.getElementById('dfile-link-url')||{}).value||'').trim() : '';
+  if (needF && !dReady && !(_lM && _lV))   issues.push('Upload product file or paste a product link');
   if (!termsOk)                          issues.push('Accept the Terms of Service');
   var btn = document.getElementById('sell-btn');
   var st  = document.getElementById('sell-st');
@@ -8488,6 +8509,15 @@ function resetSell() {
   var eb = document.getElementById('edit-mode-banner'); if (eb) eb.remove();
   var btn2 = document.getElementById('sell-btn'); if (btn2) btn2.innerHTML = '<i class="fa-solid fa-lock"></i>  Submit for Review';
   ['s-name','s-type','s-cat','s-price','s-currency','s-comm','s-desc','s-email','s-discount-price','s-sale-ends','s-shipping-fee'].forEach(function (id) { sval(id, ''); });
+  /* Reset new fields */
+  var specsCtr = document.getElementById('specs-container'); if (specsCtr) specsCtr.innerHTML = '';
+  var stateFG = document.getElementById('state-fees-grid'); if (stateFG) stateFG.innerHTML = '';
+  var dlLink = document.getElementById('dfile-link-url'); if (dlLink) dlLink.value = '';
+  var dlExp  = document.getElementById('dfile-link-expiry'); if (dlExp) dlExp.value = '';
+  var dlUp   = document.getElementById('dfile-type-upload'); if (dlUp) dlUp.checked = true;
+  var sfFlat = document.getElementById('ship-flat'); if (sfFlat) sfFlat.checked = true;
+  if (typeof toggleDfileType === 'function') toggleDfileType();
+  if (typeof toggleShipType  === 'function') toggleShipType();
   var vc = document.getElementById('variants-container'); if (vc) vc.innerHTML = '';
   variantCount = 0;
   selectedVariants = {}; /* clear variant selections on form reset */
@@ -10483,8 +10513,12 @@ function bSum(pageId) {
     var disc  = (i.isOnSale || i.is_on_sale) && parseFloat(i.discountPrice || i.discount_price || 0) > 0
                 ? parseFloat(i.discountPrice || i.discount_price)
                 : base;
+    var _sType = i.shippingType || i.shipping_type || 'flat';
+    var _sFees = i.stateFees || i.state_fees || null;
+    var _bState = (document.getElementById('sh-state') && document.getElementById('sh-state').value) || '';
+    var _perStateFee = (_sType === 'perstate' && _sFees && _bState) ? (parseFloat(_sFees[_bState]) || 0) : null;
     var ship  = (i.type === 'physical' || i.type === 'Physical')
-                ? parseFloat(i.shippingFee || i.shipping_fee || 0)
+                ? (_perStateFee !== null ? _perStateFee : parseFloat(i.shippingFee || i.shipping_fee || 0))
                 : 0;
     subtotal += disc * qty;
     shipping += ship * qty;
@@ -10518,14 +10552,22 @@ function bSum(pageId) {
 }
 
 function vShip() {
-  var ok  = gv('sh-name') && gv('sh-wa') && gv('sh-addr') && gv('sh-email');
+  var ok  = gv('sh-name') && gv('sh-wa') && gv('sh-addr') && gv('sh-email') && gv('sh-state');
   var cb  = document.getElementById('sh-cb'); ok = ok && cb && cb.checked;
   var btn = document.getElementById('sh-pay'); if (btn) btn.disabled = !ok;
   /* Wallet button */
   var walletBtn = document.getElementById('sh-wallet-pay');
   var walletBal = document.getElementById('sh-wallet-bal');
   var bal = parseFloat((CU && CU.buyerWallet) || 0);
-  var total = cart.reduce(function(s,i){ var d=parseFloat(i.discountPrice||i.discount_price||0);var p=d>0&&d<parseFloat(i.price)?d:parseFloat(i.price);return s+(p+(i.type==='physical'?parseFloat(i.shippingFee||i.shipping_fee||0):0))*(i.qty||1);},0);
+  var _bStateV = (document.getElementById('sh-state') && document.getElementById('sh-state').value) || '';
+  var total = cart.reduce(function(s,i){
+    var d=parseFloat(i.discountPrice||i.discount_price||0);
+    var p=d>0&&d<parseFloat(i.price)?d:parseFloat(i.price);
+    var _sf2 = i.stateFees||i.state_fees||null;
+    var _st2 = i.shippingType||i.shipping_type||'flat';
+    var ship2 = i.type==='physical' ? (_st2==='perstate'&&_sf2&&_bStateV ? parseFloat(_sf2[_bStateV])||0 : parseFloat(i.shippingFee||i.shipping_fee||0)) : 0;
+    return s+(p+ship2)*(i.qty||1);
+  },0);
   if (walletBtn) { walletBtn.disabled = !(ok && bal >= total); }
   if (walletBal) { walletBal.innerHTML = 'Wallet balance: ₦' + bal.toLocaleString() + (bal < total ? ' (insufficient — top up in your wallet tab)' : ' <i class="fa-solid fa-circle-check"><\/i> '); walletBal.style.color = bal >= total ? 'var(--green)' : 'var(--red)'; }
 }
@@ -10559,6 +10601,7 @@ function processPaystack(mode) {
   var name  = (nameEl  && nameEl.value.trim())  || (CU ? CU.name  : '');
   var wa    = (waEl    && waEl.value.trim())    || (CU ? (CU.phone || '') : '');
   var addr  = isPhys ? ((addrEl && addrEl.value.trim()) || '') : 'Digital Delivery';
+  var bState = isPhys ? ((document.getElementById('sh-state') && document.getElementById('sh-state').value) || '') : '';
 
   if (emailEl && !emailEl.value) emailEl.value = email;
   if (nameEl  && !nameEl.value)  nameEl.value  = name;
@@ -10580,7 +10623,10 @@ function processPaystack(mode) {
     var notExpired = !saleEnds || new Date(saleEnds) > new Date();
     /* Use discount price if it exists, is less than base price, and not expired */
     var disc = (discVal > 0 && discVal < base && notExpired) ? discVal : base;
-    var ship = isPhys ? parseFloat(i.shippingFee || i.shipping_fee || 0) : 0;
+    var _stp = i.shippingType || i.shipping_type || 'flat';
+    var _sfp = i.stateFees || i.state_fees || null;
+    var _bsp = (document.getElementById('sh-state') && document.getElementById('sh-state').value) || '';
+    var ship = isPhys ? (_stp === 'perstate' && _sfp && _bsp ? parseFloat(_sfp[_bsp]) || 0 : parseFloat(i.shippingFee || i.shipping_fee || 0)) : 0;
     total += (disc + ship) * qty;
   });
   if (total <= 0) { toast('Your cart is empty.', 'fail'); return; }
@@ -10676,7 +10722,7 @@ function processPaystack(mode) {
           };
         }),
         total:         total,
-        customer:      { name: name, email: (CU ? CU.email : email), whatsapp: wa || '', address: addr || '' }, /* raw email — never mask */
+        customer:      { name: name, email: (CU ? CU.email : email), whatsapp: wa || '', address: addr || '', state: bState || '' }, /* raw email — never mask */
         mode:          mode,
         affCode:       refCode || null,
         shipping:      addr ? { address: addr, whatsapp: wa } : null
@@ -18531,6 +18577,50 @@ function toggleShipType() {
   if (!isFlat) buildStateGrid();
 }
 window.toggleShipType = toggleShipType;
+
+/* Called when buyer selects their state on the shipping page */
+function onShipStateChange() {
+  var state = (document.getElementById('sh-state') && document.getElementById('sh-state').value) || '';
+  var info  = document.getElementById('sh-state-fee-info');
+  if (!state || !info) { if (info) info.style.display = 'none'; if (typeof bSum === 'function') bSum('shipping'); if (typeof vShip === 'function') vShip(); return; }
+  /* Check each cart item for per-state fees */
+  var msgs = [];
+  var hasPerState = false;
+  var blocked = false;
+  (window.cart || []).forEach(function(i) {
+    if (i.type !== 'physical') return;
+    var sType = i.shippingType || i.shipping_type || 'flat';
+    var sFees = i.stateFees || i.state_fees || null;
+    if (sType === 'perstate' && sFees) {
+      hasPerState = true;
+      var fee = sFees[state];
+      if (fee === undefined || fee === null || fee === '') {
+        blocked = true;
+        msgs.push('"' + (i.name||'Product').slice(0,25) + '" does not ship to ' + state);
+      } else {
+        msgs.push('Delivery to ' + state + ': \u20a6' + parseFloat(fee).toLocaleString());
+      }
+    } else if (sType === 'flat') {
+      var flatFee = parseFloat(i.shippingFee || i.shipping_fee || 0);
+      if (flatFee > 0) msgs.push('Flat shipping: \u20a6' + flatFee.toLocaleString());
+    }
+  });
+  if (msgs.length) {
+    info.style.display = 'block';
+    info.style.background = blocked ? 'rgba(220,38,38,.08)' : 'rgba(5,150,105,.08)';
+    info.style.border = '1px solid ' + (blocked ? 'rgba(220,38,38,.2)' : 'rgba(5,150,105,.2)');
+    info.style.color = blocked ? 'var(--red)' : 'var(--green)';
+    info.innerHTML = (blocked ? '<i class="fa-solid fa-circle-xmark"></i> ' : '<i class="fa-solid fa-truck"></i> ') + msgs.join(' &middot; ');
+  } else {
+    info.style.display = 'none';
+  }
+  /* Disable pay button if blocked */
+  var payBtn = document.getElementById('sh-pay');
+  if (payBtn && blocked) payBtn.disabled = true;
+  if (typeof bSum === 'function') bSum('shipping');
+  if (typeof vShip === 'function') vShip();
+}
+window.onShipStateChange = onShipStateChange;
 
 function buildStateGrid() {
   var grid = document.getElementById('state-fees-grid');
