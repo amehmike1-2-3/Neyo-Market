@@ -179,6 +179,11 @@ function toProduct(r) {
     fileExt:        r.file_ext         || null,
     fileName:       r.file_name        || null,
     fileUrl:        r.file_url         || null,
+    productLink:    r.product_link     || null,
+    productLinkExpiry: r.product_link_expiry || null,
+    shippingType:   r.shipping_type    || 'flat',
+    stateFees:      r.state_fees       || null,
+    specifications: r.specifications   || null,
     fileSize:       r.file_size        || null,
     disputed:       r.disputed         || false,
     quantity:       r.quantity         !== undefined ? parseInt(r.quantity, 10) : null,
@@ -567,10 +572,12 @@ module.exports = async function handler(req, res) {
          URL before calling this endpoint. If it's missing, the upload
          failed — we must NOT create a broken product record in Neon. */
       const productType = p.type || 'digital';
-      if ((productType === 'digital' || productType === 'course') && !p.fileUrl) {
+      const hasFileUrl     = !!(p.fileUrl);
+      const hasProductLink = !!(p.productLink);
+      if ((productType === 'digital' || productType === 'course') && !hasFileUrl && !hasProductLink) {
         return jsonErr(res, 400,
-          'Digital and course products require a file_url. Upload the file first, then submit the product.',
-          'file_url was empty or missing'
+          'Digital products need either a file upload or a product link.',
+          'file_url and product_link both missing'
         );
       }
 
@@ -603,6 +610,11 @@ module.exports = async function handler(req, res) {
       const couponCode       = p.couponCode  ? String(p.couponCode).trim().toUpperCase()  : null;
       const couponType       = (p.couponType === 'percent' || p.couponType === 'fixed') ? p.couponType : null;
       const couponValue      = (p.couponValue != null && couponCode) ? parseFloat(p.couponValue) : null;
+      const productLink      = p.productLink       || null;
+      const productLinkExpiry = p.productLinkExpiry || null;
+      const shippingType     = (p.shippingType === 'perstate') ? 'perstate' : 'flat';
+      const stateFees        = (p.stateFees && typeof p.stateFees === 'object') ? JSON.stringify(p.stateFees) : null;
+      const specifications   = (p.specifications && Array.isArray(p.specifications) && p.specifications.length) ? JSON.stringify(p.specifications) : null;
 
       const rows = await sql`
         INSERT INTO products (
@@ -612,7 +624,8 @@ module.exports = async function handler(req, res) {
           rating, reviews, emoji, imgs, status, badge, date, escrow,
           file_ext, file_name, file_url, file_size, is_verified, disputed,
           quantity, location, seller_bio, created_at, condition, currency, variants, lessons,
-          coupon_code, coupon_type, coupon_value
+          coupon_code, coupon_type, coupon_value,
+          product_link, product_link_expiry, shipping_type, state_fees, specifications
         ) VALUES (
           ${p.name}, ${productType}, ${productCat}, ${parseFloat(p.price)},
           ${discountPrice}, ${isOnSale}, ${saleEndsAt}, ${shippingFee},
@@ -626,7 +639,8 @@ module.exports = async function handler(req, res) {
           ${p.sellerBio || p.seller_bio || ''},
           NOW(),
           ${productCondition}, ${productCurrency}, ${productVariants}::jsonb, ${productLessons}::jsonb,
-          ${couponCode}, ${couponType}, ${couponValue}
+          ${couponCode}, ${couponType}, ${couponValue},
+          ${productLink}, ${productLinkExpiry}, ${shippingType}, ${stateFees}::jsonb, ${specifications}::jsonb
         )
         RETURNING *
       `;
