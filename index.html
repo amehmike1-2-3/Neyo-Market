@@ -8092,6 +8092,7 @@ function submitProduct() {
             }).then(function() { go('seller'); });
           } else {
             toast('<i class="fa-solid fa-pen-to-square"></i>  Edit submitted for admin review. Product stays live!', 'ok');
+            if(typeof nmNotif==='function') nmNotif('product_submitted','Product Edit Under Review','Your changes are being reviewed. Product stays live until approved.','EDIT');
             go('seller');
           }
         } else {
@@ -8103,6 +8104,7 @@ function submitProduct() {
             }).then(function() { go(CU && CU.role === 'admin' ? 'admin' : 'seller'); });
           } else {
             toast('Product submitted! Goes live within 24 hours.', 'ok');
+            if (typeof nmNotif==='function') nmNotif('product_submitted','Product Submitted for Review','Your listing "'+(payload.name||'product')+'" is under admin review. Goes live within 24 hrs.','PENDING');
             go(CU && CU.role === 'admin' ? 'admin' : 'seller');
           }
         }
@@ -8886,14 +8888,18 @@ window.fHome = fHome;
 ═══════════════════════════════════════════════════════════════════════ */
 window.NM_NOTIFS = { items: [], readIds: new Set() };
 
-/* Push a notification into the bell panel instead of browser popup */
-function addBellNotif(title, text, icon) {
-  var id = 'local_' + Date.now() + '_' + Math.random().toString(36).slice(2);
-  var item = { id: id, title: title, content: text, created_at: new Date().toISOString(), _icon: icon || 'fa-bell' };
+function nmNotif(type, title, content, badge_text) {
+  var id = (type||'n')+'_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
+  var item = {id:id,_type:type||'announcement',title:title||'',content:content||'',badge_text:badge_text||null,created_at:new Date().toISOString()};
+  if (!window.NM_NOTIFS) window.NM_NOTIFS = {items:[],readIds:new Set()};
   window.NM_NOTIFS.items.unshift(item);
-  if (window.NM_NOTIFS.items.length > 30) window.NM_NOTIFS.items = window.NM_NOTIFS.items.slice(0, 30);
+  if (window.NM_NOTIFS.items.length > 50) window.NM_NOTIFS.items = window.NM_NOTIFS.items.slice(0,50);
   renderNotifPanel(window.NM_NOTIFS.items);
+  var b = document.querySelector('[onclick*="toggleNotifPanel"]');
+  if (b){b.style.transition='transform .15s';b.style.transform='scale(1.3)';setTimeout(function(){b.style.transform='scale(1)';},300);}
 }
+window.nmNotif = nmNotif;
+function addBellNotif(title, text, icon) { nmNotif('announcement', title, text); }
 window.addBellNotif = addBellNotif;
 
 function toggleNotifPanel() {
@@ -8950,17 +8956,20 @@ function renderNotifPanel(items) {
     return;
   }
 
+  var NMS = {order_paid:{i:'fa-circle-check',bg:'rgba(5,150,105,.15)',c:'#059669'},order_delivered:{i:'fa-truck-ramp-box',bg:'rgba(37,99,235,.12)',c:'#2563eb'},product_submitted:{i:'fa-hourglass-half',bg:'rgba(217,119,6,.12)',c:'#d97706'},product_approved:{i:'fa-rocket',bg:'rgba(5,150,105,.15)',c:'#059669'},product_rejected:{i:'fa-circle-xmark',bg:'rgba(220,38,38,.12)',c:'#dc2626'},affiliate_earned:{i:'fa-sack-dollar',bg:'rgba(201,146,42,.15)',c:'#c9922a'},membership_expiring:{i:'fa-triangle-exclamation',bg:'rgba(220,38,38,.12)',c:'#dc2626'},dispute_opened:{i:'fa-scale-balanced',bg:'rgba(220,38,38,.12)',c:'#dc2626'},payout_approved:{i:'fa-building-columns',bg:'rgba(5,150,105,.15)',c:'#059669'},review_received:{i:'fa-star',bg:'rgba(245,196,66,.18)',c:'#d97706'},announcement:{i:'fa-megaphone',bg:'rgba(201,146,42,.12)',c:'#c9922a'}};
   var unreadCount = 0;
   var html = items.map(function(a) {
     var id = a.id || a.title;
     var isUnread = !window.NM_NOTIFS.readIds.has(id);
     if (isUnread) unreadCount++;
     var date = a.created_at ? new Date(a.created_at).toLocaleDateString('en-NG',{day:'numeric',month:'short',year:'numeric'}) : '';
+    var sty = NMS[a._type] || NMS['announcement'];
+    var bg2 = (a._type && NMS[a._type]) ? sty.c : 'var(--gold)';
     return '<div class="notif-item' + (isUnread ? ' unread' : '') + '">'
-      + '<div class="notif-item-icon"><i class="fa-solid fa-megaphone"><\/i> </div>'
+      + '<div class="notif-item-icon" style="background:'+sty.bg+';border-color:'+sty.c+'30"><i class="fa-solid '+sty.i+'" style="color:'+sty.c+'"><\/i></div>'
       + '<div class="notif-item-body">'
       + '<div class="notif-item-title">' + a.title
-      + (a.badge_text ? ' <span style="background:var(--gold);color:#fff;font-size:.58rem;font-weight:700;padding:1px 7px;border-radius:20px;margin-left:5px">' + a.badge_text + '</span>' : '')
+      + (a.badge_text ? ' <span style="background:'+bg2+';color:#fff;font-size:.58rem;font-weight:700;padding:1px 7px;border-radius:20px;margin-left:5px">' + a.badge_text + '</span>' : '')
       + '</div>'
       + (a.content ? '<div class="notif-item-text">' + a.content + '</div>' : '')
       + (date ? '<div class="notif-item-date">' + date + '</div>' : '')
@@ -10033,6 +10042,7 @@ function submitReview(productId) {
     .then(function(data) {
       if (data.ok) {
         toast('Review submitted! <i class="fa-solid fa-star" style="color:#f39c12;"><\/i> ', 'ok');
+        if (typeof nmNotif==='function'){var _rp=(window.prods||[]).find(function(x){return Number(x.id)===Number(productId);});nmNotif('review_received','Review Submitted','Your '+(rating||'')+'-star review for "'+(_rp?_rp.name:'product')+'" has been posted.','REVIEW');}
         var p = prods.find(function(x){ return Number(x.id) === Number(productId); });
         if (p) { p.rating = parseFloat(data.rating); p.reviews = data.reviews; sv('nm_products', prods); }
         loadReviews(productId);
@@ -11460,6 +11470,7 @@ function openReturnRequest(orderId, orderType) {
       if (resp.ok || !resp.error) {
         if (o) { o.status = 'disputed'; o.disputed = true; o.dispute_reason = fullReason; o.return_type = data.returnType; }
         renderOrders();
+        if (typeof nmNotif==='function') nmNotif('dispute_opened','Dispute Opened - '+orderId,'Your '+(data.returnType||'refund')+' request submitted. Admin reviews within 24 hrs. Payment stays in escrow.','DISPUTE');
         Swal.fire({
           icon:  'success',
           title: 'Request Submitted!',
@@ -12093,6 +12104,7 @@ function renderTierGrid() {
     var _exp = new Date(CU.tierExpiresAt);
     var _days = Math.ceil((_exp - new Date()) / 86400000);
     var _col = _days <= 5 ? '#e53e3e' : '#888';
+    if(_days<=3&&_days>=0&&typeof nmNotif==='function'&&!sessionStorage.getItem('nm_mem_notif_shown')){sessionStorage.setItem('nm_mem_notif_shown','1');var _tn=(TIERS.find(function(t){return t.id===currentTier;})||{}).name||currentTier;nmNotif('membership_expiring',_tn+' Plan Expiring Soon',_days<=0?'Your '+_tn+' plan has expired. Renew now to keep seller benefits.':'Your '+_tn+' plan expires in '+_days+' day'+(_days!==1?'s':'')+'. Tap to renew.',_days<=0?'EXPIRED':_days+' DAYS LEFT');}
     expiryHtml = '<div style="font-size:.78rem;color:'+_col+';margin-bottom:10px;text-align:center;padding:4px 0">'
       + (_days <= 0 ? 'Plan expired' : 'Renews in <strong>'+_days+' day'+(_days!==1?'s':'')+'</strong> ('+_exp.toLocaleDateString()+')')
       + '</div>';
@@ -12698,6 +12710,8 @@ function awardReferralBonus(referrerCode) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ refCode: referrerCode, newUserId: CU ? String(CU.id) : '' })
+  }).then(function(r){return r.json();}).then(function(bd){
+    if(bd&&bd.ok&&typeof nmNotif==='function'){var ca=bd.commission?'\u20a6'+parseFloat(bd.commission).toLocaleString():'a commission';nmNotif('affiliate_earned','Affiliate Commission Earned!','You earned '+ca+' from a referral sale. Check your wallet.','EARNED');}
   }).catch(function(){});
 }
 window.awardReferralBonus = awardReferralBonus;
@@ -14909,6 +14923,7 @@ function adminApprovePayout(withdrawalId, userId, amount) {
   .then(function(data) {
     if (data.ok) {
       toast('<i class="fa-solid fa-circle-check"><\/i>  ₦' + netAmt.toLocaleString() + ' sent to seller! (₦100 fee retained by platform)', 'ok');
+      if(typeof nmNotif==='function') nmNotif('payout_approved','Payout Approved!','₦'+netAmt.toLocaleString()+' sent to seller bank account. (₦100 platform fee deducted)','PAID OUT');
       var row = document.getElementById('wrow-' + withdrawalId);
       if (row) row.style.cssText = 'opacity:.4;text-decoration:line-through';
       if (btn) { btn.textContent = '\u2713 Done'; btn.style.background = 'var(--green-bg)'; }
@@ -15805,28 +15820,12 @@ window.buildReceiptInfo = buildReceiptInfo;
 function pushOrderNotif(type, orderId, extra) {
   var notif;
   if (type === 'order_paid') {
-    notif = {
-      id:         'order_paid_' + orderId,
-      title:      '✅ Order Paid — ' + orderId,
-      content:    'Payment confirmed & escrow active. ' + (extra || 'Your order is being prepared.'),
-      badge_text: 'PAID',
-      created_at: new Date().toISOString()
-    };
+    nmNotif('order_paid','Order Paid - '+orderId,'Payment confirmed & escrow active. '+(extra||'Your order is being prepared.'),'PAID');
   } else if (type === 'order_delivered') {
-    notif = {
-      id:         'order_delivered_' + orderId,
-      title:      '📦 Order Delivered — ' + orderId,
-      content:    'Your order has been marked as delivered. Tap "Confirm Collection" to release payment to the seller.',
-      badge_text: 'DELIVERED',
-      created_at: new Date().toISOString()
-    };
+    nmNotif('order_delivered','Order Delivered - '+orderId,'Marked as delivered. Confirm Collection to release payment to seller.','DELIVERED');
   } else {
-    notif = { id: 'notif_' + Date.now(), title: extra || 'Notification', created_at: new Date().toISOString() };
+    nmNotif('announcement',extra||'Notification',orderId||'');
   }
-
-  if (!window.NM_NOTIFS) window.NM_NOTIFS = { items: [], readIds: new Set() };
-  window.NM_NOTIFS.items = [notif].concat(window.NM_NOTIFS.items || []);
-  if (typeof renderNotifPanel === 'function') renderNotifPanel(window.NM_NOTIFS.items);
 }
 window.pushOrderNotif = pushOrderNotif;
 
