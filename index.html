@@ -94,7 +94,7 @@
     },
     {
       "@type": "ContactPoint",
-      "email": "support@neyomarket.com.ng.ng",
+      "email": "support@neyomarket.com.ng",
       "contactType": "customer support",
       "availableLanguage": "English"
     }
@@ -176,6 +176,9 @@
 {"@type":"ListItem","position":3,"name":"Sell","item":"https://neyomarket.com.ng/#sell"},
 {"@type":"ListItem","position":4,"name":"Affiliate","item":"https://neyomarket.com.ng/#aff"}
 ]}</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"SiteLinksSearchBox","url":"https://neyomarket.com.ng","potentialAction":{"@type":"SearchAction","target":"https://neyomarket.com.ng/?q={search_term_string}","query-input":"required name=search_term_string"}}
+</script>
 <link rel="sitemap" type="application/xml" href="/sitemap.xml"/>
 
 <!-- ═══ FAVICON ═══ -->
@@ -1032,8 +1035,8 @@ nav{
 /* ══════════════════════════════════════
    PRODUCT GRID
 ══════════════════════════════════════ */
-.pg{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
-@media(min-width:900px){.pg{grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}}
+.pg{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media(min-width:900px){.pg{grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}}
 
 /* Share Modal Animation */
 @keyframes slideUp {
@@ -1042,7 +1045,8 @@ nav{
 }
 
 .pcard{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);
-       overflow:hidden;cursor:pointer;transition:var(--tr);box-shadow:var(--shadow);position:relative}
+       overflow:hidden;cursor:pointer;transition:var(--tr);box-shadow:var(--shadow);position:relative;
+       display:flex;flex-direction:column;height:100%}
 .pcard:hover{box-shadow:var(--shadow-md);transform:translateY(-2px)}
 .pcard:active{opacity:.9;transform:scale(.99)}
 .admin-delete-btn{position:absolute;top:8px;right:8px;background:rgba(220,38,38,.85);color:#fff;border:none;
@@ -1053,7 +1057,7 @@ nav{
 .pci{height:200px;position:relative;overflow:hidden;background:var(--bg2);
      border-bottom:1px solid var(--border);
      display:flex;align-items:center;justify-content:center}
-@media(max-width:480px){.pci{height:170px}}
+@media(max-width:480px){.pci{height:130px}}
 .pci img{width:100%;height:100%;object-fit:contain;transition:.3s ease;padding:6px;}
 .pcard:hover .pci img{transform:scale(1.03)}
 .eph{font-size:2.5rem}
@@ -1071,7 +1075,7 @@ nav{
 .pcf{display:flex;justify-content:space-between;align-items:center}
 .pcp{font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-weight:700;color:var(--gold)}
 .pcr{font-size:.68rem;color:var(--orange)}
-.addbtn{width:100%;margin-top:10px;background:var(--gold);color:#fff;border:none;
+.addbtn{width:100%;margin-top:auto;padding-top:10px;background:var(--gold);color:#fff;border:none;
         padding:13px;border-radius:6px;font-weight:600;font-size:.78rem;
         transition:var(--tr);letter-spacing:.4px;text-transform:uppercase;touch-action:manipulation}
 .addbtn:active{opacity:.85;transform:scale(.98)}
@@ -3257,18 +3261,18 @@ nav:not(.bottom-nav){
 .pci{
   background:linear-gradient(145deg,var(--n-100),var(--n-50))!important;
   border-bottom:1.5px solid var(--n-200)!important;
-  height:190px!important;
+  height:155px!important;
 }
 [data-theme="dark"] .pci{
   background:linear-gradient(145deg,var(--n-100),var(--n-200))!important;
   border-color:var(--border)!important;
 }
-@media(max-width:480px){.pci{height:162px!important}}
+@media(max-width:480px){.pci{height:125px!important}}
 .pci img{padding:10px!important;object-fit:contain!important}
 .pcard:hover .pci img{transform:scale(1.07)!important}
 
 /* Body — tighter, cleaner typography */
-.pcb{padding:13px 13px 14px!important}
+.pcb{padding:10px 10px 11px!important;display:flex;flex-direction:column;flex:1}
 .pcb h4{
   font-size:.83rem!important;font-weight:var(--fw-semibold)!important;
   line-height:var(--lh-snug)!important;letter-spacing:-.012em!important;
@@ -5467,10 +5471,27 @@ nav:not(.bottom-nav){
       </div>
 
       <!-- Shipping Fee (physical only) -->
-      <div class="fg" id="s-shipping-wrap" style="display:none">
-        <label>Shipping Fee (₦)</label>
-        <input class="fi" type="number" id="s-shipping-fee" placeholder="e.g. 500 (0 for free shipping)" min="0" value="0"/>
-        <p class="hint">Charged in addition to product price. Enter 0 for free shipping.</p>
+      <div id="s-shipping-wrap" style="display:none;margin-bottom:14px">
+        <div style="background:var(--bg3);border:1.5px solid var(--border);border-radius:10px;padding:14px">
+          <div style="font-size:.78rem;font-weight:700;color:var(--gold);margin-bottom:10px"><i class="fa-solid fa-truck"></i>  Shipping Options</div>
+          <div style="display:flex;gap:8px;margin-bottom:12px">
+            <label style="flex:1;display:flex;align-items:center;gap:8px;padding:10px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;font-size:.82rem;font-weight:600" id="ship-flat-lbl">
+              <input type="radio" name="ship-type" value="flat" id="ship-flat" checked onchange="toggleShipType()" style="accent-color:var(--gold)"/> Flat Fee
+            </label>
+            <label style="flex:1;display:flex;align-items:center;gap:8px;padding:10px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;font-size:.82rem;font-weight:600" id="ship-state-lbl">
+              <input type="radio" name="ship-type" value="perstate" id="ship-perstate" onchange="toggleShipType()" style="accent-color:var(--gold)"/> Per State
+            </label>
+          </div>
+          <div id="ship-flat-wrap">
+            <label style="font-size:.8rem;font-weight:600;color:var(--text);margin-bottom:4px;display:block">Flat Shipping Fee (₦)</label>
+            <input class="fi" type="number" id="s-shipping-fee" placeholder="e.g. 500 (0 = free)" min="0" value="0" style="margin-bottom:4px"/>
+            <p class="hint">Same fee charged to all buyers regardless of location.</p>
+          </div>
+          <div id="ship-state-wrap" style="display:none">
+            <p style="font-size:.75rem;color:var(--muted);margin-bottom:10px">Set delivery fee per state. Leave blank = not available to that state.</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;max-height:300px;overflow-y:auto" id="state-fees-grid"></div>
+          </div>
+        </div>
       </div>
       <div class="fg">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
@@ -5479,6 +5500,16 @@ nav:not(.bottom-nav){
         </div>
         <textarea class="fi" id="s-desc" rows="4" placeholder="What's included? Who is this for? Why buy it?" oninput="validateSell()"></textarea>
         <div id="ai-desc-status" style="font-size:.72rem;color:var(--muted);margin-top:4px;display:none"></div>
+      </div>
+
+      <!-- Key Specifications -->
+      <div class="fg" style="margin-top:10px">
+        <label>Key Specifications <span style="font-size:.7rem;font-weight:400;text-transform:none;color:var(--muted)">(optional — RAM, Storage, Screen Size, etc.)</span></label>
+        <div id="specs-container" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px"></div>
+        <button type="button" onclick="addSpec()" style="width:100%;background:none;border:1.5px dashed var(--border2);color:var(--muted);padding:9px;border-radius:8px;font-size:.8rem;cursor:pointer;font-family:inherit;transition:.2s" onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--muted)'">
+          + Add Specification (e.g. RAM: 8GB)
+        </button>
+        <p class="hint">Shown as bullet points on product page. Great for phones, laptops, gadgets.</p>
       </div>
 
       <!-- Quantity, Location, Seller Bio -->
@@ -5544,18 +5575,38 @@ nav:not(.bottom-nav){
       </div>
 
       <div class="fg" id="dfile-wrap" style="display:none">
-        <label>Product File <span class="rq">*</span> <span style="font-size:.7rem;font-weight:400;text-transform:none;letter-spacing:0">(PDF, ZIP or MP4 · Max 256MB)</span></label>
-        <div class="fz" id="fz" onclick="triggerFile()">
-          <div class="fzi"><i class="fa-solid fa-folder"></i> </div>
-          <div class="fn" id="dfile-name">Tap to Choose File</div>
-          <p>PDF · ZIP · MP4 · Max 256MB · Stored securely in cloud</p>
+        <label>Product Delivery <span style="font-size:.7rem;font-weight:400;text-transform:none;color:var(--muted)">(choose one)</span></label>
+        <!-- Toggle -->
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <label style="flex:1;display:flex;align-items:center;gap:7px;padding:10px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;font-size:.82rem;font-weight:600" id="dfile-upload-lbl">
+            <input type="radio" name="dfile-type" value="upload" id="dfile-type-upload" checked onchange="toggleDfileType()" style="accent-color:var(--gold)"/> Upload File
+          </label>
+          <label style="flex:1;display:flex;align-items:center;gap:7px;padding:10px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;font-size:.82rem;font-weight:600" id="dfile-link-lbl">
+            <input type="radio" name="dfile-type" value="link" id="dfile-type-link" onchange="toggleDfileType()" style="accent-color:var(--gold)"/> Product Link
+          </label>
         </div>
-        <input type="file" id="dfile-inp" accept=".pdf,.zip,.mp4,video/mp4,application/pdf,application/zip" style="display:none" onchange="onFilePick(event)"/>
-        <div id="dfile-progress" style="display:none;margin-top:8px">
-          <div style="background:var(--bg3);border-radius:20px;height:6px;overflow:hidden">
-            <div id="dfile-progress-bar" style="height:100%;background:var(--gold);border-radius:20px;width:0%;transition:width .3s"></div>
+        <!-- Upload option -->
+        <div id="dfile-upload-wrap">
+          <div class="fz" id="fz" onclick="triggerFile()">
+            <div class="fzi"><i class="fa-solid fa-folder"></i> </div>
+            <div class="fn" id="dfile-name">Tap to Choose File</div>
+            <p>PDF · ZIP · MP4 · Max 256MB · Stored securely in cloud</p>
           </div>
-          <div id="dfile-progress-text" style="font-size:.72rem;color:var(--muted);margin-top:4px;text-align:center"></div>
+          <input type="file" id="dfile-inp" accept=".pdf,.zip,.mp4,video/mp4,application/pdf,application/zip" style="display:none" onchange="onFilePick(event)"/>
+          <div id="dfile-progress" style="display:none;margin-top:8px">
+            <div style="background:var(--bg3);border-radius:20px;height:6px;overflow:hidden">
+              <div id="dfile-progress-bar" style="height:100%;background:var(--gold);border-radius:20px;width:0%;transition:width .3s"></div>
+            </div>
+            <div id="dfile-progress-text" style="font-size:.72rem;color:var(--muted);margin-top:4px;text-align:center"></div>
+          </div>
+        </div>
+        <!-- Link option -->
+        <div id="dfile-link-wrap" style="display:none">
+          <input class="fi" type="url" id="dfile-link-url" placeholder="https://drive.google.com/... or Dropbox, OneDrive, any URL" style="margin-bottom:8px"/>
+          <p class="hint" style="margin-bottom:10px">Google Drive, Dropbox, OneDrive or any direct link. Make sure sharing is set to “Anyone with link”.</p>
+          <label style="font-size:.8rem;font-weight:600;color:var(--text);margin-bottom:4px;display:block">Link Expiry Date <span style="font-size:.7rem;font-weight:400;color:var(--muted)">(optional)</span></label>
+          <input class="fi" type="datetime-local" id="dfile-link-expiry"/>
+          <p class="hint">After this date the link will be shown as expired to buyers. Leave blank = never expires.</p>
         </div>
       </div>
 
@@ -8048,6 +8099,11 @@ function submitProduct() {
     isOnSale:       document.getElementById('s-on-sale') ? document.getElementById('s-on-sale').checked : false,
     saleEndsAt:     gv('s-sale-ends') || null,
     shippingFee:    parseFloat(gv('s-shipping-fee') || '0') || 0,
+    shippingType:   (document.getElementById('ship-perstate') && document.getElementById('ship-perstate').checked) ? 'perstate' : 'flat',
+    stateFees:      (document.getElementById('ship-perstate') && document.getElementById('ship-perstate').checked) ? (typeof getStateFees==='function' ? getStateFees() : {}) : null,
+    specifications: typeof getSpecs === 'function' ? getSpecs() : [],
+    productLink:    (document.getElementById('dfile-type-link') && document.getElementById('dfile-type-link').checked) ? (gv('dfile-link-url')||null) : null,
+    productLinkExpiry: (document.getElementById('dfile-type-link') && document.getElementById('dfile-type-link').checked) ? (gv('dfile-link-expiry')||null) : null,
     sellerWhatsapp: CU && CU.phone ? CU.phone : '',
     cat:            gv('s-cat')  || 'other',
     price:          parseFloat(gv('s-price')) || 0,
@@ -8075,7 +8131,8 @@ function submitProduct() {
   };
 
   var pType = payload.type;
-  var needsFileUpload = (pType === 'digital' || pType === 'course') && digitalFileData && digitalFileData.file;
+  var _usingLnk = document.getElementById('dfile-type-link') && document.getElementById('dfile-type-link').checked;
+  var needsFileUpload = !_usingLnk && (pType === 'digital' || pType === 'course') && digitalFileData && digitalFileData.file;
 
   function doSubmitPayload(finalPayload) {
     var payloadStr;
@@ -8153,7 +8210,9 @@ function submitProduct() {
     if (btn) { btn.disabled = true; btn.textContent = 'Saving product...'; }
 
     /* ── UPLOAD TO CLOUDINARY ──────────────────────────────────────── */
-    if (!digitalFileData || !digitalFileData.file) {
+    var usingLink = document.getElementById('dfile-type-link') && document.getElementById('dfile-type-link').checked;
+    var linkUrl   = usingLink ? (gv('dfile-link-url')||''): '';
+    if (!usingLink && (!digitalFileData || !digitalFileData.file)) {
       if (btn) { btn.disabled = false; btn.textContent = 'Submit for Review'; }
       toast('No file selected. Please choose a file.', 'fail');
       return;
@@ -9848,7 +9907,29 @@ function opn(id) {
     + '</div>'
     + '</div>'
     + '</div>'
-    
+
+    /* ════ ACCORDION: SPECIFICATIONS ════ */
+    + (p.specifications && (typeof p.specifications === 'string' ? JSON.parse(p.specifications||'[]') : p.specifications).length
+      ? ('<div class="accordion-section">'
+        + '<div class="accordion-header" onclick="toggleAccordion(this)">'
+        + '<h4><i class="fa-solid fa-list-check"><\/i>  Specifications</h4>'
+        + '<span class="accordion-toggle">+</span>'
+        + '</div>'
+        + '<div class="accordion-content">'
+        + '<div class="accordion-body">'
+        + '<table style="width:100%;border-collapse:collapse;font-size:.83rem">'
+        + (typeof p.specifications === 'string' ? JSON.parse(p.specifications||'[]') : (p.specifications||[])).map(function(s,i){
+            return '<tr style="border-bottom:1px solid var(--border);background:'+(i%2===0?'var(--bg3)':'transparent')+'">'
+              + '<td style="padding:7px 10px;font-weight:600;color:var(--muted);width:40%;white-space:nowrap">' + s.key + '</td>'
+              + '<td style="padding:7px 10px;color:var(--text);font-weight:500">' + s.value + '</td>'
+              + '</tr>';
+          }).join('')
+        + '</table>'
+        + '</div>'
+        + '</div>'
+        + '</div>')
+      : '')
+
     /* ════ ACCORDION: REVIEWS ════ */
     + '<div class="accordion-section">'
     + '<div class="accordion-header" onclick="toggleAccordion(this)">'
@@ -10588,6 +10669,8 @@ function processPaystack(mode) {
             variant: selectedVariants[i.id] || i.variant || null,
             /* The actual downloadable file URL — NOT the product image */
             fileUrl:  (prod && (prod.fileUrl || prod.file_url)) || null,
+            productLink: (prod && prod.productLink) || null,
+            productLinkExpiry: (prod && prod.productLinkExpiry) || null,
             fileName: (prod && (prod.fileName || prod.file_name)) || null,
             fileExt:  (prod && (prod.fileExt  || prod.file_ext))  || null
           };
@@ -11028,8 +11111,18 @@ function renderOrders() {
               + 'target="_blank" rel="noopener noreferrer" class="dl-btn" '
               + 'onclick="markDLEscrow(\'' + o.id + '\')"><i class="fa-solid fa-arrow-down"><\/i> ️ Download Product</a>';
           } else {
-            /* fileUrl missing or was an ImgBB image link — fetch correct URL live */
-            actionBtn = '<button onclick="markDL(\'' + o.id + '\')" class="dl-btn"><i class="fa-solid fa-arrow-down"><\/i> ️ Download Product</button>';
+            /* Check if product has a productLink (external URL delivery) */
+            var _prodLink = (prod && prod.productLink) || (item && item.productLink) || '';
+            var _linkExp  = (prod && prod.productLinkExpiry) || (item && item.productLinkExpiry) || null;
+            var _linkExpired = _linkExp && new Date(_linkExp) < new Date();
+            if (_prodLink && !_linkExpired) {
+              actionBtn = '<a href="' + _prodLink + '" target="_blank" rel="noopener noreferrer" class="dl-btn" onclick="markDLEscrow(\'' + o.id + '\')"><i class="fa-solid fa-link"><\/i> Access Product</a>'
+                + (_linkExp ? '<p style="font-size:.68rem;color:var(--muted);text-align:center;margin-top:4px">Link expires: ' + new Date(_linkExp).toLocaleDateString() + '</p>' : '');
+            } else if (_prodLink && _linkExpired) {
+              actionBtn = '<div style="color:var(--red);font-size:.82rem;font-weight:600;padding:10px;background:var(--red-bg);border-radius:8px;text-align:center"><i class="fa-solid fa-link-slash"><\/i> Product link has expired. Contact seller.</div>';
+            } else {
+              actionBtn = '<button onclick="markDL(\'' + o.id + '\')" class="dl-btn"><i class="fa-solid fa-arrow-down"><\/i> Download Product</button>';
+            }
           }
         } else if (isDone) {
           actionBtn = '<div style="color:var(--green);font-size:.84rem;font-weight:600;margin-top:10px;padding:10px 14px;background:var(--green-bg);border-radius:6px;text-align:center"><i class="fa-solid fa-circle-check"><\/i>  Order Complete</div>';
@@ -18411,4 +18504,103 @@ window.loadMoreRP = loadMoreRP;
   }
 })();
 
+</script>
+<script>
+/* ═══════════════════════════════════════════════════════════
+   SHIPPING TYPE TOGGLE — flat fee / per-state
+═══════════════════════════════════════════════════════════ */
+var NG_STATES = [
+  'Abia','Adamawa','Akwa Ibom','Anambra','Bauchi','Bayelsa','Benue','Borno',
+  'Cross River','Delta','Ebonyi','Edo','Ekiti','Enugu','FCT - Abuja','Gombe',
+  'Imo','Jigawa','Kaduna','Kano','Katsina','Kebbi','Kogi','Kwara','Lagos',
+  'Nasarawa','Niger','Ogun','Ondo','Osun','Oyo','Plateau','Rivers','Sokoto',
+  'Taraba','Yobe','Zamfara'
+];
+
+function toggleShipType() {
+  var isFlat = document.getElementById('ship-flat') && document.getElementById('ship-flat').checked;
+  var flatWrap  = document.getElementById('ship-flat-wrap');
+  var stateWrap = document.getElementById('ship-state-wrap');
+  var flatLbl   = document.getElementById('ship-flat-lbl');
+  var stateLbl  = document.getElementById('ship-state-lbl');
+  if (flatWrap)  flatWrap.style.display  = isFlat ? 'block' : 'none';
+  if (stateWrap) stateWrap.style.display = isFlat ? 'none'  : 'block';
+  if (flatLbl)  flatLbl.style.borderColor  = isFlat ? 'var(--gold)' : 'var(--border)';
+  if (stateLbl) stateLbl.style.borderColor = isFlat ? 'var(--border)' : 'var(--gold)';
+  /* Build state grid once */
+  if (!isFlat) buildStateGrid();
+}
+window.toggleShipType = toggleShipType;
+
+function buildStateGrid() {
+  var grid = document.getElementById('state-fees-grid');
+  if (!grid || grid.children.length > 0) return;
+  grid.innerHTML = NG_STATES.map(function(s) {
+    var id = 'state-' + s.replace(/[\s-]/g,'_').toLowerCase();
+    return '<div style="display:flex;flex-direction:column;gap:2px">'
+      + '<label style="font-size:.65rem;font-weight:600;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + s + '</label>'
+      + '<input class="fi" type="number" id="' + id + '" placeholder="\u20a6" min="0" style="padding:7px 8px;font-size:.78rem;margin:0"/>'
+      + '</div>';
+  }).join('');
+}
+window.buildStateGrid = buildStateGrid;
+
+function getStateFees() {
+  var fees = {};
+  NG_STATES.forEach(function(s) {
+    var id = 'state-' + s.replace(/[\s-]/g,'_').toLowerCase();
+    var el = document.getElementById(id);
+    if (el && el.value !== '') fees[s] = parseFloat(el.value) || 0;
+  });
+  return fees;
+}
+window.getStateFees = getStateFees;
+
+/* ═══════════════════════════════════════════════════════════
+   DIGITAL FILE TYPE TOGGLE — upload / link
+═══════════════════════════════════════════════════════════ */
+function toggleDfileType() {
+  var isUpload = document.getElementById('dfile-type-upload') && document.getElementById('dfile-type-upload').checked;
+  var upWrap   = document.getElementById('dfile-upload-wrap');
+  var lkWrap   = document.getElementById('dfile-link-wrap');
+  var upLbl    = document.getElementById('dfile-upload-lbl');
+  var lkLbl    = document.getElementById('dfile-link-lbl');
+  if (upWrap) upWrap.style.display = isUpload ? 'block' : 'none';
+  if (lkWrap) lkWrap.style.display = isUpload ? 'none'  : 'block';
+  if (upLbl) upLbl.style.borderColor = isUpload ? 'var(--gold)' : 'var(--border)';
+  if (lkLbl) lkLbl.style.borderColor = isUpload ? 'var(--border)' : 'var(--gold)';
+}
+window.toggleDfileType = toggleDfileType;
+
+/* ═══════════════════════════════════════════════════════════
+   SPECIFICATIONS — add / remove rows
+═══════════════════════════════════════════════════════════ */
+var specCount = 0;
+function addSpec() {
+  specCount++;
+  var id = 'spec-' + specCount;
+  var container = document.getElementById('specs-container');
+  if (!container) return;
+  var div = document.createElement('div');
+  div.id = id;
+  div.style.cssText = 'display:grid;grid-template-columns:1fr 1.5fr auto;gap:6px;align-items:center';
+  div.innerHTML = '<input class="fi" placeholder="Label (e.g. RAM)" style="margin:0;font-size:.8rem;padding:9px 10px" id="' + id + '-k"/>'
+    + '<input class="fi" placeholder="Value (e.g. 8GB)" style="margin:0;font-size:.8rem;padding:9px 10px" id="' + id + '-v"/>'
+    + '<button type="button" onclick="document.getElementById(\'' + id + '\').remove()" style="background:var(--red-bg);border:1px solid rgba(239,68,68,.3);color:var(--red);border-radius:8px;padding:9px 12px;cursor:pointer;font-size:.82rem;flex-shrink:0"><i class="fa-solid fa-xmark"></i></button>';
+  container.appendChild(div);
+}
+window.addSpec = addSpec;
+
+function getSpecs() {
+  var specs = [];
+  var container = document.getElementById('specs-container');
+  if (!container) return specs;
+  container.querySelectorAll('[id^="spec-"]').forEach(function(div) {
+    var k = (document.getElementById(div.id + '-k') || {}).value || '';
+    var v = (document.getElementById(div.id + '-v') || {}).value || '';
+    if (k.trim() && v.trim()) specs.push({ key: k.trim(), value: v.trim() });
+  });
+  return specs;
+}
+window.getSpecs = getSpecs;
 </script>
