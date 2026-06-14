@@ -230,7 +230,7 @@ module.exports = async function handler(req, res) {
     if (productIds.length > 0) {
       /* Fetch all products in one query */
       const products = await sql`
-        SELECT id, name, type, file_url, file_name, file_ext
+        SELECT id, name, type, file_url, file_name, file_ext, product_link, product_link_expiry
         FROM products
         WHERE id = ANY(${productIds})
       `;
@@ -243,9 +243,11 @@ module.exports = async function handler(req, res) {
         if (prod && (prod.type === 'digital' || prod.type === 'course')) {
           /* Attach file info directly to the item for the buyer's download */
           return Object.assign({}, item, {
-            fileUrl:  prod.file_url  || item.fileUrl  || null,
-            fileName: prod.file_name || item.fileName || null,
-            fileExt:  prod.file_ext  || item.fileExt  || null,
+            fileUrl:       prod.file_url           || item.fileUrl       || null,
+            fileName:      prod.file_name          || item.fileName      || null,
+            fileExt:       prod.file_ext           || item.fileExt       || null,
+            productLink:   prod.product_link       || item.productLink   || null,
+            productLinkExpiry: prod.product_link_expiry || item.productLinkExpiry || null,
           });
         }
         return item;

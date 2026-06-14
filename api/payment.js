@@ -821,8 +821,8 @@ module.exports = async function handler(req, res) {
         const productIds = itemList.map(function(i) { return Number(i.id); })
                                    .filter(function(id) { return !isNaN(id) && id > 0; });
         if (productIds.length) {
-          const prods = await sql`SELECT id, file_url FROM products WHERE id = ANY(${productIds})`;
-          const first = prods.find(function(p) { return p.file_url; });
+          const prods = await sql`SELECT id, file_url, product_link, product_link_expiry FROM products WHERE id = ANY(${productIds})`;
+          const first = prods.find(function(p) { return p.file_url || p.product_link; });
           if (first) topFileUrl = first.file_url;
           itemList.forEach(function(item) {
             const p = prods.find(function(p) { return Number(p.id) === Number(item.id); });
@@ -1543,7 +1543,7 @@ module.exports = async function handler(req, res) {
                                    .filter(function(id) { return !isNaN(id) && id > 0; });
         if (productIds.length) {
           try {
-            const prods = await sql`SELECT id, file_url FROM products WHERE id = ANY(${productIds})`;
+            const prods = await sql`SELECT id, file_url, product_link, product_link_expiry FROM products WHERE id = ANY(${productIds})`;
             const first = prods.find(function(p) { return p.file_url; });
             if (first) topFileUrl = first.file_url;
           } catch(e) {}
