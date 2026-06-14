@@ -11160,8 +11160,9 @@ function renderOrders() {
               + 'onclick="markDLEscrow(\'' + o.id + '\')"><i class="fa-solid fa-arrow-down"><\/i> ️ Download Product</a>';
           } else {
             /* Check if product has a productLink (external URL delivery) */
-            var _prodLink = (prod && prod.productLink) || (item && item.productLink) || '';
-            var _linkExp  = (prod && prod.productLinkExpiry) || (item && item.productLinkExpiry) || null;
+            var _firstItem = (o.items && o.items[0]) || {};
+            var _prodLink = _firstItem.productLink || _firstItem.product_link || o.productLink || '';
+            var _linkExp  = _firstItem.productLinkExpiry || _firstItem.product_link_expiry || o.productLinkExpiry || null;
             var _linkExpired = _linkExp && new Date(_linkExp) < new Date();
             if (_prodLink && !_linkExpired) {
               actionBtn = '<a href="' + _prodLink + '" target="_blank" rel="noopener noreferrer" class="dl-btn" onclick="markDLEscrow(\'' + o.id + '\')"><i class="fa-solid fa-link"><\/i> Access Product</a>'
@@ -11324,7 +11325,16 @@ function renderOrders() {
           + '</div>';
       }).join('');
     })
-    .catch(function() {
+    .then(function(data) {
+      /* Handle non-ok HTTP responses */
+      if (!data.ok && !data.orders) {
+        console.error('[renderOrders] API error:', data.error || data.message || JSON.stringify(data));
+        list.innerHTML = '<div style="color:var(--muted);font-size:.82rem;padding:20px;text-align:center">'
+          + 'Could not load orders. Please refresh.<br><span style="font-size:.72rem;color:var(--red)">' + (data.error||'') + '</span></div>';
+      }
+    })
+    .catch(function(err) {
+      console.error('[renderOrders] fetch failed:', err && err.message);
       list.innerHTML = '<div style="color:var(--muted);font-size:.82rem;padding:20px;text-align:center">Could not load orders. Please refresh.</div>';
     });
 }
