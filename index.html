@@ -5636,7 +5636,7 @@ nav:not(.bottom-nav){
       <div class="fg"><label>Full Name <span class="rq">*</span></label><input class="fi" type="text" id="sh-name" placeholder="Your full name" oninput="vShip()"/></div>
       <div class="fg"><label>WhatsApp Number <span class="rq">*</span></label><input class="fi" type="tel" id="sh-wa" placeholder="+234…" oninput="vShip()"/></div>
       <div class="fg"><label>Delivery State <span class="rq">*</span></label>
-        <select class="fi" id="sh-state" onchange="onShipStateChange()">
+        <select class="fi" id="sh-state" onchange="onShipStateChange();vShip();">
           <option value="">-- Select your state --</option>
           <option>Abia</option><option>Adamawa</option><option>Akwa Ibom</option>
           <option>Anambra</option><option>Bauchi</option><option>Bayelsa</option>
@@ -10725,7 +10725,7 @@ function processPaystack(mode) {
         customer:      { name: name, email: (CU ? CU.email : email), whatsapp: wa || '', address: addr || '', state: bState || '' }, /* raw email — never mask */
         mode:          mode,
         affCode:       refCode || null,
-        shipping:      addr ? { address: addr, whatsapp: wa } : null
+        shipping:      addr ? { address: addr, whatsapp: wa, state: bState||'' } : null
       };
 
       /* ── POST to server — saves order + splits balances atomically ── */
@@ -10869,7 +10869,7 @@ function processPaystack(mode) {
             return sessionStorage.getItem('nm_ref_session') || null;
           } catch(e){ return null; }
         })(),
-        shipping: addr ? { address: addr, whatsapp: wa } : null
+        shipping: addr ? { address: addr, whatsapp: wa, state: bState||'' } : null
       };
 
       /* Poll up to 8 times (40 seconds) — covers bank transfer delays */
@@ -11280,9 +11280,20 @@ function renderOrders() {
         var addrRow = '';
         if (isPhys && o.customer) {
           var addr = o.customer.address || ''; var phone = o.customer.whatsapp || '';
+          var oState = o.customer.state || o.state || '';
+          /* Resolve shipping fee for display */
+          var _dispShipFee = 0;
+          var _dispShipType = (o.items&&o.items[0]&&(o.items[0].shippingType||o.items[0].shipping_type)) || 'flat';
+          var _dispStateFees = (o.items&&o.items[0]&&(o.items[0].stateFees||o.items[0].state_fees)) || null;
+          if (_dispShipType === 'perstate' && _dispStateFees && oState) {
+            _dispShipFee = parseFloat(_dispStateFees[oState]) || 0;
+          } else {
+            _dispShipFee = parseFloat((o.items&&o.items[0]&&(o.items[0].shippingFee||o.items[0].shipping_fee))||0);
+          }
           if (addr || phone) {
             addrRow = '<div style="background:var(--blue-bg);border:1.5px solid var(--blue);border-radius:10px;padding:12px 14px;margin:8px 0;font-size:.8rem">'
               + '<div style="color:var(--blue);font-weight:700;font-size:.78rem;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;display:flex;align-items:center;gap:6px"><i class="fa-solid fa-box"><\/i>  <span>Delivery Info</span></div>'
+              + (oState ? '<div style="display:flex;align-items:center;gap:8px;color:var(--text);margin-bottom:5px;font-weight:500"><span style="font-size:.9rem"><i class="fa-solid fa-location-dot"><\/i> </span><span>' + oState + '</span></div>' : '')
               + (phone ? '<div style="display:flex;align-items:center;gap:8px;color:var(--text);margin-bottom:5px;font-weight:500"><span style="font-size:.9rem"><i class="fa-solid fa-phone"><\/i> </span><span>' + phone + '</span></div>' : '')
               + (addr  ? '<div style="display:flex;align-items:flex-start;gap:8px;color:var(--text);font-weight:500;line-height:1.5"><span style="font-size:.9rem;flex-shrink:0;margin-top:1px"><i class="fa-solid fa-location-dot"><\/i> </span><span>' + addr  + '</span></div>' : '')
               + '</div>';
@@ -11514,77 +11525,57 @@ window.markDLEscrow = markDLEscrow;
    NO blob fetch — avoids the CORS corrupted-file bug entirely.
 ════════════════════════════════════════════════════════════════ */
 function markDL(id) {
-  var o = ords.find(function(x) { return x.id === id; });
+  var o = ords.find(function(x){ return x.id === id; });
   if (!o) return;
 
-  /* Release escrow first */
-  markDLEscrow(id);
+  /* Show loading state */
+  var dlBtn = document.querySelector('button[onclick*="markDL"]');
+  if (dlBtn) { dlBtn.disabled=true; dlBtn.textContent='Preparing…'; }
 
-  /* Find all items that need a file URL */
-  var items = o.items || [];
-  var triggered = 0;
+  /* Call confirm to get secure token URL */
+  fetch('/api/payment?action=confirm', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ orderId: id, userId: CU ? String(CU.id) : '', items: o.items||[] })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(data) {
+    if (dlBtn) { dlBtn.disabled=false; dlBtn.innerHTML='<i class="fa-solid fa-arrow-down"></i>  DOWNLOAD PRODUCT'; }
 
-  function doDirectDownload(fileUrl, fileName) {
-    if (!fileUrl || fileUrl.length < 10) {
-      toast('No download file found. Contact support or the seller directly.', 'fail');
-      return;
-    }
-    /* Normalize URL */
-    var url = fileUrl;
-    var gdMatch = url.match(/drive\.google\.com\/file\/d\/([^\/]+)/);
-    if (gdMatch) url = 'https://drive.google.com/uc?export=download&id=' + gdMatch[1];
-    if (url.indexOf('dropbox.com') !== -1) {
-      url = url.replace('?dl=0','?dl=1').replace('www.dropbox.com','dl.dropboxusercontent.com');
-    }
+    var dlUrl = data.downloadUrl || '';
 
-    var a = document.createElement('a');
-    a.href     = url;
-    a.download = (fileName || 'download').replace(/[^a-zA-Z0-9._\- ]/g,'_');
-    a.target   = '_blank';
-    a.rel      = 'noopener noreferrer';
-    a.style.display = 'none';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    toast('<i class="fa-solid fa-arrow-down"><\/i> ️ Download started! If prompted, tap "Save".', 'ok');
-    triggered++;
-  }
-
-  items.forEach(function(item) {
-    /* Check local cache first */
-    var prod = (window.prods || []).find(function(p){ return Number(p.id) === Number(item.id); });
-    var url  = (prod && (prod.fileUrl || prod.file_url)) || item.fileUrl || item.file_url || '';
-
-    if (url && url.indexOf('/image/') === -1 && url.length > 10) {
-      var name = (prod && (prod.fileName || prod.name)) || item.name || 'download';
-      doDirectDownload(url, name);
+    if (dlUrl && dlUrl.indexOf('action=download&token=') !== -1) {
+      /* Secure token URL -- opens in new tab, counts uses, expires after 10 uses / 48hrs */
+      markDLEscrow(id);
+      window.open(dlUrl, '_blank', 'noopener,noreferrer');
+      toast('<i class="fa-solid fa-arrow-down"></i>  Download started! Link valid for 10 downloads / 48 hours.', 'ok');
     } else {
-      /* Fetch live from Neon */
-      fetch('/api/products?id=' + Number(item.id))
-        .then(function(r){ return r.json(); })
-        .then(function(data) {
-          var lp = data.product;
-          if (lp) {
-            /* Update local cache */
-            var idx = (window.prods||[]).findIndex(function(p){ return Number(p.id)===Number(item.id); });
-            if (idx !== -1) { window.prods[idx] = lp; prods[idx] = lp; }
-            else if (window.prods) { window.prods.push(lp); }
-            var furl = lp.fileUrl || lp.file_url || item.fileUrl || item.file_url || '';
-            var fname = lp.fileName || lp.file_name || lp.name || item.name || 'download';
-            doDirectDownload(furl, fname);
-          } else {
-            doDirectDownload(item.fileUrl || item.file_url || '', item.name || 'download');
-          }
-        })
-        .catch(function(){
-          doDirectDownload(item.fileUrl || item.file_url || '', item.name || 'download');
-        });
+      /* Fallback: direct URL from items */
+      markDLEscrow(id);
+      var items = o.items || [];
+      var hit = 0;
+      items.forEach(function(item) {
+        var url = item.fileUrl || item.file_url || '';
+        if (!url || url.length < 10) return;
+        var gd = url.match(/drive\.google\.com\/file\/d\/([^\/]+)/);
+        if (gd) url = 'https://drive.google.com/uc?export=download&id=' + gd[1];
+        if (url.indexOf('dropbox.com') !== -1)
+          url = url.replace('?dl=0','?dl=1').replace('www.dropbox.com','dl.dropboxusercontent.com');
+        var a = document.createElement('a');
+        a.href=url; a.download=(item.name||'download').replace(/[^a-zA-Z0-9._\- ]/g,'_');
+        a.target='_blank'; a.rel='noopener noreferrer'; a.style.display='none';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        hit++;
+      });
+      if (!hit) toast('No download file found. Contact support or the seller.', 'fail');
+      else toast('<i class="fa-solid fa-arrow-down"></i>  Download started!', 'ok');
     }
+  })
+  .catch(function(err) {
+    if (dlBtn) { dlBtn.disabled=false; dlBtn.innerHTML='<i class="fa-solid fa-arrow-down"></i>  DOWNLOAD PRODUCT'; }
+    console.error('[markDL] error:', err&&err.message);
+    toast('Download failed. Please try again.', 'fail');
   });
-
-  if (items.length === 0) {
-    toast('No items found in this order. Contact support.', 'fail');
-  }
 }
 window.markDL = markDL;
 
@@ -14269,12 +14260,14 @@ function aTab(tab, btn) {
         + '<div class="act"><h3>Recent Orders</h3>'
         + (allOrders.length
           ? '<div class="tbl-wrap"><table class="tbl">'
-            + '<tr><th>Order ID</th><th>Customer</th><th>Amount</th><th>Status</th><th>Date</th></tr>'
+            + '<tr><th>Order ID</th><th>Customer &amp; State</th><th>WhatsApp</th><th>Amount</th><th>Status</th><th>Date</th></tr>'
             + allOrders.slice().reverse().slice(0,8).map(function(o) {
                 var cust = o.customer||{};
+                var _stSel = cust.state || o.state || '';
                 return '<tr>'
                   + '<td style="color:var(--gold);font-size:.76rem">'+o.id+'</td>'
-                  + '<td>'+(cust.name||'—')+'</td>'
+                  + '<td>'+(cust.name||'—')+'<br/><span style="font-size:.7rem;color:var(--blue)">' + (_stSel ? '\ud83d\udccd '+_stSel : '') + '</span></td>'
+                  + '<td>'+(cust.whatsapp||cust.phone||'—')+'</td>'
                   + '<td>₦'+parseFloat(o.total||0).toLocaleString()+'</td>'
                   + '<td><span class="sb2 '+(o.status==='paid'||o.collected?'s-ok':'s-pend')+'">'+( o.collected?'Done':o.status||'Pending')+'</span></td>'
                   + '<td style="font-size:.74rem;color:var(--muted)">'+(o.date||'')+'</td>'
@@ -14574,9 +14567,11 @@ function aTab(tab, btn) {
                 var cust = o.customer||{};
                 var dcode = o.deliveryCode || o.delivery_code || '—';
                 var oSym = currSymbol(o.currency||'NGN');
+                var oStateA = cust.state || o.state || '';
+                var _adminCustTd = (cust.name||'—')+'<br/><span style="font-size:.7rem;color:var(--blue)">'+(oStateA?'📍 '+oStateA:'')+'</span><br/><span style="font-size:.7rem;color:var(--muted)">'+(cust.email||'')+'</span>';
                 return '<tr>'
                   + '<td style="font-size:.74rem;color:var(--gold)">'+o.id+'</td>'
-                  + '<td>'+(cust.name||'—')+'<br/><span style="font-size:.72rem;color:var(--muted)">'+(cust.email||'')+'</span></td>'
+                  + '<td>'+_adminCustTd+'</td>'
                   + '<td>'+(o.items||[]).length+'</td>'
                   + '<td style="font-weight:600">'+oSym+parseFloat(o.total||0).toLocaleString()+'</td>'
                   + '<td style="color:var(--green)">'+oSym+parseFloat(o.sellerPayout||o.seller_payout||0).toLocaleString()+'</td>'
