@@ -7569,8 +7569,10 @@ window.dismissUpgradeBanner = dismissUpgradeBanner;
 
 /* Save helpers — persist locally AND sync to API */
 function saveAll() {
-  /* Only cache session — products/orders always come from Neon */
+  /* Cache users + orders locally for offline fallback */
   sv('nm_users', usrs);
+  /* Also cache orders so they show immediately after payment before DB fetch */
+  try { if (ords && ords.length) localStorage.setItem('nm_ords_cache', JSON.stringify(ords)); } catch(e) {}
 }
 
 function syncProductToAPI(product) {
@@ -10778,24 +10780,23 @@ function processPaystack(mode) {
             }).catch(function(e){ console.warn('[stock] PATCH failed:', e.message); });
           }
         });
+        /* Push new order into local ords immediately so it shows instantly */
+        try {
+          var _newOrd = { id: trackId, status: 'paid', total: total,
+            date: new Date().toLocaleDateString('en-NG'),
+            items: cart.map(function(i){ return {name:i.name,price:i.price,qty:i.qty||1,type:i.type,fileUrl:i.fileUrl||null,productLink:i.productLink||null}; }) };
+          ords = [_newOrd].concat(ords||[]);
+          localStorage.setItem('nm_ords_cache', JSON.stringify(ords));
+        } catch(e) {}
         cart = []; updBadge();
-        saveAll();  /* persist to localStorage so order survives refresh */
+        saveAll();
+        try { if (typeof renderOrders === 'function') renderOrders(); } catch(e) {}
 
-        /* Show receipt with REAL Order ID */
+        /* Show receipt */
         var ri = document.getElementById('rec-id');
-        if (ri) {
-    ri.textContent =
-        trackId ||
-        (data && data.id) ||
-        (order && order.id) ||
-        'NYO-0000';
-  }
-
         if (typeof buildReceiptInfo === 'function') buildReceiptInfo({
           orderId: trackId,
-          id: trackId,
-          name: name,
-          wa: wa || 'N/A',
+          name: name, wa: wa || 'N/A',
           total: total,
           platformFee:  data.platformFee  || parseFloat((total*0.05).toFixed(2)),
           affiliateFee: data.affiliateFee || 0,
@@ -10926,23 +10927,22 @@ function processPaystack(mode) {
                 }).catch(function(){});
               }
             });
+            /* Push new order into local ords immediately */
+            try {
+              var _newOrd2 = { id: trackId, status: 'paid', total: total,
+                date: new Date().toLocaleDateString('en-NG'),
+                items: cart.map(function(i){ return {name:i.name,price:i.price,qty:i.qty||1,type:i.type,fileUrl:i.fileUrl||null,productLink:i.productLink||null}; }) };
+              ords = [_newOrd2].concat(ords||[]);
+              localStorage.setItem('nm_ords_cache', JSON.stringify(ords));
+            } catch(e) {}
             cart = []; updBadge();
             saveAll();
-            /* Show receipt with REAL Order ID */
+            try { if (typeof renderOrders === 'function') renderOrders(); } catch(e) {}
+            /* Show receipt */
             var ri = document.getElementById('rec-id');
-            if (ri) {
-    ri.textContent =
-        trackId ||
-        (data && data.id) ||
-        (order && order.id) ||
-        'NYO-0000';
-  }
-
             if (typeof buildReceiptInfo === 'function') buildReceiptInfo({
           orderId: trackId,
-          id: trackId,
-          name: name,
-          wa: wa || 'N/A',
+          name: name, wa: wa || 'N/A',
           total: total,
           platformFee:  data.platformFee  || parseFloat((total*0.05).toFixed(2)),
           affiliateFee: data.affiliateFee || 0,
@@ -11076,6 +11076,17 @@ function renderOrders() {
   if (!CU) { list.innerHTML = ''; return; }
   /* Cache orders for course player unlock check */
 
+  /* Show cached orders instantly while DB loads */
+  try {
+    var _cached = localStorage.getItem('nm_ords_cache');
+    if (_cached) {
+      var _cachedOrds = JSON.parse(_cached);
+      if (_cachedOrds && _cachedOrds.length) {
+        ords = _cachedOrds;
+        /* Render immediately from cache then DB will overwrite below */
+      }
+    }
+  } catch(e) {}
   list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:.82rem"><i class="fa-solid fa-hourglass-half"><\/i>  Loading orders…</div>';
 
   /* Always fetch from DB — survives refresh */
@@ -11085,6 +11096,8 @@ function renderOrders() {
       var myOrders = data.orders || [];
       ords = myOrders;
       window.ordersCache = myOrders; /* cache for course player unlock */
+      /* Update local cache with fresh DB data */
+      try { if (myOrders.length) localStorage.setItem('nm_ords_cache', JSON.stringify(myOrders)); } catch(e) {}
 
       if (!myOrders.length) {
         list.innerHTML = emptyState({
@@ -11232,159 +11245,133 @@ function renderOrders() {
           actionBtn = '<button onclick="markCol(\'' + o.id + '\')" style="width:100%;background:var(--green);color:#fff;border:none;padding:14px;border-radius:6px;font-weight:700;font-size:.88rem;cursor:pointer;margin-top:10px"><i class="fa-solid fa-circle-check"><\/i>  Confirm Receipt & Release Payment</button>';
         } else {
           /* Genuinely awaiting Paystack webhook — ref not yet confirmed */
-actionBtn = '<div style="color:var(--orange);font-size:.78rem;margin-top:8px;padding:8px 12px;background:var(--orange-bg);border-radius:6px;text-align:center"><i class="fa-solid fa-hourglass-half"></i> Awaiting payment confirmation…</div>';
-}
+          actionBtn = '<div style="color:var(--orange);font-size:.78rem;margin-top:8px;padding:8px 12px;background:var(--orange-bg);border-radius:6px;text-align:center"><i class="fa-solid fa-hourglass-half"><\/i>  Awaiting payment confirmation…</div>';
+        }
 
-var isEscrow    = o.status === 'escrow_held';
-var isDisputed  = o.status === 'disputed' || o.disputed;
+        var isEscrow    = o.status === 'escrow_held';
+        var isDisputed  = o.status === 'disputed' || o.disputed;
+        var statusLabel = isDone      ? 'Completed'
+                        : isDisputed  ? '<i class="fa-solid fa-scale-balanced"><\/i> ️ Disputed'
+                        : isEscrow    ? '<i class="fa-solid fa-shield-halved"><\/i> ️ Escrow Held'
+                        : isPaid      ? 'Paid · Escrow'
+                        : 'Pending';
+        var statusBg    = isDone      ? '#d1fae5'
+                        : isDisputed  ? '#fef2f2'
+                        : isEscrow    ? '#eff6ff'
+                        : isPaid      ? '#dbeafe'
+                        : '#fef3c7';
+        var statusColor = isDone      ? '#065f46'
+                        : isDisputed  ? '#991b1b'
+                        : isEscrow    ? '#1e40af'
+                        : isPaid      ? '#1e40af'
+                        : '#92400e';
 
-var statusLabel =
-  isDone ? 'Completed' :
-  isDisputed ? '<i class="fa-solid fa-scale-balanced"></i> Disputed' :
-  isEscrow ? '<i class="fa-solid fa-shield-halved"></i> Escrow Held' :
-  isPaid ? 'Paid · Escrow' :
-  'Pending';
+        /* Dispute button: shown for paid/escrow orders that are not yet complete or disputed */
+        var disputeBtn = '';
+        /* Check if within return window (7 days for physical, 24hrs for digital) */
+        var orderDate   = o.date || o.created_at || null;
+        var hoursSince  = orderDate ? (Date.now() - new Date(orderDate).getTime()) / 3600000 : 999;
+        var returnWindow = isPhys ? 168 : 24; /* 7 days or 24 hours */
+        var inWindow    = hoursSince <= returnWindow;
 
-var statusBg =
-  isDone ? '#d1fae5' :
-  isDisputed ? '#fef2f2' :
-  isEscrow ? '#eff6ff' :
-  isPaid ? '#dbeafe' :
-  '#fef3c7';
+        if (isPaid && !isDone && !isDisputed && inWindow) {
+          disputeBtn = '<button onclick="openReturnRequest(\'' + o.id + '\',\'' + (isPhys?'physical':'digital') + '\')" '
+            + 'style="width:100%;margin-top:8px;background:transparent;border:1.5px solid #dc2626;color:#dc2626;padding:11px;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">'
+            + '?? Request Return / Refund</button>';
+        } else if (isPaid && !isDone && !isDisputed && !inWindow) {
+          disputeBtn = '<div style="color:var(--muted);font-size:.74rem;margin-top:8px;padding:8px 12px;background:var(--bg3);border-radius:6px;text-align:center">'
+            + '⏰ Return window closed (' + (isPhys ? '7-day' : '24-hour') + ' limit)</div>';
+        } else if (isDisputed) {
+          var returnType = o.return_type || 'dispute';
+          disputeBtn = '<div style="color:#991b1b;font-size:.78rem;margin-top:8px;padding:10px 12px;background:#fef2f2;border-radius:8px;border:1px solid #fecaca">'
+            + '<div style="font-weight:700;margin-bottom:3px"><i class="fa-solid fa-scale-balanced"><\/i> ️ Return Request Submitted</div>'
+            + '<div style="color:#b91c1c">Admin reviewing — decision within 24 hours.</div>'
+            + (o.dispute_reason ? '<div style="color:var(--muted);margin-top:4px;font-size:.72rem">Reason: ' + String(o.dispute_reason).substring(0,60) + '</div>' : '')
+            + '</div>';
+        }
 
-var statusColor =
-  isDone ? '#065f46' :
-  isDisputed ? '#991b1b' :
-  isEscrow ? '#1e40af' :
-  isPaid ? '#1e40af' :
-  '#92400e';
+        var addrRow = '';
+        if (isPhys && o.customer) {
+          var addr = o.customer.address || ''; var phone = o.customer.whatsapp || '';
+          if (addr || phone) {
+            addrRow = '<div style="background:var(--blue-bg);border:1.5px solid var(--blue);border-radius:10px;padding:12px 14px;margin:8px 0;font-size:.8rem">'
+              + '<div style="color:var(--blue);font-weight:700;font-size:.78rem;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;display:flex;align-items:center;gap:6px"><i class="fa-solid fa-box"><\/i>  <span>Delivery Info</span></div>'
+              + (phone ? '<div style="display:flex;align-items:center;gap:8px;color:var(--text);margin-bottom:5px;font-weight:500"><span style="font-size:.9rem"><i class="fa-solid fa-phone"><\/i> </span><span>' + phone + '</span></div>' : '')
+              + (addr  ? '<div style="display:flex;align-items:flex-start;gap:8px;color:var(--text);font-weight:500;line-height:1.5"><span style="font-size:.9rem;flex-shrink:0;margin-top:1px"><i class="fa-solid fa-location-dot"><\/i> </span><span>' + addr  + '</span></div>' : '')
+              + '</div>';
+          }
+        }
 
-/* Dispute button */
-var disputeBtn = '';
+        var itemThumb = '';
+        try {
+          var fi = o.items && o.items[0];
+          if (fi) {
+            var imgs = fi.imgs || fi.images || [];
+            if (typeof imgs === 'string') { try { imgs = JSON.parse(imgs); } catch(e){imgs=[];} }
+            if (imgs && imgs.length) itemThumb = imgs[0];
+          }
+        } catch(e){}
 
-var orderDate = o.date || o.created_at || '';
-var parsedDate = new Date(orderDate);
+        return '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:18px;overflow:hidden;margin-bottom:16px;box-shadow:0 4px 20px rgba(0,0,0,.09);transition:.2s">'
 
-var hoursSince = orderDate && !isNaN(parsedDate)
-  ? (Date.now() - parsedDate.getTime()) / 3600000
-  : 999;
+          /* ── Top stripe: order ID + status badge ── */
+          + '<div style="display:flex;justify-content:space-between;align-items:center;padding:13px 16px;border-bottom:1px solid var(--border);background:var(--bg3)">'
+          + '<div style="display:flex;align-items:center;gap:6px">'
+          + '<span style="font-size:.58rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">ORDER</span>'
+          + '<span style="font-weight:800;font-size:.92rem;color:var(--text);letter-spacing:.4px;font-family:monospace">' + o.id + '</span>'
+          + '</div>'
+          + '<span style="background:' + statusBg + ';color:' + statusColor + ';padding:5px 13px;border-radius:50px;font-size:.66rem;font-weight:800;letter-spacing:.4px;border:1.5px solid ' + statusColor + '22">' + statusLabel + '</span>'
+          + '</div>'
 
-var returnWindow = isPhys ? 168 : 24;
-var inWindow = hoursSince <= returnWindow;
+          /* ── Progress tracker (physical) ── */
+          + (isPhys ? '<div style="padding:14px 16px 2px">' + buildOrderTracker(o.status) + '</div>' : '')
 
-if (isPaid && !isDone && !isDisputed && inWindow) {
+          /* ── Product row ── */
+          + '<div style="display:flex;align-items:center;gap:13px;padding:14px 16px">'
+          + (itemThumb
+            ? '<img src="' + itemThumb + '" alt="product" style="width:58px;height:58px;border-radius:12px;object-fit:cover;flex-shrink:0;border:1.5px solid var(--border);box-shadow:0 2px 8px rgba(0,0,0,.12)">'
+            : '<div style="width:58px;height:58px;border-radius:12px;background:var(--bg3);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.6rem;border:1.5px solid var(--border)">' + (o.items[0]&&o.items[0].emoji||'<i class="fa-solid fa-box"><\/i> ') + '</div>')
+          + '<div style="flex:1;min-width:0">'
+          + '<div style="font-size:.86rem;font-weight:700;color:var(--text);line-height:1.35;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'
+          + o.items.map(function(i){
+              var vb = i.variant ? ' <span style="background:rgba(201,146,42,.15);color:var(--gold);border-radius:4px;padding:1px 6px;font-size:.65rem;font-weight:700">' + i.variant + '</span>' : '';
+              return i.name.substring(0,34) + vb;
+            }).join(' &amp; ')
+          + '</div>'
+          + '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
+          + '<span style="font-size:1.08rem;font-weight:800;color:var(--gold);font-family:serif">' + currSymbol(o.currency) + o.total.toLocaleString() + '</span>'
+          + '<span style="font-size:.7rem;color:var(--muted);background:var(--bg3);padding:2px 8px;border-radius:20px">' + (o.date||'') + '</span>'
+          + '</div>'
+          + '</div>'
+          + '</div>'
 
-  disputeBtn =
-    '<button onclick="openReturnRequest(\'' + o.id + '\',\'' + (isPhys ? 'physical' : 'digital') + '\')" ' +
-    'style="width:100%;margin-top:8px;background:transparent;border:1.5px solid #dc2626;color:#dc2626;padding:11px;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">' +
-    'Request Return / Refund</button>';
+          /* ── Delivery address (physical) ── */
+          + (addrRow ? '<div style="padding:0 16px 12px">' + addrRow + '</div>' : '')
 
-} else if (isPaid && !isDone && !isDisputed && !inWindow) {
+          /* ── Action area ── */
+          + '<div style="padding:0 16px 16px">'
+          + actionBtn
+          + disputeBtn
+          + '</div>'
 
-  disputeBtn =
-    '<div style="color:var(--muted);font-size:.74rem;margin-top:8px;padding:8px 12px;background:var(--bg3);border-radius:6px;text-align:center">' +
-    '⏰ Return window closed (' + (isPhys ? '7-day' : '24-hour') + ' limit)</div>';
-
-} else if (isDisputed) {
-
-  disputeBtn =
-    '<div style="color:#991b1b;font-size:.78rem;margin-top:8px;padding:10px 12px;background:#fef2f2;border-radius:8px;border:1px solid #fecaca">' +
-    '<div style="font-weight:700;margin-bottom:3px"><i class="fa-solid fa-scale-balanced"></i> Return Request Submitted</div>' +
-    '<div style="color:#b91c1c">Admin reviewing — decision within 24 hours.</div>' +
-    (o.dispute_reason
-      ? '<div style="color:var(--muted);margin-top:4px;font-size:.72rem">Reason: ' +
-        String(o.dispute_reason).substring(0, 60) + '</div>'
-      : '') +
-    '</div>';
-}
-
-/* Address block */
-var addrRow = '';
-if (isPhys && o.customer) {
-
-  var addr = o.customer.address || '';
-  var phone = o.customer.whatsapp || '';
-
-  if (addr || phone) {
-
-    addrRow =
-      '<div style="background:var(--blue-bg);border:1.5px solid var(--blue);border-radius:10px;padding:12px 14px;margin:8px 0;font-size:.8rem">' +
-      '<div style="color:var(--blue);font-weight:700;font-size:.78rem;text-transform:uppercase;margin-bottom:8px">' +
-      '<i class="fa-solid fa-box"></i> Delivery Info</div>' +
-
-      (phone ? '<div style="margin-bottom:5px"><i class="fa-solid fa-phone"></i> ' + phone + '</div>' : '') +
-      (addr ? '<div><i class="fa-solid fa-location-dot"></i> ' + addr + '</div>' : '') +
-
-      '</div>';
-  }
-}
-
-/* Product thumbnail */
-var itemThumb = '';
-
-try {
-  var fi = (o.items && o.items.length) ? o.items[0] : null;
-
-  if (fi) {
-    var imgs = fi.imgs || fi.images || [];
-
-    if (typeof imgs === 'string') {
-      try { imgs = JSON.parse(imgs); } catch (e) { imgs = []; }
-    }
-
-    if (imgs && imgs.length) itemThumb = imgs[0];
-  }
-} catch (e) {}
-
-/* SAFE item list (FIXED CRASH HERE) */
-var itemList = (o.items || []).map(function(i) {
-
-  var vb = i.variant
-    ? ' <span style="background:rgba(201,146,42,.15);color:var(--gold);border-radius:4px;padding:1px 6px;font-size:.65rem;font-weight:700">' + i.variant + '</span>'
-    : '';
-
-  return (i.name || '').substring(0, 34) + vb;
-
-}).join(' &amp; ');
-
-/* FINAL RETURN */
-return '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:18px;overflow:hidden;margin-bottom:16px;box-shadow:0 4px 20px rgba(0,0,0,.09)">'
-
-  /* Top */
-  + '<div style="display:flex;justify-content:space-between;align-items:center;padding:13px 16px;border-bottom:1px solid var(--border);background:var(--bg3)">'
-  + '<div><span style="font-size:.58rem;font-weight:700;color:var(--muted)">ORDER</span> '
-  + '<span style="font-family:monospace;font-weight:800">' + o.id + '</span></div>'
-  + '<span style="background:' + statusBg + ';color:' + statusColor + ';padding:5px 13px;border-radius:50px;font-size:.66rem;font-weight:800">' + statusLabel + '</span>'
-  + '</div>'
-
-  /* Product */
-  + '<div style="display:flex;gap:13px;padding:14px 16px">'
-
-  + (itemThumb
-    ? '<img src="' + itemThumb + '" style="width:58px;height:58px;border-radius:12px;object-fit:cover">'
-    : '<div style="width:58px;height:58px;border-radius:12px;background:var(--bg3);display:flex;align-items:center;justify-content:center"><i class="fa-solid fa-box"></i></div>')
-
-  + '<div style="flex:1;min-width:0">'
-  + '<div style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + itemList + '</div>'
-  + '<div style="margin-top:6px">'
-  + '<span style="font-weight:800;color:var(--gold)">' + currSymbol(o.currency) + (o.total || 0).toLocaleString() + '</span>'
-  + '</div>'
-  + '</div></div>'
-
-  /* Address */
-  + (addrRow ? '<div style="padding:0 16px 12px">' + addrRow + '</div>' : '')
-
-  /* Actions */
-  + '<div style="padding:0 16px 16px">'
-  + actionBtn
-  + disputeBtn
-  + '</div>'
-
-  + '</div>';
+          + '</div>';
       }).join('');
     })
     .catch(function() {
-      list.innerHTML = '<div style="color:var(--muted);font-size:.82rem;padding:20px;text-align:center">Could not load orders. Please refresh.</div>';
+      /* Fallback: show locally cached orders if server fails */
+      if (ords && ords.length) {
+        var localHtml = ords.map(function(o){
+          return '<div style="padding:12px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;margin-bottom:10px">'
+            + '<div style="font-size:.7rem;color:var(--muted);font-weight:700;letter-spacing:.08em">ORDER ' + o.id + '</div>'
+            + '<div style="font-size:.85rem;font-weight:600;margin-top:4px">' + (o.items||[]).map(function(i){ return i.name; }).join(', ') + '</div>'
+            + '<div style="font-size:.78rem;color:var(--gold);margin-top:4px">\u20a6' + parseFloat(o.total||0).toLocaleString() + '</div>'
+            + '<div style="font-size:.7rem;color:var(--muted);margin-top:4px">' + (o.status||'paid') + ' • ' + (o.date||'') + '</div>'
+            + '</div>';
+        }).join('');
+        list.innerHTML = '<div style="font-size:.75rem;color:var(--orange);padding:8px 12px;background:rgba(217,119,6,.08);border-radius:8px;margin-bottom:10px"><i class="fa-solid fa-triangle-exclamation"></i>  Showing cached orders — <a onclick="renderOrders()" style="color:var(--gold);cursor:pointer;font-weight:700">Tap to refresh</a></div>' + localHtml;
+      } else {
+        list.innerHTML = '<div style="color:var(--muted);font-size:.82rem;padding:20px;text-align:center"><i class="fa-solid fa-rotate"></i>  Could not load orders. <a onclick="renderOrders()" style="color:var(--gold);cursor:pointer;font-weight:700">Tap to retry</a></div>';
+      }
     });
 }
 
@@ -16036,19 +16023,16 @@ document.addEventListener('click', function (e) { if (e.target.classList.contain
    Call: buildReceiptInfo({ name, wa, total, platformFee, affiliateFee, sellerAmount, currency, date })
 ═════════════════════════════════════════════════════════════════════ */
 function buildReceiptInfo(opts) {
-
-if (opts.orderId) {
-var rid = document.getElementById('rec-id');
-if (rid) rid.textContent = opts.orderId;
-}
-
-var sym   = (opts.currency && typeof currSymbol === 'function') ? currSymbol(opts.currency) : '₦';
-var fmt   = function(n){ return parseFloat(n||0).toLocaleString('en-NG',{minimumFractionDigits:2,maximumFractionDigits:2}); };
-var total = parseFloat(opts.total || 0);
-var fee   = parseFloat(opts.platformFee  || (total * 0.05).toFixed(2));
-var aff   = parseFloat(opts.affiliateFee || 0);
-var sel   = parseFloat(opts.sellerAmount || (total * 0.90).toFixed(2));
-var date  = opts.date || new Date().toLocaleDateString('en-NG',{day:'numeric',month:'short',year:'numeric'});
+  /* FIX: set the real Order ID - never show NYO-0000 placeholder */
+  var _riEl = document.getElementById('rec-id');
+  if (_riEl && opts.orderId) _riEl.textContent = opts.orderId;
+  var sym   = (opts.currency && typeof currSymbol === 'function') ? currSymbol(opts.currency) : '₦';
+  var fmt   = function(n){ return parseFloat(n||0).toLocaleString('en-NG',{minimumFractionDigits:2,maximumFractionDigits:2}); };
+  var total = parseFloat(opts.total || 0);
+  var fee   = parseFloat(opts.platformFee  || (total * 0.05).toFixed(2));
+  var aff   = parseFloat(opts.affiliateFee || 0);
+  var sel   = parseFloat(opts.sellerAmount || (total * 0.90).toFixed(2));
+  var date  = opts.date || new Date().toLocaleDateString('en-NG',{day:'numeric',month:'short',year:'numeric'});
 
   var set = function(id, val){ var el = document.getElementById(id); if(el) el.textContent = val; };
   set('rec-name-val',   opts.name  || '—');
