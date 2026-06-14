@@ -11525,77 +11525,57 @@ window.markDLEscrow = markDLEscrow;
    NO blob fetch — avoids the CORS corrupted-file bug entirely.
 ════════════════════════════════════════════════════════════════ */
 function markDL(id) {
-  var o = ords.find(function(x) { return x.id === id; });
+  var o = ords.find(function(x){ return x.id === id; });
   if (!o) return;
 
-  /* Release escrow first */
-  markDLEscrow(id);
+  /* Show loading state */
+  var dlBtn = document.querySelector('button[onclick*="markDL"]');
+  if (dlBtn) { dlBtn.disabled=true; dlBtn.textContent='Preparing…'; }
 
-  /* Find all items that need a file URL */
-  var items = o.items || [];
-  var triggered = 0;
+  /* Call confirm to get secure token URL */
+  fetch('/api/payment?action=confirm', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ orderId: id, userId: CU ? String(CU.id) : '', items: o.items||[] })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(data) {
+    if (dlBtn) { dlBtn.disabled=false; dlBtn.innerHTML='<i class="fa-solid fa-arrow-down"></i>  DOWNLOAD PRODUCT'; }
 
-  function doDirectDownload(fileUrl, fileName) {
-    if (!fileUrl || fileUrl.length < 10) {
-      toast('No download file found. Contact support or the seller directly.', 'fail');
-      return;
-    }
-    /* Normalize URL */
-    var url = fileUrl;
-    var gdMatch = url.match(/drive\.google\.com\/file\/d\/([^\/]+)/);
-    if (gdMatch) url = 'https://drive.google.com/uc?export=download&id=' + gdMatch[1];
-    if (url.indexOf('dropbox.com') !== -1) {
-      url = url.replace('?dl=0','?dl=1').replace('www.dropbox.com','dl.dropboxusercontent.com');
-    }
+    var dlUrl = data.downloadUrl || '';
 
-    var a = document.createElement('a');
-    a.href     = url;
-    a.download = (fileName || 'download').replace(/[^a-zA-Z0-9._\- ]/g,'_');
-    a.target   = '_blank';
-    a.rel      = 'noopener noreferrer';
-    a.style.display = 'none';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    toast('<i class="fa-solid fa-arrow-down"><\/i> ️ Download started! If prompted, tap "Save".', 'ok');
-    triggered++;
-  }
-
-  items.forEach(function(item) {
-    /* Check local cache first */
-    var prod = (window.prods || []).find(function(p){ return Number(p.id) === Number(item.id); });
-    var url  = (prod && (prod.fileUrl || prod.file_url)) || item.fileUrl || item.file_url || '';
-
-    if (url && url.indexOf('/image/') === -1 && url.length > 10) {
-      var name = (prod && (prod.fileName || prod.name)) || item.name || 'download';
-      doDirectDownload(url, name);
+    if (dlUrl && dlUrl.indexOf('action=download&token=') !== -1) {
+      /* Secure token URL -- opens in new tab, counts uses, expires after 10 uses / 48hrs */
+      markDLEscrow(id);
+      window.open(dlUrl, '_blank', 'noopener,noreferrer');
+      toast('<i class="fa-solid fa-arrow-down"></i>  Download started! Link valid for 10 downloads / 48 hours.', 'ok');
     } else {
-      /* Fetch live from Neon */
-      fetch('/api/products?id=' + Number(item.id))
-        .then(function(r){ return r.json(); })
-        .then(function(data) {
-          var lp = data.product;
-          if (lp) {
-            /* Update local cache */
-            var idx = (window.prods||[]).findIndex(function(p){ return Number(p.id)===Number(item.id); });
-            if (idx !== -1) { window.prods[idx] = lp; prods[idx] = lp; }
-            else if (window.prods) { window.prods.push(lp); }
-            var furl = lp.fileUrl || lp.file_url || item.fileUrl || item.file_url || '';
-            var fname = lp.fileName || lp.file_name || lp.name || item.name || 'download';
-            doDirectDownload(furl, fname);
-          } else {
-            doDirectDownload(item.fileUrl || item.file_url || '', item.name || 'download');
-          }
-        })
-        .catch(function(){
-          doDirectDownload(item.fileUrl || item.file_url || '', item.name || 'download');
-        });
+      /* Fallback: direct URL from items */
+      markDLEscrow(id);
+      var items = o.items || [];
+      var hit = 0;
+      items.forEach(function(item) {
+        var url = item.fileUrl || item.file_url || '';
+        if (!url || url.length < 10) return;
+        var gd = url.match(/drive\.google\.com\/file\/d\/([^\/]+)/);
+        if (gd) url = 'https://drive.google.com/uc?export=download&id=' + gd[1];
+        if (url.indexOf('dropbox.com') !== -1)
+          url = url.replace('?dl=0','?dl=1').replace('www.dropbox.com','dl.dropboxusercontent.com');
+        var a = document.createElement('a');
+        a.href=url; a.download=(item.name||'download').replace(/[^a-zA-Z0-9._\- ]/g,'_');
+        a.target='_blank'; a.rel='noopener noreferrer'; a.style.display='none';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        hit++;
+      });
+      if (!hit) toast('No download file found. Contact support or the seller.', 'fail');
+      else toast('<i class="fa-solid fa-arrow-down"></i>  Download started!', 'ok');
     }
+  })
+  .catch(function(err) {
+    if (dlBtn) { dlBtn.disabled=false; dlBtn.innerHTML='<i class="fa-solid fa-arrow-down"></i>  DOWNLOAD PRODUCT'; }
+    console.error('[markDL] error:', err&&err.message);
+    toast('Download failed. Please try again.', 'fail');
   });
-
-  if (items.length === 0) {
-    toast('No items found in this order. Contact support.', 'fail');
-  }
 }
 window.markDL = markDL;
 
