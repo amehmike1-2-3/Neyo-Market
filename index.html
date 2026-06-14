@@ -11169,10 +11169,19 @@ function renderOrders() {
               + 'target="_blank" rel="noopener noreferrer" class="dl-btn" '
               + 'onclick="markDLEscrow(\'' + o.id + '\')"><i class="fa-solid fa-arrow-down"><\/i> ️ Download Product</a>';
           } else {
-            /* Check if product has a productLink (external URL delivery) */
-            var _firstItem = (o.items && o.items[0]) || {};
-            var _prodLink = _firstItem.productLink || _firstItem.product_link || o.productLink || '';
-            var _linkExp  = _firstItem.productLinkExpiry || _firstItem.product_link_expiry || o.productLinkExpiry || null;
+            /* Check all items for productLink (external URL delivery) */
+            var _prodLink = '';
+            var _linkExp  = null;
+            for (var _pi = 0; _pi < (o.items||[]).length; _pi++) {
+              var _itm = o.items[_pi];
+              if (_itm.productLink || _itm.product_link) {
+                _prodLink = _itm.productLink || _itm.product_link || '';
+                _linkExp  = _itm.productLinkExpiry || _itm.product_link_expiry || null;
+                break;
+              }
+            }
+            if (!_prodLink) _prodLink = o.productLink || '';
+            if (!_linkExp)  _linkExp  = o.productLinkExpiry || null;
             var _linkExpired = _linkExp && new Date(_linkExp) < new Date();
             if (_prodLink && !_linkExpired) {
               actionBtn = '<a href="' + _prodLink + '" target="_blank" rel="noopener noreferrer" class="dl-btn" onclick="markDLEscrow(\'' + o.id + '\')"><i class="fa-solid fa-link"><\/i> Access Product</a>'
