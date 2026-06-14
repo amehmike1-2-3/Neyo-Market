@@ -10781,9 +10781,12 @@ function processPaystack(mode) {
         cart = []; updBadge();
         saveAll();  /* persist to localStorage so order survives refresh */
 
-        /* Show receipt */
+        /* Show receipt with REAL Order ID */
         var ri = document.getElementById('rec-id');
+        if (ri) ri.textContent = trackId;
+
         if (typeof buildReceiptInfo === 'function') buildReceiptInfo({
+          id: trackId,
           name: name, wa: wa || 'N/A',
           total: total,
           platformFee:  data.platformFee  || parseFloat((total*0.05).toFixed(2)),
@@ -10917,9 +10920,12 @@ function processPaystack(mode) {
             });
             cart = []; updBadge();
             saveAll();
-            /* Show receipt */
+            /* Show receipt with REAL Order ID */
             var ri = document.getElementById('rec-id');
+            if (ri) ri.textContent = trackId;
+
             if (typeof buildReceiptInfo === 'function') buildReceiptInfo({
+          id: trackId,
           name: name, wa: wa || 'N/A',
           total: total,
           platformFee:  data.platformFee  || parseFloat((total*0.05).toFixed(2)),
