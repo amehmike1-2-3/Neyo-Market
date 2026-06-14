@@ -82,6 +82,7 @@ function toOrder(r) {
     date:          r.date || (r.created_at ? new Date(r.created_at).toLocaleDateString() : ''),
     ref:           r.ref            || '',
     shipping:      safeJson(r.shipping, null),
+    currency:      r.currency       || 'NGN',
     createdAt:     r.created_at     || null
   };
 }
