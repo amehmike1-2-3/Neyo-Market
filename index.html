@@ -7569,10 +7569,8 @@ window.dismissUpgradeBanner = dismissUpgradeBanner;
 
 /* Save helpers — persist locally AND sync to API */
 function saveAll() {
-  /* Cache users + orders locally for offline fallback */
+  /* Only cache session - products/orders always come from Neon */
   sv('nm_users', usrs);
-  /* Also cache orders so they show immediately after payment before DB fetch */
-  try { if (ords && ords.length) localStorage.setItem('nm_ords_cache', JSON.stringify(ords)); } catch(e) {}
 }
 
 function syncProductToAPI(product) {
@@ -10780,17 +10778,8 @@ function processPaystack(mode) {
             }).catch(function(e){ console.warn('[stock] PATCH failed:', e.message); });
           }
         });
-        /* Push new order into local ords immediately so it shows instantly */
-        try {
-          var _newOrd = { id: trackId, status: 'paid', total: total,
-            date: new Date().toLocaleDateString('en-NG'),
-            items: cart.map(function(i){ return {name:i.name,price:i.price,qty:i.qty||1,type:i.type,fileUrl:i.fileUrl||null,productLink:i.productLink||null}; }) };
-          ords = [_newOrd].concat(ords||[]);
-          localStorage.setItem('nm_ords_cache', JSON.stringify(ords));
-        } catch(e) {}
         cart = []; updBadge();
-        saveAll();
-        try { if (typeof renderOrders === 'function') renderOrders(); } catch(e) {}
+        saveAll();  /* persist to localStorage so order survives refresh */
 
         /* Show receipt */
         var ri = document.getElementById('rec-id');
@@ -10927,17 +10916,8 @@ function processPaystack(mode) {
                 }).catch(function(){});
               }
             });
-            /* Push new order into local ords immediately */
-            try {
-              var _newOrd2 = { id: trackId, status: 'paid', total: total,
-                date: new Date().toLocaleDateString('en-NG'),
-                items: cart.map(function(i){ return {name:i.name,price:i.price,qty:i.qty||1,type:i.type,fileUrl:i.fileUrl||null,productLink:i.productLink||null}; }) };
-              ords = [_newOrd2].concat(ords||[]);
-              localStorage.setItem('nm_ords_cache', JSON.stringify(ords));
-            } catch(e) {}
             cart = []; updBadge();
             saveAll();
-            try { if (typeof renderOrders === 'function') renderOrders(); } catch(e) {}
             /* Show receipt */
             var ri = document.getElementById('rec-id');
             if (typeof buildReceiptInfo === 'function') buildReceiptInfo({
@@ -11076,28 +11056,15 @@ function renderOrders() {
   if (!CU) { list.innerHTML = ''; return; }
   /* Cache orders for course player unlock check */
 
-  /* Show cached orders instantly while DB loads */
-  try {
-    var _cached = localStorage.getItem('nm_ords_cache');
-    if (_cached) {
-      var _cachedOrds = JSON.parse(_cached);
-      if (_cachedOrds && _cachedOrds.length) {
-        ords = _cachedOrds;
-        /* Render immediately from cache then DB will overwrite below */
-      }
-    }
-  } catch(e) {}
   list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:.82rem"><i class="fa-solid fa-hourglass-half"><\/i>  Loading orders…</div>';
 
-  /* Always fetch from DB — survives refresh */
+  /* Always fetch from DB - survives refresh */
   fetch('/api/payment?action=orders&userId=' + encodeURIComponent(String(CU.id)))
     .then(function(r){ return r.json(); })
     .then(function(data) {
       var myOrders = data.orders || [];
       ords = myOrders;
       window.ordersCache = myOrders; /* cache for course player unlock */
-      /* Update local cache with fresh DB data */
-      try { if (myOrders.length) localStorage.setItem('nm_ords_cache', JSON.stringify(myOrders)); } catch(e) {}
 
       if (!myOrders.length) {
         list.innerHTML = emptyState({
@@ -11358,20 +11325,7 @@ function renderOrders() {
       }).join('');
     })
     .catch(function() {
-      /* Fallback: show locally cached orders if server fails */
-      if (ords && ords.length) {
-        var localHtml = ords.map(function(o){
-          return '<div style="padding:12px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;margin-bottom:10px">'
-            + '<div style="font-size:.7rem;color:var(--muted);font-weight:700;letter-spacing:.08em">ORDER ' + o.id + '</div>'
-            + '<div style="font-size:.85rem;font-weight:600;margin-top:4px">' + (o.items||[]).map(function(i){ return i.name; }).join(', ') + '</div>'
-            + '<div style="font-size:.78rem;color:var(--gold);margin-top:4px">\u20a6' + parseFloat(o.total||0).toLocaleString() + '</div>'
-            + '<div style="font-size:.7rem;color:var(--muted);margin-top:4px">' + (o.status||'paid') + ' • ' + (o.date||'') + '</div>'
-            + '</div>';
-        }).join('');
-        list.innerHTML = '<div style="font-size:.75rem;color:var(--orange);padding:8px 12px;background:rgba(217,119,6,.08);border-radius:8px;margin-bottom:10px"><i class="fa-solid fa-triangle-exclamation"></i>  Showing cached orders — <a onclick="renderOrders()" style="color:var(--gold);cursor:pointer;font-weight:700">Tap to refresh</a></div>' + localHtml;
-      } else {
-        list.innerHTML = '<div style="color:var(--muted);font-size:.82rem;padding:20px;text-align:center"><i class="fa-solid fa-rotate"></i>  Could not load orders. <a onclick="renderOrders()" style="color:var(--gold);cursor:pointer;font-weight:700">Tap to retry</a></div>';
-      }
+      list.innerHTML = '<div style="color:var(--muted);font-size:.82rem;padding:20px;text-align:center">Could not load orders. Please refresh.</div>';
     });
 }
 
