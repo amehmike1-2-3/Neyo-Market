@@ -11232,116 +11232,155 @@ function renderOrders() {
           actionBtn = '<button onclick="markCol(\'' + o.id + '\')" style="width:100%;background:var(--green);color:#fff;border:none;padding:14px;border-radius:6px;font-weight:700;font-size:.88rem;cursor:pointer;margin-top:10px"><i class="fa-solid fa-circle-check"><\/i>  Confirm Receipt & Release Payment</button>';
         } else {
           /* Genuinely awaiting Paystack webhook — ref not yet confirmed */
-          actionBtn = '<div style="color:var(--orange);font-size:.78rem;margin-top:8px;padding:8px 12px;background:var(--orange-bg);border-radius:6px;text-align:center"><i class="fa-solid fa-hourglass-half"><\/i>  Awaiting payment confirmation…</div>';
-        }
+actionBtn = '<div style="color:var(--orange);font-size:.78rem;margin-top:8px;padding:8px 12px;background:var(--orange-bg);border-radius:6px;text-align:center"><i class="fa-solid fa-hourglass-half"></i> Awaiting payment confirmation…</div>';
+}
 
-        var isEscrow    = o.status === 'escrow_held';
-        var isDisputed  = o.status === 'disputed' || o.disputed;
-        var statusLabel = isDone      ? 'Completed'
-                        : isDisputed  ? '<i class="fa-solid fa-scale-balanced"><\/i> ️ Disputed'
-                        : isEscrow    ? '<i class="fa-solid fa-shield-halved"><\/i> ️ Escrow Held'
-                        : isPaid      ? 'Paid · Escrow'
-                        : 'Pending';
-        var statusBg    = isDone      ? '#d1fae5'
-                        : isDisputed  ? '#fef2f2'
-                        : isEscrow    ? '#eff6ff'
-                        : isPaid      ? '#dbeafe'
-                        : '#fef3c7';
-        var statusColor = isDone      ? '#065f46'
-                        : isDisputed  ? '#991b1b'
-                        : isEscrow    ? '#1e40af'
-                        : isPaid      ? '#1e40af'
-                        : '#92400e';
+var isEscrow    = o.status === 'escrow_held';
+var isDisputed  = o.status === 'disputed' || o.disputed;
 
-        /* Dispute button: shown for paid/escrow orders that are not yet complete or disputed */
-        var disputeBtn = '';
-        /* Check if within return window (7 days for physical, 24hrs for digital) */
-        var orderDate   = o.date || o.created_at || null;
-        var hoursSince  = orderDate ? (Date.now() - new Date(orderDate).getTime()) / 3600000 : 999;
-        var returnWindow = isPhys ? 168 : 24; /* 7 days or 24 hours */
-        var inWindow    = hoursSince <= returnWindow;
+var statusLabel =
+  isDone ? 'Completed' :
+  isDisputed ? '<i class="fa-solid fa-scale-balanced"></i> Disputed' :
+  isEscrow ? '<i class="fa-solid fa-shield-halved"></i> Escrow Held' :
+  isPaid ? 'Paid · Escrow' :
+  'Pending';
 
-        if (isPaid && !isDone && !isDisputed && inWindow) {
-          disputeBtn = '<button onclick="openReturnRequest(\'' + o.id + '\',\'' + (isPhys?'physical':'digital') + '\')" '
-            + 'style="width:100%;margin-top:8px;background:transparent;border:1.5px solid #dc2626;color:#dc2626;padding:11px;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">'
-            + '?? Request Return / Refund</button>';
-        } else if (isPaid && !isDone && !isDisputed && !inWindow) {
-          disputeBtn = '<div style="color:var(--muted);font-size:.74rem;margin-top:8px;padding:8px 12px;background:var(--bg3);border-radius:6px;text-align:center">'
-            + '⏰ Return window closed (' + (isPhys ? '7-day' : '24-hour') + ' limit)</div>';
-        } else if (isDisputed) {
-          var returnType = o.return_type || 'dispute';
-          disputeBtn = '<div style="color:#991b1b;font-size:.78rem;margin-top:8px;padding:10px 12px;background:#fef2f2;border-radius:8px;border:1px solid #fecaca">'
-            + '<div style="font-weight:700;margin-bottom:3px"><i class="fa-solid fa-scale-balanced"><\/i> ️ Return Request Submitted</div>'
-            + '<div style="color:#b91c1c">Admin reviewing — decision within 24 hours.</div>'
-            + (o.dispute_reason ? '<div style="color:var(--muted);margin-top:4px;font-size:.72rem">Reason: ' + String(o.dispute_reason).substring(0,60) + '</div>' : '')
-            + '</div>';
-        }
+var statusBg =
+  isDone ? '#d1fae5' :
+  isDisputed ? '#fef2f2' :
+  isEscrow ? '#eff6ff' :
+  isPaid ? '#dbeafe' :
+  '#fef3c7';
 
-        var addrRow = '';
-        if (isPhys && o.customer) {
-          var addr = o.customer.address || ''; var phone = o.customer.whatsapp || '';
-          if (addr || phone) {
-            addrRow = '<div style="background:var(--blue-bg);border:1.5px solid var(--blue);border-radius:10px;padding:12px 14px;margin:8px 0;font-size:.8rem">'
-              + '<div style="color:var(--blue);font-weight:700;font-size:.78rem;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;display:flex;align-items:center;gap:6px"><i class="fa-solid fa-box"><\/i>  <span>Delivery Info</span></div>'
-              + (phone ? '<div style="display:flex;align-items:center;gap:8px;color:var(--text);margin-bottom:5px;font-weight:500"><span style="font-size:.9rem"><i class="fa-solid fa-phone"><\/i> </span><span>' + phone + '</span></div>' : '')
-              + (addr  ? '<div style="display:flex;align-items:flex-start;gap:8px;color:var(--text);font-weight:500;line-height:1.5"><span style="font-size:.9rem;flex-shrink:0;margin-top:1px"><i class="fa-solid fa-location-dot"><\/i> </span><span>' + addr  + '</span></div>' : '')
-              + '</div>';
-          }
-        }
+var statusColor =
+  isDone ? '#065f46' :
+  isDisputed ? '#991b1b' :
+  isEscrow ? '#1e40af' :
+  isPaid ? '#1e40af' :
+  '#92400e';
 
-        var itemThumb = '';
-        try {
-          var fi = o.items && o.items[0];
-          if (fi) {
-            var imgs = fi.imgs || fi.images || [];
-            if (typeof imgs === 'string') { try { imgs = JSON.parse(imgs); } catch(e){imgs=[];} }
-            if (imgs && imgs.length) itemThumb = imgs[0];
-          }
-        } catch(e){}
+/* Dispute button */
+var disputeBtn = '';
 
-        return '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:18px;overflow:hidden;margin-bottom:16px;box-shadow:0 4px 20px rgba(0,0,0,.09);transition:.2s">'
+var orderDate = o.date || o.created_at || '';
+var parsedDate = new Date(orderDate);
 
-          /* ── Top stripe: order ID + status badge ── */
-          + '<div style="display:flex;justify-content:space-between;align-items:center;padding:13px 16px;border-bottom:1px solid var(--border);background:var(--bg3)">'
-          + '<div style="display:flex;align-items:center;gap:6px">'
-          + '<span style="font-size:.58rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">ORDER</span>'
-          + '<span style="font-weight:800;font-size:.92rem;color:var(--text);letter-spacing:.4px;font-family:monospace">' + o.id + '</span>'
-          + '</div>'
-          + '<span style="background:' + statusBg + ';color:' + statusColor + ';padding:5px 13px;border-radius:50px;font-size:.66rem;font-weight:800;letter-spacing:.4px;border:1.5px solid ' + statusColor + '22">' + statusLabel + '</span>'
-          + '</div>'
+var hoursSince = orderDate && !isNaN(parsedDate)
+  ? (Date.now() - parsedDate.getTime()) / 3600000
+  : 999;
 
-          /* ── Progress tracker (physical) ── */
-          + (isPhys ? '<div style="padding:14px 16px 2px">' + buildOrderTracker(o.status) + '</div>' : '')
+var returnWindow = isPhys ? 168 : 24;
+var inWindow = hoursSince <= returnWindow;
 
-          /* ── Product row ── */
-          + '<div style="display:flex;align-items:center;gap:13px;padding:14px 16px">'
-          + (itemThumb
-            ? '<img src="' + itemThumb + '" alt="product" style="width:58px;height:58px;border-radius:12px;object-fit:cover;flex-shrink:0;border:1.5px solid var(--border);box-shadow:0 2px 8px rgba(0,0,0,.12)">'
-            : '<div style="width:58px;height:58px;border-radius:12px;background:var(--bg3);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.6rem;border:1.5px solid var(--border)">' + (o.items[0]&&o.items[0].emoji||'<i class="fa-solid fa-box"><\/i> ') + '</div>')
-          + '<div style="flex:1;min-width:0">'
-          + '<div style="font-size:.86rem;font-weight:700;color:var(--text);line-height:1.35;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'
-          + o.items.map(function(i){
-              var vb = i.variant ? ' <span style="background:rgba(201,146,42,.15);color:var(--gold);border-radius:4px;padding:1px 6px;font-size:.65rem;font-weight:700">' + i.variant + '</span>' : '';
-              return i.name.substring(0,34) + vb;
-            }).join(' &amp; ')
-          + '</div>'
-          + '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
-          + '<span style="font-size:1.08rem;font-weight:800;color:var(--gold);font-family:serif">' + currSymbol(o.currency) + o.total.toLocaleString() + '</span>'
-          + '<span style="font-size:.7rem;color:var(--muted);background:var(--bg3);padding:2px 8px;border-radius:20px">' + (o.date||'') + '</span>'
-          + '</div>'
-          + '</div>'
-          + '</div>'
+if (isPaid && !isDone && !isDisputed && inWindow) {
 
-          /* ── Delivery address (physical) ── */
-          + (addrRow ? '<div style="padding:0 16px 12px">' + addrRow + '</div>' : '')
+  disputeBtn =
+    '<button onclick="openReturnRequest(\'' + o.id + '\',\'' + (isPhys ? 'physical' : 'digital') + '\')" ' +
+    'style="width:100%;margin-top:8px;background:transparent;border:1.5px solid #dc2626;color:#dc2626;padding:11px;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">' +
+    'Request Return / Refund</button>';
 
-          /* ── Action area ── */
-          + '<div style="padding:0 16px 16px">'
-          + actionBtn
-          + disputeBtn
-          + '</div>'
+} else if (isPaid && !isDone && !isDisputed && !inWindow) {
 
-          + '</div>';
+  disputeBtn =
+    '<div style="color:var(--muted);font-size:.74rem;margin-top:8px;padding:8px 12px;background:var(--bg3);border-radius:6px;text-align:center">' +
+    '⏰ Return window closed (' + (isPhys ? '7-day' : '24-hour') + ' limit)</div>';
+
+} else if (isDisputed) {
+
+  disputeBtn =
+    '<div style="color:#991b1b;font-size:.78rem;margin-top:8px;padding:10px 12px;background:#fef2f2;border-radius:8px;border:1px solid #fecaca">' +
+    '<div style="font-weight:700;margin-bottom:3px"><i class="fa-solid fa-scale-balanced"></i> Return Request Submitted</div>' +
+    '<div style="color:#b91c1c">Admin reviewing — decision within 24 hours.</div>' +
+    (o.dispute_reason
+      ? '<div style="color:var(--muted);margin-top:4px;font-size:.72rem">Reason: ' +
+        String(o.dispute_reason).substring(0, 60) + '</div>'
+      : '') +
+    '</div>';
+}
+
+/* Address block */
+var addrRow = '';
+if (isPhys && o.customer) {
+
+  var addr = o.customer.address || '';
+  var phone = o.customer.whatsapp || '';
+
+  if (addr || phone) {
+
+    addrRow =
+      '<div style="background:var(--blue-bg);border:1.5px solid var(--blue);border-radius:10px;padding:12px 14px;margin:8px 0;font-size:.8rem">' +
+      '<div style="color:var(--blue);font-weight:700;font-size:.78rem;text-transform:uppercase;margin-bottom:8px">' +
+      '<i class="fa-solid fa-box"></i> Delivery Info</div>' +
+
+      (phone ? '<div style="margin-bottom:5px"><i class="fa-solid fa-phone"></i> ' + phone + '</div>' : '') +
+      (addr ? '<div><i class="fa-solid fa-location-dot"></i> ' + addr + '</div>' : '') +
+
+      '</div>';
+  }
+}
+
+/* Product thumbnail */
+var itemThumb = '';
+
+try {
+  var fi = (o.items && o.items.length) ? o.items[0] : null;
+
+  if (fi) {
+    var imgs = fi.imgs || fi.images || [];
+
+    if (typeof imgs === 'string') {
+      try { imgs = JSON.parse(imgs); } catch (e) { imgs = []; }
+    }
+
+    if (imgs && imgs.length) itemThumb = imgs[0];
+  }
+} catch (e) {}
+
+/* SAFE item list (FIXED CRASH HERE) */
+var itemList = (o.items || []).map(function(i) {
+
+  var vb = i.variant
+    ? ' <span style="background:rgba(201,146,42,.15);color:var(--gold);border-radius:4px;padding:1px 6px;font-size:.65rem;font-weight:700">' + i.variant + '</span>'
+    : '';
+
+  return (i.name || '').substring(0, 34) + vb;
+
+}).join(' &amp; ');
+
+/* FINAL RETURN */
+return '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:18px;overflow:hidden;margin-bottom:16px;box-shadow:0 4px 20px rgba(0,0,0,.09)">'
+
+  /* Top */
+  + '<div style="display:flex;justify-content:space-between;align-items:center;padding:13px 16px;border-bottom:1px solid var(--border);background:var(--bg3)">'
+  + '<div><span style="font-size:.58rem;font-weight:700;color:var(--muted)">ORDER</span> '
+  + '<span style="font-family:monospace;font-weight:800">' + o.id + '</span></div>'
+  + '<span style="background:' + statusBg + ';color:' + statusColor + ';padding:5px 13px;border-radius:50px;font-size:.66rem;font-weight:800">' + statusLabel + '</span>'
+  + '</div>'
+
+  /* Product */
+  + '<div style="display:flex;gap:13px;padding:14px 16px">'
+
+  + (itemThumb
+    ? '<img src="' + itemThumb + '" style="width:58px;height:58px;border-radius:12px;object-fit:cover">'
+    : '<div style="width:58px;height:58px;border-radius:12px;background:var(--bg3);display:flex;align-items:center;justify-content:center"><i class="fa-solid fa-box"></i></div>')
+
+  + '<div style="flex:1;min-width:0">'
+  + '<div style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + itemList + '</div>'
+  + '<div style="margin-top:6px">'
+  + '<span style="font-weight:800;color:var(--gold)">' + currSymbol(o.currency) + (o.total || 0).toLocaleString() + '</span>'
+  + '</div>'
+  + '</div></div>'
+
+  /* Address */
+  + (addrRow ? '<div style="padding:0 16px 12px">' + addrRow + '</div>' : '')
+
+  /* Actions */
+  + '<div style="padding:0 16px 16px">'
+  + actionBtn
+  + disputeBtn
+  + '</div>'
+
+  + '</div>';
       }).join('');
     })
     .catch(function() {
