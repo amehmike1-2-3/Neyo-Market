@@ -11078,9 +11078,10 @@ function renderOrders() {
       }
 
       list.innerHTML = myOrders.map(function (o) {
-        var allDig    = o.items.every(function(i){ return i.type==='digital'||i.type==='course'; });
-        var isCourse  = o.items.some(function(i){ return i.type==='course'; });
-        var isPhys    = o.items.some(function(i){ return i.type==='physical'; });
+       try {
+        var allDig    = (o.items||[]).every(function(i){ return i.type==='digital'||i.type==='course'; });
+        var isCourse  = (o.items||[]).some(function(i){ return i.type==='course'; });
+        var isPhys    = (o.items||[]).some(function(i){ return i.type==='physical'; });
         var isPaid = o.status === 'paid'
                  || o.status === 'success'
                  || o.status === 'escrow_held'
@@ -11092,7 +11093,7 @@ function renderOrders() {
 
         /* ── COURSE: View Course button ── */
         if (isCourse && (isPaid || isDone)) {
-          var courseId = o.items[0] && o.items[0].id;
+          var courseId = (o.items&&o.items[0]) && o.items[0].id;
           actionBtn = '<button onclick="viewCourse(\'' + courseId + '\')" '
             + 'style="width:100%;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;'
             + 'padding:14px;border-radius:8px;font-weight:700;font-size:.9rem;cursor:pointer;'
@@ -11307,7 +11308,7 @@ function renderOrders() {
             }).join(' &amp; ')
           + '</div>'
           + '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
-          + '<span style="font-size:1.08rem;font-weight:800;color:var(--gold);font-family:serif">' + currSymbol(o.currency) + o.total.toLocaleString() + '</span>'
+          + '<span style="font-size:1.08rem;font-weight:800;color:var(--gold);font-family:serif">' + currSymbol(o.currency||'NGN') + o.total.toLocaleString() + '</span>'
           + '<span style="font-size:.7rem;color:var(--muted);background:var(--bg3);padding:2px 8px;border-radius:20px">' + (o.date||'') + '</span>'
           + '</div>'
           + '</div>'
@@ -11323,6 +11324,10 @@ function renderOrders() {
           + '</div>'
 
           + '</div>';
+       } catch(e) {
+         console.error('[renderOrders] card error for order', o && o.id, e && e.message);
+         return '<div style="padding:12px 16px;color:var(--red);font-size:.8rem">Error rendering order ' + (o&&o.id||'') + '</div>';
+       }
       }).join('');
     })
     .then(function(data) {
@@ -13355,7 +13360,7 @@ function renderSellerPage() {
               + shipCard
               + digNote
               + '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">'
-              + '<div style="font-size:.8rem;color:var(--muted)">Your payout: <strong style="color:var(--green);font-size:.9rem">' + currSymbol(o.currency) + myPayout.toLocaleString() + '</strong> <span style="font-size:.72rem">(90%)</span></div>'
+              + '<div style="font-size:.8rem;color:var(--muted)">Your payout: <strong style="color:var(--green);font-size:.9rem">' + currSymbol(o.currency||'NGN') + myPayout.toLocaleString() + '</strong> <span style="font-size:.72rem">(90%)</span></div>'
               + (custPhone ? '<a href="https://wa.me/' + custPhone.replace(/\D/g,'') + '" target="_blank" style="background:rgba(30,216,128,.1);border:1px solid rgba(30,216,128,.22);color:var(--green);padding:5px 12px;border-radius:7px;font-size:.76rem;font-weight:700;text-decoration:none"><i class="fa-solid fa-comment-dots"><\/i>  WhatsApp Buyer</a>' : '')
               + '</div>'
               /* ── DVC CLAIM INPUT: physical orders waiting for confirmation ── */
@@ -14557,7 +14562,7 @@ function aTab(tab, btn) {
             + allOrders.slice().reverse().map(function(o) {
                 var cust = o.customer||{};
                 var dcode = o.deliveryCode || o.delivery_code || '—';
-                var oSym = currSymbol(o.currency);
+                var oSym = currSymbol(o.currency||'NGN');
                 return '<tr>'
                   + '<td style="font-size:.74rem;color:var(--gold)">'+o.id+'</td>'
                   + '<td>'+(cust.name||'—')+'<br/><span style="font-size:.72rem;color:var(--muted)">'+(cust.email||'')+'</span></td>'
