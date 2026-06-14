@@ -10783,11 +10783,19 @@ function processPaystack(mode) {
 
         /* Show receipt with REAL Order ID */
         var ri = document.getElementById('rec-id');
-        if (ri) ri.textContent = trackId;
+        if (ri) {
+    ri.textContent =
+        trackId ||
+        (data && data.id) ||
+        (order && order.id) ||
+        'NYO-0000';
+  }
 
         if (typeof buildReceiptInfo === 'function') buildReceiptInfo({
+          orderId: trackId,
           id: trackId,
-          name: name, wa: wa || 'N/A',
+          name: name,
+          wa: wa || 'N/A',
           total: total,
           platformFee:  data.platformFee  || parseFloat((total*0.05).toFixed(2)),
           affiliateFee: data.affiliateFee || 0,
@@ -10922,11 +10930,19 @@ function processPaystack(mode) {
             saveAll();
             /* Show receipt with REAL Order ID */
             var ri = document.getElementById('rec-id');
-            if (ri) ri.textContent = trackId;
+            if (ri) {
+    ri.textContent =
+        trackId ||
+        (data && data.id) ||
+        (order && order.id) ||
+        'NYO-0000';
+  }
 
             if (typeof buildReceiptInfo === 'function') buildReceiptInfo({
+          orderId: trackId,
           id: trackId,
-          name: name, wa: wa || 'N/A',
+          name: name,
+          wa: wa || 'N/A',
           total: total,
           platformFee:  data.platformFee  || parseFloat((total*0.05).toFixed(2)),
           affiliateFee: data.affiliateFee || 0,
@@ -15981,13 +15997,19 @@ document.addEventListener('click', function (e) { if (e.target.classList.contain
    Call: buildReceiptInfo({ name, wa, total, platformFee, affiliateFee, sellerAmount, currency, date })
 ═════════════════════════════════════════════════════════════════════ */
 function buildReceiptInfo(opts) {
-  var sym   = (opts.currency && typeof currSymbol === 'function') ? currSymbol(opts.currency) : '₦';
-  var fmt   = function(n){ return parseFloat(n||0).toLocaleString('en-NG',{minimumFractionDigits:2,maximumFractionDigits:2}); };
-  var total = parseFloat(opts.total || 0);
-  var fee   = parseFloat(opts.platformFee  || (total * 0.05).toFixed(2));
-  var aff   = parseFloat(opts.affiliateFee || 0);
-  var sel   = parseFloat(opts.sellerAmount || (total * 0.90).toFixed(2));
-  var date  = opts.date || new Date().toLocaleDateString('en-NG',{day:'numeric',month:'short',year:'numeric'});
+
+if (opts.orderId) {
+var rid = document.getElementById('rec-id');
+if (rid) rid.textContent = opts.orderId;
+}
+
+var sym   = (opts.currency && typeof currSymbol === 'function') ? currSymbol(opts.currency) : '₦';
+var fmt   = function(n){ return parseFloat(n||0).toLocaleString('en-NG',{minimumFractionDigits:2,maximumFractionDigits:2}); };
+var total = parseFloat(opts.total || 0);
+var fee   = parseFloat(opts.platformFee  || (total * 0.05).toFixed(2));
+var aff   = parseFloat(opts.affiliateFee || 0);
+var sel   = parseFloat(opts.sellerAmount || (total * 0.90).toFixed(2));
+var date  = opts.date || new Date().toLocaleDateString('en-NG',{day:'numeric',month:'short',year:'numeric'});
 
   var set = function(id, val){ var el = document.getElementById(id); if(el) el.textContent = val; };
   set('rec-name-val',   opts.name  || '—');
